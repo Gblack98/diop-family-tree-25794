@@ -33,9 +33,9 @@ export const PersonInfoPanel = ({
       {/* Panel */}
       <div 
         key={person.name}
-        className="fixed bottom-0 sm:bottom-4 sm:right-4 left-0 sm:left-auto w-full sm:w-72 md:w-80 bg-card backdrop-blur-xl border-t sm:border border-border shadow-2xl z-[60] animate-in slide-in-from-bottom-full sm:slide-in-from-right-full duration-300 sm:rounded-xl"
+        className="fixed bottom-0 sm:bottom-4 sm:right-4 left-0 sm:left-auto w-full sm:w-72 md:w-80 bg-card backdrop-blur-xl border-t sm:border border-border shadow-2xl z-[60] animate-in slide-in-from-bottom-full sm:slide-in-from-right-full duration-300 sm:rounded-xl max-h-[60dvh] sm:max-h-[65dvh] flex flex-col"
       >
-        <div className="p-3 sm:p-4 safe-area-inset-bottom max-h-[40dvh] sm:max-h-[50dvh] flex flex-col">
+        <div className="p-3 sm:p-4 safe-area-inset-bottom flex flex-col flex-1 min-h-0">
         {/* Poignée pour le design mobile */}
         <div className="sm:hidden flex justify-center pb-1.5 flex-shrink-0">
           <div className="w-10 h-1 rounded-full bg-muted-foreground/30"></div>
@@ -65,7 +65,7 @@ export const PersonInfoPanel = ({
           </button>
         </div>
 
-        <ScrollArea className="flex-1 min-h-0 -mx-3 sm:-mx-4">
+        <div className="flex-1 min-h-0 overflow-y-auto -mx-3 sm:-mx-4">
             <div className="p-3 sm:p-4 space-y-3">
               {/* Parents */}
               <div>
@@ -118,7 +118,7 @@ export const PersonInfoPanel = ({
                 )}
               </div>
             </div>
-        </ScrollArea>
+        </div>
         
         {/* Pied de page (ne défile pas) */}
         {person.enfants.length > 0 && (
