@@ -326,16 +326,16 @@ export class FamilyTreeEngine {
         }
       });
 
-      // Only show spouse links for couples at the same level with shared children
+      // Show all spouse links for couples with shared children
       person.spouses.forEach((spouseName) => {
         const spouse = this.personMap.get(spouseName);
-        if (spouse && spouse.visible && spouse.level === person.level) {
+        if (spouse && spouse.visible) {
           const sharedChildren = person.enfants.filter((child) => 
             spouse.enfants.includes(child)
           );
           
-          // Only draw link if they share children and are close together (same level group)
-          if (sharedChildren.length > 0 && Math.abs(person.x - spouse.x) < this.dimensions.nodeWidth * 2) {
+          // Draw link if they share children (remove proximity constraint)
+          if (sharedChildren.length > 0) {
             const pair = [person.name, spouseName].sort().join("|");
             if (!processedPairs.has(pair)) {
               processedPairs.add(pair);

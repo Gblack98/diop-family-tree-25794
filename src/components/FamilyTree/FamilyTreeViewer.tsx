@@ -87,13 +87,25 @@ export const FamilyTreeViewer = () => {
   };
 
   const handleNodeClick = (person: PersonNode) => {
+    // If clicking on the same person and they have children, toggle expansion
     if (selectedPerson?.name === person.name && person.enfants.length > 0) {
       engine.toggleExpand(person);
       updateTree();
-       setTimeout(() => handleFit(), 550); // Fit after animation
+      setTimeout(() => handleFit(), 550);
+    } 
+    // If clicking on a different person with hidden children, auto-expand
+    else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {
+      setSelectedPerson(person);
+      setIsPersonInfoVisible(true);
+      engine.toggleExpand(person);
+      updateTree();
+      setTimeout(() => handleFit(), 550);
     }
-    setSelectedPerson(person);
-    setIsPersonInfoVisible(true);
+    // Otherwise just select the person
+    else {
+      setSelectedPerson(person);
+      setIsPersonInfoVisible(true);
+    }
   };
 
   const handleSearchSelect = (person: PersonNode) => {
