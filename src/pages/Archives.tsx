@@ -17,12 +17,11 @@ const Archives = () => {
   return (
     <div className="min-h-screen bg-background">
       <ArchiveHeader 
-        archiveCount={filteredArchives.length}
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
       />
 
-      <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {filteredArchives.map((archive, index) => (
             <Dialog key={archive.id}>

@@ -1,24 +1,16 @@
-import { ArrowLeft, FileText, Image as ImageIcon, BookOpen, Quote } from "lucide-react";
+import { ArrowLeft, FileText, Image as ImageIcon, BookOpen, Quote, Home } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  NavigationMenu,
-  NavigationMenuList,
-  NavigationMenuItem,
-  NavigationMenuLink,
-} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
 interface Category {
   value: string;
   label: string;
-  icon: typeof FileText;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 const categories: Category[] = [
-  { value: "all", label: "Tout", icon: FileText },
+  { value: "all", label: "Tout", icon: Home },
   { value: "photo", label: "Photos", icon: ImageIcon },
   { value: "biography", label: "Biographies", icon: BookOpen },
   { value: "document", label: "Documents", icon: FileText },
@@ -27,87 +19,58 @@ const categories: Category[] = [
 ];
 
 interface ArchiveHeaderProps {
-  archiveCount: number;
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
 }
 
-export const ArchiveHeader = ({ archiveCount, selectedCategory, onCategoryChange }: ArchiveHeaderProps) => {
-  const isMobile = useIsMobile();
-
+export const ArchiveHeader = ({ selectedCategory, onCategoryChange }: ArchiveHeaderProps) => {
   return (
-    <header className="sticky top-0 z-50 bg-gradient-to-r from-card/95 via-card/90 to-card/95 backdrop-blur-xl border-b border-border/30 shadow-lg">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <div className="flex items-center gap-3 sm:gap-4 animate-in fade-in slide-in-from-left duration-500">
-            <Link 
-              to="/" 
-              className="p-2 hover:bg-accent rounded-lg transition-all hover:scale-105 active:scale-95"
-            >
+    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border shadow-sm">
+      <div className="max-w-screen-2xl mx-auto">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+          {/* Logo et titre */}
+          <Link 
+            to="/" 
+            className="flex items-center gap-3 group"
+          >
+            <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
               <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-foreground">
                 Archives Familiales
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
-                Mémoire et héritage de la famille Diop
+              <p className="text-xs text-muted-foreground">
+                Famille Diop
               </p>
             </div>
-          </div>
-          <Badge variant="secondary" className="animate-in fade-in slide-in-from-right duration-500">
-            {archiveCount}
-          </Badge>
-        </div>
+          </Link>
 
-        {/* Navigation responsive */}
-        <nav className="animate-in fade-in slide-in-from-bottom duration-700 delay-150">
-          {isMobile ? (
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              {categories.map((cat) => {
-                const Icon = cat.icon;
-                return (
-                  <Button
-                    key={cat.value}
-                    variant={selectedCategory === cat.value ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onCategoryChange(cat.value)}
-                    className="flex items-center gap-1.5 whitespace-nowrap shrink-0"
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span className="text-xs">{cat.label}</span>
-                  </Button>
-                );
-              })}
-            </div>
-          ) : (
-            <NavigationMenu className="mx-auto">
-              <NavigationMenuList className="flex-wrap justify-center gap-1">
-                {categories.map((cat) => {
-                  const Icon = cat.icon;
-                  return (
-                    <NavigationMenuItem key={cat.value}>
-                      <NavigationMenuLink asChild>
-                        <Button
-                          variant={selectedCategory === cat.value ? "default" : "ghost"}
-                          size="sm"
-                          onClick={() => onCategoryChange(cat.value)}
-                          className={cn(
-                            "flex items-center gap-2 transition-all hover:scale-105",
-                            selectedCategory === cat.value && "shadow-lg"
-                          )}
-                        >
-                          <Icon className="w-4 h-4" />
-                          <span>{cat.label}</span>
-                        </Button>
-                      </NavigationMenuLink>
-                    </NavigationMenuItem>
-                  );
-                })}
-              </NavigationMenuList>
-            </NavigationMenu>
-          )}
-        </nav>
+          {/* Navigation moderne */}
+          <nav className="flex items-center gap-1 bg-muted/50 rounded-full p-1">
+            {categories.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = selectedCategory === cat.value;
+              return (
+                <Button
+                  key={cat.value}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onCategoryChange(cat.value)}
+                  className={cn(
+                    "rounded-full gap-2 transition-all",
+                    isActive && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-sm"
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden md:inline text-sm font-medium">
+                    {cat.label}
+                  </span>
+                </Button>
+              );
+            })}
+          </nav>
+        </div>
       </div>
     </header>
   );
