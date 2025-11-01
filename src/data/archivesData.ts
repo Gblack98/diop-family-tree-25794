@@ -1,7 +1,15 @@
+export enum ArchiveCategory {
+  BIOGRAPHY = "biography",
+  PHOTO = "photo",
+  DOCUMENT = "document",
+  QUOTE = "quote",
+  ARTICLE = "article",
+}
+
 export interface Archive {
   id: number;
   person: string;
-  category: "biography" | "photo" | "document" | "quote" | "article";
+  category: ArchiveCategory;
   title: string;
   content: string;
   fullContent?: string;
@@ -13,19 +21,19 @@ export interface Archive {
 export const archivesData: Archive[] = [
   {
     id: 1,
-    person: "Charles Médor Diop",
-    category: "biography",
-    title: "Biographie de Charles Médor Diop",
-    content: "Né en 1920 à Dakar, Charles Médor Diop fut un pionnier de l'éducation au Sénégal. Diplômé de l'École Normale Supérieure, il a consacré sa vie à former des générations d'enseignants. Son engagement pour l'accès universel à l'éducation a marqué l'histoire de notre famille.",
-    fullContent: "Né en 1920 à Dakar dans une famille modeste, Charles Médor Diop a très tôt montré un talent exceptionnel pour les études. Grâce à une bourse, il intègre l'École Normale Supérieure où il excelle dans toutes les disciplines. Après son diplôme en 1945, il refuse plusieurs offres prestigieuses pour retourner au Sénégal et se consacrer à l'éducation des jeunes. Il fonde plusieurs écoles dans les zones rurales et forme des centaines d'enseignants. Son héritage perdure aujourd'hui à travers les nombreuses institutions qu'il a créées.",
-    date: "1920-1985",
-    image: "/images/archives/charles-medor-diop.jpg",
-    achievements: ["Fondateur de 5 écoles", "Formateur de 500+ enseignants", "Décoré de l'Ordre National du Mérite"]
+    person: "Ibrahima Gabar Diop",
+    category: ArchiveCategory.BIOGRAPHY,
+    title: "Biographie d'Ibrahima Gabar Diop",
+    content: "Né le 25 janvier 1947 à Dakar. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    fullContent: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    date: "1947-présent",
+    image: "/images/archives/ibrahima-gabar-diop.jpg",
+    achievements: ["Directeur Général de l’ANNPS", "CEMP du président de la République du Sénégal", "Commandant du GNSP"]
   },
   {
     id: 2,
     person: "Daro Wade",
-    category: "photo",
+    category: ArchiveCategory.PHOTO,
     title: "Portrait de famille - 1965",
     content: "Rassemblement familial à Saint-Louis lors de la Tabaski. Une journée mémorable réunissant trois générations.",
     date: "1965",
@@ -34,7 +42,7 @@ export const archivesData: Archive[] = [
   {
     id: 3,
     person: "Gabar Biram Médor Diop",
-    category: "document",
+    category: ArchiveCategory.DOCUMENT,
     title: "Diplôme de Médecine",
     content: "Université de Dakar - Faculté de Médecine. Premier médecin de la famille Diop.",
     fullContent: "Diplôme de Docteur en Médecine obtenu avec mention Très Bien. Mamadou Diop s'est spécialisé en pédiatrie et a ouvert le premier cabinet pédiatrique dans sa région natale.",
@@ -44,7 +52,7 @@ export const archivesData: Archive[] = [
   {
     id: 4,
     person: "Alioune Badara Gabar Diop",
-    category: "quote",
+    category: ArchiveCategory.QUOTE,
     title: "Sur l'héritage familial",
     content: "L'éducation est l'arme la plus puissante que vous puissiez utiliser pour changer le monde. C'est ce que mon père m'a appris, et c'est ce que j'ai transmis à mes enfants.",
     date: "1998",
@@ -52,7 +60,7 @@ export const archivesData: Archive[] = [
   {
     id: 5,
     person: "Ibrahima Gabar Diop",
-    category: "article",
+    category: ArchiveCategory.ARTICLE,
     title: "Article de presse - Le Soleil",
     content: "Reconnaissance nationale pour son œuvre philanthropique. Ibrahima Gabar Diop a fondé trois écoles dans les zones rurales du Sénégal.",
     fullContent: "Le philanthrope Ibrahima Gabar Diop a reçu hier la médaille d'honneur de la République pour son action exceptionnelle dans le domaine de l'éducation. En 20 ans, il a fondé trois écoles permettant à des centaines d'enfants d'accéder à l'éducation dans des zones reculées.",
@@ -62,7 +70,7 @@ export const archivesData: Archive[] = [
   {
     id: 6,
     person: "Amadou Bamba Diop",
-    category: "photo",
+    category: ArchiveCategory.PHOTO,
     title: "Photo de Amadou Bamba Diop - XXXX",
     content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
     date: "XXXX",
@@ -71,7 +79,7 @@ export const archivesData: Archive[] = [
   {
     id: 7,
     person: "El Hadj Malick Ndiaye",
-    category: "biography",
+    category: ArchiveCategory.BIOGRAPHY,
     title: "Parcours d'El Hadj Malick Ndiaye",
     content: "Ingénieur brillant, El Hadj Malick Ndiaye a contribué au développement des infrastructures modernes au Sénégal.",
     fullContent: "Diplômé de l'École Polytechnique de Dakar en 1990, El Hadj Malick Ndiaye s'est illustré dans la conception et la réalisation de nombreux projets d'infrastructure. Son expertise a été sollicitée pour des projets majeurs à travers toute l'Afrique de l'Ouest.",
@@ -81,7 +89,7 @@ export const archivesData: Archive[] = [
   {
     id: 8,
     person: "Marième Diop",
-    category: "quote",
+    category: ArchiveCategory.QUOTE,
     title: "Sur la solidarité familiale",
     content: "Dans notre famille, nous avons toujours su que notre force réside dans notre unité. Chaque succès individuel est une victoire collective.",
     date: "2010",
@@ -89,7 +97,7 @@ export const archivesData: Archive[] = [
   {
     id: 9,
     person: "Amadou Diop",
-    category: "document",
+    category: ArchiveCategory.DOCUMENT,
     title: "Acte de naissance - 1895",
     content: "Document historique attestant de la naissance d'Amadou Diop, l'un des plus anciens membres documentés de notre lignée.",
     date: "1895",
@@ -98,7 +106,7 @@ export const archivesData: Archive[] = [
     {
     id: 10,
     person: "Magatte Diop",
-    category: "photo",
+    category: ArchiveCategory.PHOTO,
     title: "Photo de Magatte Diop - XXXX",
     content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
     date: "XXXX",

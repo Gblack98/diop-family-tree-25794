@@ -1,12 +1,37 @@
 import { PersonNode } from "@/lib/familyTree/types";
-import { X, Users, Heart, Baby, GitCommit } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { X, Users, Heart, Baby, GitCommit, LucideIcon } from "lucide-react";
 
 interface PersonInfoPanelProps {
   person: PersonNode | null;
   onClose: () => void;
   onToggleExpand: (person: PersonNode) => void;
 }
+
+interface InfoSectionProps {
+  icon: LucideIcon;
+  title: string;
+  count: number;
+  items: string[];
+  emptyText: string;
+}
+
+const InfoSection = ({ icon: Icon, title, count, items, emptyText }: InfoSectionProps) => (
+  <div>
+    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+      <Icon className="w-3 h-3" />
+      {title} ({count})
+    </div>
+    {items.length > 0 ? (
+      <ul className="space-y-1">
+        {items.map((item) => (
+          <li key={item} className="px-2.5 py-1.5 bg-muted/60 rounded-md text-xs">{item}</li>
+        ))}
+      </ul>
+    ) : (
+      <p className="text-xs text-muted-foreground/80">{emptyText}</p>
+    )}
+  </div>
+);
 
 export const PersonInfoPanel = ({
   person,
@@ -67,56 +92,27 @@ export const PersonInfoPanel = ({
 
         <div className="flex-1 min-h-0 overflow-y-auto -mx-3 sm:-mx-4">
             <div className="p-3 sm:p-4 space-y-3">
-              {/* Parents */}
-              <div>
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  <Users className="w-3 h-3" />
-                  Parents ({person.parents.length})
-                </div>
-                {person.parents.length > 0 ? (
-                  <ul className="space-y-1">
-                    {person.parents.map((parent) => (
-                      <li key={parent} className="px-2.5 py-1.5 bg-muted/60 rounded-md text-xs">{parent}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-xs text-muted-foreground/80">Information non disponible</p>
-                )}
-              </div>
-
-              {/* Conjoints */}
-              <div>
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  <Heart className="w-3 h-3" />
-                  Conjoint(s) ({person.spouses.length})
-                </div>
-                {person.spouses.length > 0 ? (
-                  <ul className="space-y-1">
-                    {person.spouses.map((spouse) => (
-                      <li key={spouse} className="px-2.5 py-1.5 bg-muted/60 rounded-md text-xs">{spouse}</li>
-                    ))}
-                  </ul>
-                ) : (
-                   <p className="text-xs text-muted-foreground/80">Information non disponible</p>
-                )}
-              </div>
-
-              {/* Enfants */}
-              <div>
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  <Baby className="w-3 h-3" />
-                  Enfants ({person.enfants.length})
-                </div>
-                {person.enfants.length > 0 ? (
-                  <ul className="space-y-1">
-                    {person.enfants.map((child) => (
-                      <li key={child} className="px-2.5 py-1.5 bg-muted/60 rounded-md text-xs">{child}</li>
-                    ))}
-                  </ul>
-                ) : (
-                   <p className="text-xs text-muted-foreground/80">Information non disponible</p>
-                )}
-              </div>
+              <InfoSection 
+                icon={Users}
+                title="Parents"
+                count={person.parents.length}
+                items={person.parents}
+                emptyText="Information non disponible"
+              />
+              <InfoSection 
+                icon={Heart}
+                title="Conjoint(s)"
+                count={person.spouses.length}
+                items={person.spouses}
+                emptyText="Information non disponible"
+              />
+              <InfoSection 
+                icon={Baby}
+                title="Enfants"
+                count={person.enfants.length}
+                items={person.enfants}
+                emptyText="Information non disponible"
+              />
             </div>
         </div>
         

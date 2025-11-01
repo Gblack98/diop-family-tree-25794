@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { PersonNode, TreeLink, TreeDimensions } from "@/lib/familyTree/types";
+import { createNodeHTML } from "./nodeHTML";
 
 interface FamilyTreeCanvasProps {
   persons: PersonNode[];
@@ -10,7 +11,6 @@ interface FamilyTreeCanvasProps {
   onNodeClick: (person: PersonNode) => void;
   onReset: () => void;
   onFitToScreen: () => void;
-  onExportRequest?: (format: 'png' | 'pdf') => void;
 }
 
 export const FamilyTreeCanvas = ({
@@ -21,7 +21,6 @@ export const FamilyTreeCanvas = ({
   onNodeClick,
   onReset,
   onFitToScreen,
-  onExportRequest,
 }: FamilyTreeCanvasProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -29,7 +28,7 @@ export const FamilyTreeCanvas = ({
 
   // Initialize zoom
   useEffect(() => {
-    if (!svgRef.current) return;
+    if (!svgRef.current || !gRef.current) return;
 
     const svg = d3.select(svgRef.current);
     const g = d3.select(gRef.current);
@@ -46,13 +45,13 @@ export const FamilyTreeCanvas = ({
 
     // Initial view
     setTimeout(() => {
-      onReset();
+      (window as any).__treeReset?.();
     }, 100);
-  }, []);
+  }, [onReset]);
 
   // Update reset and fit functions
   useEffect(() => {
-    const resetView = () => {
+    (window as any).__treeReset = () => {
       if (!svgRef.current || !zoomRef.current) return;
       const svg = d3.select(svgRef.current);
       svg
@@ -64,7 +63,7 @@ export const FamilyTreeCanvas = ({
         );
     };
 
-    const fitToScreen = () => {
+    (window as any).__treeFit = () => {
       if (!svgRef.current || !gRef.current || !zoomRef.current) return;
       
       const svg = d3.select(svgRef.current);
@@ -95,7 +94,7 @@ export const FamilyTreeCanvas = ({
         );
     };
 
-    const exportTree = async (format: 'png' | 'pdf') => {
+    (window as any).__treeExport = async (format: 'png' | 'pdf') => {
       if (!svgRef.current || !gRef.current) return;
       
       try {
@@ -195,17 +194,12 @@ export const FamilyTreeCanvas = ({
       }
     };
 
-    // Store methods globally for header buttons
-    (window as any).__treeReset = resetView;
-    (window as any).__treeFit = fitToScreen;
-    (window as any).__treeExport = exportTree;
-
     return () => {
-      delete (window as any).__treeReset;
-      delete (window as any).__treeFit;
-      delete (window as any).__treeExport;
+      delete (window as any).__treeReset; // Cleanup
+      delete (window as any).__treeFit;   // Cleanup
+      delete (window as any).__treeExport; // Cleanup
     };
-  }, [dimensions]);
+  }, [dimensions.width, dimensions.height]); // Dependencies are more specific
 
   // Render links
   useEffect(() => {
@@ -248,7 +242,7 @@ export const FamilyTreeCanvas = ({
       });
   }, [links, dimensions]);
 
-  // Render nodes
+  // Render and update nodes
   useEffect(() => {
     if (!gRef.current) return;
 
@@ -257,7 +251,12 @@ export const FamilyTreeCanvas = ({
       .selectAll<SVGGElement, PersonNode>(".node")
       .data(persons, (d) => d.name);
 
-    nodeSelection.exit().remove();
+    // --- Exit ---
+    nodeSelection.exit()
+      .transition()
+      .duration(300)
+      .attr("opacity", 0)
+      .remove();
 
     const nodeEnter = nodeSelection
       .enter()
@@ -269,29 +268,37 @@ export const FamilyTreeCanvas = ({
         onNodeClick(d);
       });
 
-    // Add foreignObject for HTML content
-    const fo = nodeEnter
+    // Position entering nodes at their parent's previous position for a smooth transition.
+    nodeEnter.attr("transform", (d) => {
+        const parent = persons.find(p => p.enfants.includes(d.name));
+        const x = parent?.x ?? d.x;
+        const y = parent?.y ?? d.y;
+        return `translate(${x}, ${y})`;
+    });
+
+    // --- Enter: Add foreignObject for HTML content ---
+    nodeEnter
       .append("foreignObject")
       .attr("width", dimensions.nodeWidth)
       .attr("height", dimensions.nodeHeight)
       .attr("x", -dimensions.nodeWidth / 2)
-      .attr("y", -dimensions.nodeHeight / 2);
+      .attr("y", -dimensions.nodeHeight / 2)
+      .append("xhtml:div")
+        .attr("xmlns", "http://www.w3.org/1999/xhtml")
+        .html((d) => createNodeHTML(d, selectedPerson, dimensions));
 
-    fo.append("xhtml:div")
-      .attr("xmlns", "http://www.w3.org/1999/xhtml")
-      .html((d) => createNodeHTML(d, selectedPerson));
-
-    // Update existing nodes
+    // --- Update + Enter ---
     const nodeUpdate = nodeSelection.merge(nodeEnter);
 
     nodeUpdate
       .transition()
       .duration(500)
       .attr("transform", (d) => `translate(${d.x}, ${d.y})`);
+    
+    // Only update the HTML content, no need to re-create the whole foreignObject
+    nodeUpdate.select<HTMLDivElement>("foreignObject > div")
+      .html((d) => createNodeHTML(d, selectedPerson, dimensions));
 
-    nodeUpdate
-      .select("foreignObject > div")
-      .html((d) => createNodeHTML(d, selectedPerson));
   }, [persons, selectedPerson, dimensions, onNodeClick]);
 
   return (
@@ -299,127 +306,9 @@ export const FamilyTreeCanvas = ({
       ref={svgRef}
       width={dimensions.width}
       height={dimensions.height}
-      className="w-full h-full cursor-grab active:cursor-grabbing"
+      className="w-full h-full cursor-grab active:cursor-grabbing bg-background"
     >
       <g ref={gRef} />
     </svg>
   );
 };
-
-function createNodeHTML(person: PersonNode, selectedPerson: PersonNode | null): string {
-  const initial = person.name.charAt(0).toUpperCase();
-  const childCount = person.enfants.length;
-  const hasHiddenChildren = childCount > 0 && !person.expanded;
-  const isSelected = selectedPerson?.name === person.name;
-
-  const avatarColor =
-    person.genre === "Homme"
-      ? "background: linear-gradient(135deg, hsl(var(--male)), hsl(210 100% 46%));"
-      : "background: linear-gradient(135deg, hsl(var(--female)), hsl(330 76% 48%));";
-
-  const borderColor =
-    person.genre === "Homme" ? "hsl(var(--male))" : "hsl(var(--female))";
-
-  return `
-    <div style="
-      width: calc(100% - 4px);
-      height: calc(100% - 4px);
-      margin: 2px;
-      background: hsl(var(--card));
-      border: ${isSelected ? "3px" : "2px"} solid ${borderColor};
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: all 0.3s;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    ">
-      <div style="
-        padding: 10px;
-        border-bottom: 1px solid hsl(var(--border));
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: hsl(var(--card));
-      ">
-        <div style="
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          ${avatarColor}
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          font-size: 16px;
-          color: white;
-          flex-shrink: 0;
-        ">${initial}</div>
-        <div style="flex: 1; min-width: 0;">
-          <div style="
-            font-weight: 600;
-            font-size: 13px;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: hsl(var(--foreground));
-          ">${person.name}</div>
-          <div style="
-            font-size: 11px;
-            color: hsl(var(--muted-foreground));
-          ">Génération ${person.level}</div>
-        </div>
-      </div>
-      <div style="padding: 10px; flex: 1; display: flex; align-items: center;">
-        <div style="
-          display: flex;
-          gap: 12px;
-          font-size: 12px;
-          width: 100%;
-        ">
-          <div style="
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            color: hsl(var(--muted-foreground));
-          ">👥 ${person.parents.length}</div>
-          <div style="
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            color: hsl(var(--muted-foreground));
-          ">💑 ${person.spouses.length}</div>
-          <div style="
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            color: hsl(var(--muted-foreground));
-          ">👶 ${childCount}</div>
-        </div>
-      </div>
-      ${
-        hasHiddenChildren
-          ? `<div style="
-          position: absolute;
-          bottom: 4px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: hsl(var(--primary));
-          color: white;
-          width: 34px;
-          height: 34px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          font-size: 13px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-          border: 2px solid hsl(var(--background));
-        ">+${childCount}</div>`
-          : ""
-      }
-    </div>
-  `;
-}
