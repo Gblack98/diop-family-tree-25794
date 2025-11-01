@@ -1,3 +1,4 @@
+import { FileText, Image as ImageIcon, BookOpen, Quote, Home, LucideIcon } from "lucide-react";
 export enum ArchiveCategory {
   BIOGRAPHY = "biography",
   PHOTO = "photo",
@@ -17,6 +18,23 @@ export interface Archive {
   image?: string;
   achievements?: string[];
 }
+
+export interface CategoryConfig {
+  value: ArchiveCategory | "all";
+  label: string;
+  icon: LucideIcon;
+}
+
+export const archiveCategories: CategoryConfig[] = [
+  { value: "all", label: "Tout", icon: Home },
+  { value: ArchiveCategory.PHOTO, label: "Photos", icon: ImageIcon },
+  { value: ArchiveCategory.BIOGRAPHY, label: "Biographies", icon: BookOpen },
+  { value: ArchiveCategory.DOCUMENT, label: "Documents", icon: FileText },
+  { value: ArchiveCategory.QUOTE, label: "Citations", icon: Quote },
+  { value: ArchiveCategory.ARTICLE, label: "Articles", icon: FileText },
+];
+
+
 
 export const archivesData: Archive[] = [
   {

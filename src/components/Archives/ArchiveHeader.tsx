@@ -1,22 +1,8 @@
-import { ArrowLeft, FileText, Image as ImageIcon, BookOpen, Quote, Home } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface Category {
-  value: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const categories: Category[] = [
-  { value: "all", label: "Tout", icon: Home },
-  { value: "photo", label: "Photos", icon: ImageIcon },
-  { value: "biography", label: "Biographies", icon: BookOpen },
-  { value: "document", label: "Documents", icon: FileText },
-  { value: "quote", label: "Citations", icon: Quote },
-  { value: "article", label: "Articles", icon: FileText },
-];
+import { archiveCategories } from "@/data/archivesData";
 
 interface ArchiveHeaderProps {
   selectedCategory: string;
@@ -48,7 +34,7 @@ export const ArchiveHeader = ({ selectedCategory, onCategoryChange }: ArchiveHea
 
           {/* Navigation moderne */}
           <nav className="flex items-center gap-1 bg-muted/50 rounded-full p-1">
-            {categories.map((cat) => {
+            {archiveCategories.map((cat) => {
               const Icon = cat.icon;
               const isActive = selectedCategory === cat.value;
               return (
