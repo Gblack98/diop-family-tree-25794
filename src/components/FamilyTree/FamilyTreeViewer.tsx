@@ -10,35 +10,36 @@ import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
 import { familyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
-// NOUVELLE LOGIQUE RESPONSIVE (beaucoup plus compacte sur mobile)
+// NOUVEAU : Dimensions "Micro" pour mobile
 const getResponsiveDimensions = (): TreeDimensions => {
   const width = window.innerWidth;
   const height = window.innerHeight;
 
-  const isMobile = width < 768; // Tablette et moins
-  const isSmallMobile = width < 480; // Smartphones
-
-  if (isSmallMobile) {
-    return {
-      width,
-      height,
-      nodeWidth: 150, // Très compact
-      nodeHeight: 90,
-      levelHeight: 160,
-      coupleSpacing: 20,
-      siblingSpacing: 30,
-    };
-  }
+  const isTablet = width < 1024;
+  const isMobile = width < 640;
 
   if (isMobile) {
     return {
       width,
       height,
-      nodeWidth: 180,
-      nodeHeight: 110,
-      levelHeight: 200,
+      // MODE MICRO : Très compact
+      nodeWidth: 100,  // Largeur réduite de moitié par rapport au desktop
+      nodeHeight: 50,  // Hauteur minimale (juste nom + photo)
+      levelHeight: 90, // Les générations sont plus rapprochées
+      coupleSpacing: 10,
+      siblingSpacing: 15, // Espace entre frères/sœurs réduit au minimum
+    };
+  }
+
+  if (isTablet) {
+    return {
+      width,
+      height,
+      nodeWidth: 160,
+      nodeHeight: 90,
+      levelHeight: 180,
       coupleSpacing: 30,
-      siblingSpacing: 50,
+      siblingSpacing: 40,
     };
   }
 
@@ -47,10 +48,10 @@ const getResponsiveDimensions = (): TreeDimensions => {
     width,
     height,
     nodeWidth: 240,
-    nodeHeight: 140,
-    levelHeight: 260,
+    nodeHeight: 135,
+    levelHeight: 240,
     coupleSpacing: 60,
-    siblingSpacing: 80,
+    siblingSpacing: 70,
   };
 };
 
@@ -69,14 +70,15 @@ export const FamilyTreeViewer = () => {
   const [searchParams] = useSearchParams();
 
   const updateTree = useCallback(() => {
-    // IMPORTANT : On s'assure que l'engine a les bonnes dimensions avant de calculer
-    engine.updateDimensions(dimensions);
+    // IMPORTANT : Mise à jour des dimensions dans le moteur
+    if (engine.updateDimensions) {
+       engine.updateDimensions(dimensions);
+    }
     engine.updateVisibility(currentMode, selectedPerson || undefined, selectedPerson2 || undefined);
     engine.calculatePositions();
     setVisiblePersons([...engine.getVisiblePersons()]);
   }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
 
-  // Initial setup and resize handler
   useEffect(() => {
     engine.initializeExpanded(3);
     setAllPersons(engine.getAllPersons());
@@ -84,12 +86,10 @@ export const FamilyTreeViewer = () => {
     const handleResize = () => {
       const newDims = getResponsiveDimensions();
       setDimensions(newDims);
-      // L'effet updateTree se déclenchera automatiquement car 'dimensions' change
     };
 
     window.addEventListener("resize", handleResize);
-    
-    // Appel initial pour caler le layout
+    // Petit délai pour assurer le bon calcul au chargement
     setTimeout(() => handleResize(), 100);
 
     return () => window.removeEventListener("resize", handleResize);
@@ -99,7 +99,7 @@ export const FamilyTreeViewer = () => {
     updateTree();
   }, [updateTree]);
 
-  // Gestion du paramètre ?focus=Nom
+  // Gestion du focus depuis l'URL (Archives -> Arbre)
   useEffect(() => {
     const focusName = searchParams.get("focus");
     if (focusName && allPersons.length > 0) {
@@ -141,6 +141,7 @@ export const FamilyTreeViewer = () => {
     if (selectedPerson?.name === person.name && person.enfants.length > 0) {
       engine.toggleExpand(person);
       updateTree();
+      // On re-centre légèrement après expansion
       setTimeout(() => handleFit(), 550);
     } 
     else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {

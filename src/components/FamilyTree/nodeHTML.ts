@@ -10,8 +10,10 @@ export function createNodeHTML(
   const hasHiddenChildren = childCount > 0 && !person.expanded;
   const isSelected = selectedPerson?.name === person.name;
 
-  // Détection du mode compact (Mobile)
-  const isCompact = dimensions.nodeWidth < 180;
+  // Détection du mode MICRO (Mobile)
+  const isMicro = dimensions.nodeWidth < 120;
+  // Détection du mode COMPACT (Tablette)
+  const isCompact = !isMicro && dimensions.nodeWidth < 180;
 
   const avatarColor =
     person.genre === "Homme"
@@ -21,12 +23,66 @@ export function createNodeHTML(
   const borderColor =
     person.genre === "Homme" ? "hsl(var(--male))" : "hsl(var(--female))";
 
-  // Tailles dynamiques
+  // --- RENDU MICRO (Smartphone) ---
+  if (isMicro) {
+    return `
+      <div style="
+        width: ${dimensions.nodeWidth - 4}px;
+        height: ${dimensions.nodeHeight - 4}px;
+        margin: 2px;
+        background: hsl(var(--card));
+        border: ${isSelected ? "2px" : "1px"} solid ${borderColor};
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: row; /* Alignement horizontal */
+        align-items: center;
+        padding: 4px;
+        gap: 6px;
+        overflow: hidden;
+        font-family: sans-serif;
+      ">
+        <div style="
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          ${avatarColor}
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 11px;
+          color: white;
+          flex-shrink: 0;
+        ">${initial}</div>
+        
+        <div style="
+          font-weight: 600;
+          font-size: 10px;
+          line-height: 1.1;
+          color: hsl(var(--foreground));
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+        ">${person.name}</div>
+
+        ${hasHiddenChildren ? `
+          <div style="
+            position: absolute; top: -2px; right: -2px;
+            background: hsl(var(--primary)); color: white;
+            width: 12px; height: 12px; border-radius: 50%;
+            font-size: 8px; display: flex; align-items: center; justify-content: center;
+          ">+</div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // --- RENDU STANDARD & COMPACT (Tablette/Desktop) ---
   const avatarSize = isCompact ? "32px" : "40px";
   const fontSizeName = isCompact ? "12px" : "13px";
-  const fontSizeGen = isCompact ? "10px" : "11px";
   const padding = isCompact ? "6px" : "10px";
-  const iconSize = isCompact ? "10px" : "12px";
 
   return `
     <div style="
@@ -50,6 +106,7 @@ export function createNodeHTML(
         align-items: center;
         gap: ${isCompact ? "6px" : "8px"};
         background: hsl(var(--card));
+        flex: 1;
       ">
         <div style="
           width: ${avatarSize};
@@ -75,25 +132,35 @@ export function createNodeHTML(
             color: hsl(var(--foreground));
           ">${person.name}</div>
           <div style="
-            font-size: ${fontSizeGen};
+            font-size: ${isCompact ? "10px" : "11px"};
             color: hsl(var(--muted-foreground));
           ">Génération ${person.level}</div>
         </div>
       </div>
-      <div style="padding: ${padding}; flex: 1; display: flex; align-items: center; justify-content: space-around; font-size: ${iconSize}; color: hsl(var(--muted-foreground));">
-        <div style="display: flex; align-items: center; gap: 4px;">👥 ${person.parents.length}</div>
-        <div style="display: flex; align-items: center; gap: 4px;">💑 ${person.spouses.length}</div>
-        <div style="display: flex; align-items: center; gap: 4px;">👶 ${childCount}</div>
+      
+      <div style="
+        padding: 4px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-around; 
+        font-size: 10px; 
+        color: hsl(var(--muted-foreground));
+        background: hsl(var(--muted)/0.3);
+      ">
+        <span style="display:flex; gap:2px">👥 ${person.parents.length}</span>
+        <span style="display:flex; gap:2px">💑 ${person.spouses.length}</span>
+        <span style="display:flex; gap:2px">👶 ${childCount}</span>
       </div>
+
       ${
         hasHiddenChildren
           ? `<div style="
-          position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+          position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
           background: hsl(var(--primary)); color: white;
-          width: ${isCompact ? "24px" : "28px"}; height: ${isCompact ? "24px" : "28px"}; border-radius: 50%;
+          width: 20px; height: 20px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          font-weight: bold; font-size: ${isCompact ? "11px" : "12px"};
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 2px solid hsl(var(--card));
+          font-weight: bold; font-size: 10px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid hsl(var(--card));
         ">+${childCount}</div>`
           : ""
       }
