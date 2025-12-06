@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "./Header";
 import { PersonInfoPanel } from "./PersonInfoPanel";
@@ -6,58 +6,50 @@ import { Legend } from "./Legend";
 import { ModePanel } from "./ModePanel";
 import { FamilyTreeCanvas } from "./FamilyTreeCanvas";
 import { Dedication } from "./Dedication";
-import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
+import { FamilyTreeEngine, TreeOrientation } from "@/lib/familyTree/FamilyTreeEngine";
 import { familyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
-// NOUVEAU : Dimensions "Micro" pour mobile
-const getResponsiveDimensions = (): TreeDimensions => {
+const getResponsiveDimensions = (): { dims: TreeDimensions, orientation: TreeOrientation } => {
   const width = window.innerWidth;
-  const height = window.innerHeight;
-
-  const isTablet = width < 1024;
-  const isMobile = width < 640;
+  const isMobile = width < 768; 
 
   if (isMobile) {
+    // --- MODE MICRO-CARTE (Mobile) ---
+    // C'est la config "Badge" que vous aviez aimée.
     return {
-      width,
-      height,
-      // MODE MICRO : Très compact
-      nodeWidth: 100,  // Largeur réduite de moitié par rapport au desktop
-      nodeHeight: 50,  // Hauteur minimale (juste nom + photo)
-      levelHeight: 90, // Les générations sont plus rapprochées
-      coupleSpacing: 10,
-      siblingSpacing: 15, // Espace entre frères/sœurs réduit au minimum
+      orientation: "vertical", // On reste vertical (Haut -> Bas)
+      dims: {
+        width,
+        height: window.innerHeight,
+        // Dimensions minuscules (50% plus petit que desktop)
+        nodeWidth: 100,   // Juste la place pour "Photo + Prénom"
+        nodeHeight: 50,   // Très fin
+        levelHeight: 90,  // Générations très rapprochées
+        coupleSpacing: 10,
+        siblingSpacing: 15, // Serré
+      }
     };
   }
 
-  if (isTablet) {
-    return {
-      width,
-      height,
-      nodeWidth: 160,
-      nodeHeight: 90,
-      levelHeight: 180,
-      coupleSpacing: 30,
-      siblingSpacing: 40,
-    };
-  }
-
-  // Desktop standard
+  // --- MODE DESKTOP (Classique) ---
   return {
-    width,
-    height,
-    nodeWidth: 240,
-    nodeHeight: 135,
-    levelHeight: 240,
-    coupleSpacing: 60,
-    siblingSpacing: 70,
+    orientation: "vertical",
+    dims: {
+      width,
+      height: window.innerHeight,
+      nodeWidth: 240,
+      nodeHeight: 120,
+      levelHeight: 240,
+      coupleSpacing: 60,
+      siblingSpacing: 70,
+    }
   };
 };
 
 export const FamilyTreeViewer = () => {
-  const [dimensions, setDimensions] = useState(getResponsiveDimensions());
-  const [engine] = useState(() => new FamilyTreeEngine(familyData, dimensions));
+  const [layout, setLayout] = useState(getResponsiveDimensions());
+  const [engine] = useState(() => new FamilyTreeEngine(familyData, layout.dims));
   
   const [currentMode, setCurrentMode] = useState<ViewMode>("tree");
   const [selectedPerson, setSelectedPerson] = useState<PersonNode | null>(null);
@@ -65,32 +57,35 @@ export const FamilyTreeViewer = () => {
   const [visiblePersons, setVisiblePersons] = useState<PersonNode[]>([]);
   const [allPersons, setAllPersons] = useState<PersonNode[]>([]);
   const [isModePanelOpen, setIsModePanelOpen] = useState(false);
-  const [isPersonInfoVisible, setIsPersonInfoVisible] = useState(true);
+  const [isPersonInfoVisible, setIsPersonInfoVisible] = useState(false);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isFocusHandled = useRef(false);
 
   const updateTree = useCallback(() => {
-    // IMPORTANT : Mise à jour des dimensions dans le moteur
-    if (engine.updateDimensions) {
-       engine.updateDimensions(dimensions);
-    }
+    engine.updateDimensions(layout.dims);
+    if(engine.setOrientation) engine.setOrientation(layout.orientation);
+    
     engine.updateVisibility(currentMode, selectedPerson || undefined, selectedPerson2 || undefined);
     engine.calculatePositions();
     setVisiblePersons([...engine.getVisiblePersons()]);
-  }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
+  }, [engine, currentMode, selectedPerson, selectedPerson2, layout]);
 
   useEffect(() => {
     engine.initializeExpanded(3);
     setAllPersons(engine.getAllPersons());
 
     const handleResize = () => {
-      const newDims = getResponsiveDimensions();
-      setDimensions(newDims);
+      setLayout(getResponsiveDimensions());
     };
 
     window.addEventListener("resize", handleResize);
-    // Petit délai pour assurer le bon calcul au chargement
-    setTimeout(() => handleResize(), 100);
+    
+    // Centrage initial
+    setTimeout(() => {
+        handleResize();
+        if ((window as any).__treeReset) (window as any).__treeReset();
+    }, 200);
 
     return () => window.removeEventListener("resize", handleResize);
   }, [engine]);
@@ -99,31 +94,61 @@ export const FamilyTreeViewer = () => {
     updateTree();
   }, [updateTree]);
 
-  // Gestion du focus depuis l'URL (Archives -> Arbre)
+  // URL Focus logic
   useEffect(() => {
     const focusName = searchParams.get("focus");
-    if (focusName && allPersons.length > 0) {
+    if (focusName && allPersons.length > 0 && !isFocusHandled.current) {
       const targetPerson = allPersons.find(
         p => p.name.toLowerCase() === focusName.toLowerCase()
       );
 
       if (targetPerson) {
+        isFocusHandled.current = true;
         setTimeout(() => {
             engine.expandToRoot(targetPerson);
             updateTree();
             setSelectedPerson(targetPerson);
             setIsPersonInfoVisible(true);
-            
             if ((window as any).__treeCenterOnNode) {
               (window as any).__treeCenterOnNode(targetPerson);
             }
-            const newUrl = window.location.pathname;
-            window.history.replaceState({}, '', newUrl);
+            setSearchParams({}, { replace: true });
         }, 500);
       }
     }
-  }, [allPersons, searchParams, engine, updateTree]);
+  }, [allPersons, searchParams, engine, updateTree, setSearchParams]);
 
+  const handleNodeClick = (person: PersonNode) => {
+    isFocusHandled.current = true;
+    if (selectedPerson?.name === person.name && person.enfants.length > 0) {
+      engine.toggleExpand(person);
+      updateTree();
+    } 
+    else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {
+      setSelectedPerson(person);
+      setIsPersonInfoVisible(true);
+      engine.toggleExpand(person);
+      updateTree();
+    }
+    else {
+      setSelectedPerson(person);
+      setIsPersonInfoVisible(true);
+    }
+    setTimeout(() => {
+       if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
+    }, 300);
+  };
+
+  const handleSearchSelect = (person: PersonNode) => {
+    isFocusHandled.current = true;
+    engine.expandToRoot(person);
+    updateTree();
+    setSelectedPerson(person);
+    setIsPersonInfoVisible(true);
+    setTimeout(() => {
+      if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
+    }, 100);
+  };
 
   const handleModeChange = (mode: ViewMode) => {
     setCurrentMode(mode);
@@ -131,51 +156,17 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(null);
       setSelectedPerson2(null);
       setIsModePanelOpen(false);
-       setTimeout(() => handleFit(), 100);
+       setTimeout(() => handleReset(), 100);
     } else {
       setIsModePanelOpen(true);
     }
-  };
-
-  const handleNodeClick = (person: PersonNode) => {
-    if (selectedPerson?.name === person.name && person.enfants.length > 0) {
-      engine.toggleExpand(person);
-      updateTree();
-      // On re-centre légèrement après expansion
-      setTimeout(() => handleFit(), 550);
-    } 
-    else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {
-      setSelectedPerson(person);
-      setIsPersonInfoVisible(true);
-      engine.toggleExpand(person);
-      updateTree();
-      setTimeout(() => handleFit(), 550);
-    }
-    else {
-      setSelectedPerson(person);
-      setIsPersonInfoVisible(true);
-    }
-  };
-
-  const handleSearchSelect = (person: PersonNode) => {
-    engine.expandToRoot(person);
-    updateTree();
-    setSelectedPerson(person);
-    setIsPersonInfoVisible(true);
-    
-    setTimeout(() => {
-      if ((window as any).__treeCenterOnNode) {
-        (window as any).__treeCenterOnNode(person);
-      }
-    }, 100);
   };
 
   const handleToggleExpand = (person: PersonNode) => {
     engine.toggleExpand(person);
     updateTree();
     setSelectedPerson(person); 
-    setIsPersonInfoVisible(true);
-     setTimeout(() => handleFit(), 550);
+    setIsPersonInfoVisible(true); 
   };
 
   const handleModeApply = (person1?: PersonNode, person2?: PersonNode) => {
@@ -183,10 +174,7 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(person1);
       setSelectedPerson2(person2 || null);
       setIsModePanelOpen(false);
-      
-      setTimeout(() => {
-        handleFit();
-      }, 100);
+      setTimeout(() => handleFit(), 100);
     }
   };
 
@@ -204,22 +192,14 @@ export const FamilyTreeViewer = () => {
     }
   };
 
-  const handleReset = () => {
-    if ((window as any).__treeReset) (window as any).__treeReset();
-  };
-
-  const handleFit = () => {
-    if ((window as any).__treeFit) (window as any).__treeFit();
-  };
-
-  const handleExport = (format: 'png' | 'pdf') => {
-    if ((window as any).__treeExport) (window as any).__treeExport(format);
-  };
+  const handleReset = () => { if ((window as any).__treeReset) (window as any).__treeReset(); };
+  const handleFit = () => { if ((window as any).__treeFit) (window as any).__treeFit(); };
+  const handleExport = (format: 'png' | 'pdf') => { if ((window as any).__treeExport) (window as any).__treeExport(format); };
 
   const generations = new Set(allPersons.map((p) => p.level)).size;
 
   return (
-    <div className="h-dvh w-dvw overflow-hidden bg-background font-sans">
+    <div className="h-dvh w-dvw overflow-hidden bg-background font-sans relative">
       <Header
         totalMembers={allPersons.length}
         totalGenerations={generations}
@@ -234,15 +214,16 @@ export const FamilyTreeViewer = () => {
 
       <Dedication />
 
-      <main className="w-full h-full">
+      <main className="w-full h-full pt-[60px] pb-0">
         <FamilyTreeCanvas
           persons={visiblePersons}
           links={engine.getLinks()}
-          dimensions={dimensions}
+          dimensions={layout.dims}
           selectedPerson={selectedPerson}
           onNodeClick={handleNodeClick}
           onReset={handleReset}
           onFitToScreen={handleFit}
+          orientation={layout.orientation}
         />
       </main>
 
