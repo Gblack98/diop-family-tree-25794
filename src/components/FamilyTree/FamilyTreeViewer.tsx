@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom"; // IMPORT AJOUTÉ
 import { Header } from "./Header";
 import { PersonInfoPanel } from "./PersonInfoPanel";
 import { Legend } from "./Legend";
@@ -46,6 +47,9 @@ export const FamilyTreeViewer = () => {
   const [isModePanelOpen, setIsModePanelOpen] = useState(false);
   const [isPersonInfoVisible, setIsPersonInfoVisible] = useState(true);
 
+  // Hook pour lire les paramètres d'URL (pour le lien depuis Archives)
+  const [searchParams] = useSearchParams();
+
   const updateTree = useCallback(() => {
     engine.updateVisibility(currentMode, selectedPerson || undefined, selectedPerson2 || undefined);
     engine.calculatePositions();
@@ -72,6 +76,37 @@ export const FamilyTreeViewer = () => {
   useEffect(() => {
     updateTree();
   }, [updateTree]);
+
+  // NOUVEAU : Effet pour gérer le "focus" depuis l'URL (Archives -> Arbre)
+  useEffect(() => {
+    const focusName = searchParams.get("focus");
+    // On vérifie si on a un paramètre focus et si les personnes sont chargées
+    if (focusName && allPersons.length > 0) {
+      const targetPerson = allPersons.find(
+        p => p.name.toLowerCase() === focusName.toLowerCase()
+      );
+
+      if (targetPerson) {
+        // Petit délai pour assurer que le canvas est prêt
+        setTimeout(() => {
+            // On utilise la logique de recherche existante pour centrer/ouvrir
+            engine.expandToRoot(targetPerson);
+            updateTree();
+            setSelectedPerson(targetPerson);
+            setIsPersonInfoVisible(true);
+            
+            // On centre la vue via la fonction globale exposée par le Canvas
+            if ((window as any).__treeCenterOnNode) {
+              (window as any).__treeCenterOnNode(targetPerson);
+            }
+
+            // Optionnel : Nettoyer l'URL pour ne pas re-zoomer si on rafraichit la page
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+        }, 500);
+      }
+    }
+  }, [allPersons, searchParams, engine, updateTree]);
 
 
   const handleModeChange = (mode: ViewMode) => {

@@ -1,4 +1,5 @@
 import { FileText, Image as ImageIcon, BookOpen, Quote, Home, LucideIcon } from "lucide-react";
+
 export enum ArchiveCategory {
   BIOGRAPHY = "biography",
   PHOTO = "photo",
@@ -15,7 +16,8 @@ export interface Archive {
   content: string;
   fullContent?: string;
   date: string;
-  image?: string;
+  image?: string;       // Gardé pour compatibilité
+  images?: string[];    // NOUVEAU : Pour le carrousel (ex: ["/img1.jpg", "/img2.jpg"])
   achievements?: string[];
 }
 
@@ -34,17 +36,20 @@ export const archiveCategories: CategoryConfig[] = [
   { value: ArchiveCategory.ARTICLE, label: "Articles", icon: FileText },
 ];
 
-
-
 export const archivesData: Archive[] = [
   {
     id: 1,
     person: "Ibrahima Gabar Diop",
     category: ArchiveCategory.BIOGRAPHY,
     title: "Biographie d'Ibrahima Gabar Diop",
-    content: "Né le 25 janvier 1947 à Dakar. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    content: "Né le 25 janvier 1947 à Dakar. Une vie dédiée au service public et à la famille.",
     fullContent: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     date: "1947-présent",
+    // EXEMPLE MULTI-IMAGES (Carrousel)
+    images: [
+      "/images/archives/ibrahima-gabar-diop.jpg",
+      // Ajoutez d'autres chemins d'images ici si vous en avez, ex: "/images/archives/ibrahima-jeune.jpg"
+    ],
     image: "/images/archives/ibrahima-gabar-diop.jpg",
     achievements: ["Directeur Général de l’ANNPS", "CEMP du président de la République du Sénégal", "Commandant du GNSP"]
   },
@@ -89,8 +94,8 @@ export const archivesData: Archive[] = [
     id: 6,
     person: "Amadou Bamba Diop",
     category: ArchiveCategory.PHOTO,
-    title: "Photo de Amadou Bamba Diop - XXXX",
-    content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+    title: "Photo de Amadou Bamba Diop",
+    content: "Portrait officiel conservé dans les archives familiales.",
     date: "XXXX",
     image: "/images/archives/amadou-bamba-diop.jpg"
   },
@@ -121,12 +126,12 @@ export const archivesData: Archive[] = [
     date: "1895",
     image: "/images/archives/acte-naissance-1895.jpg"
   },
-    {
+  {
     id: 10,
     person: "Magatte Diop",
     category: ArchiveCategory.PHOTO,
-    title: "Photo de Magatte Diop - XXXX",
-    content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+    title: "Photo de Magatte Diop",
+    content: "Portrait conservé précieusement.",
     date: "XXXX",
     image: "/images/archives/magatte-diop.jpg"
   },
