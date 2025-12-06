@@ -4,8 +4,8 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { PersonNode, TreeLink, TreeDimensions } from "@/lib/familyTree/types";
 import { createNodeHTML } from "./nodeHTML";
-import { TreeOrientation } from "@/lib/familyTree/FamilyTreeEngine";
 
+// Interface standard sans "orientation"
 interface FamilyTreeCanvasProps {
   persons: PersonNode[];
   links: TreeLink[];
@@ -14,7 +14,6 @@ interface FamilyTreeCanvasProps {
   onNodeClick: (person: PersonNode) => void;
   onReset: () => void;
   onFitToScreen: () => void;
-  orientation: TreeOrientation;
 }
 
 export const FamilyTreeCanvas = ({
@@ -25,7 +24,6 @@ export const FamilyTreeCanvas = ({
   onNodeClick,
   onReset,
   onFitToScreen,
-  orientation,
 }: FamilyTreeCanvasProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -35,9 +33,11 @@ export const FamilyTreeCanvas = ({
     if (!svgRef.current || !gRef.current) return;
     const svg = d3.select(svgRef.current);
     const g = d3.select(gRef.current);
-    const zoom = d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.1, 4]).on("zoom", (event) => {
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 4]) // Permet un dézoom puissant
+      .on("zoom", (event) => {
         g.attr("transform", event.transform);
-    });
+      });
     svg.call(zoom);
     zoomRef.current = zoom;
   }, []);
@@ -55,17 +55,19 @@ export const FamilyTreeCanvas = ({
       );
     };
 
-    // RESET STANDARD (Retour à la configuration d'origine)
+    // RESET STANDARD (Centrage Parfait)
     (window as any).__treeReset = () => {
       if (!svgRef.current || !zoomRef.current || persons.length === 0) return;
       const svg = d3.select(svgRef.current);
-
       const rootNode = persons.find(p => p.level === 0) || persons[0];
-      const initialScale = dimensions.width < 640 ? 0.7 : 0.9;
       
-      // RACINE EN HAUT, CENTRÉE
-      const x = -rootNode.x * initialScale + dimensions.width / 2;
-      const y = 80;
+      // Zoom initial adapté
+      const isMobile = dimensions.width < 640;
+      const initialScale = isMobile ? 0.7 : 0.9;
+      
+      // CENTRAGE HORIZONTAL : Milieu écran - (Position X de la racine * Zoom)
+      const x = dimensions.width / 2 - (rootNode.x * initialScale);
+      const y = 50; // Marge du haut fixe
 
       svg.transition().duration(750).call(
         zoomRef.current.transform,
@@ -77,6 +79,7 @@ export const FamilyTreeCanvas = ({
        if((window as any).__treeReset) (window as any).__treeReset();
     };
 
+    // Exportation (Code identique mais remis pour être sûr)
     (window as any).__treeExport = async (format: 'png' | 'pdf') => {
        if (!svgRef.current || !gRef.current) return;
       try {
@@ -138,8 +141,9 @@ export const FamilyTreeCanvas = ({
     return () => {
       delete (window as any).__treeReset; delete (window as any).__treeFit; delete (window as any).__treeCenterOnNode; delete (window as any).__treeExport;
     };
-  }, [dimensions.width, dimensions.height, persons, orientation]); 
+  }, [dimensions.width, dimensions.height, persons]); 
 
+  // Liens Verticaux Classiques
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);
@@ -156,7 +160,6 @@ export const FamilyTreeCanvas = ({
         if (d.type === "spouse") {
            return `M ${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`;
         } else {
-          // COURBES VERTICALES CLASSIQUES
           const sourceY = d.source.y + dimensions.nodeHeight / 2;
           const targetY = d.target.y - dimensions.nodeHeight / 2;
           const midY = (sourceY + targetY) / 2;
@@ -165,6 +168,7 @@ export const FamilyTreeCanvas = ({
       });
   }, [links, dimensions]);
 
+  // Noeuds
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);

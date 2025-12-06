@@ -6,50 +6,59 @@ import { Legend } from "./Legend";
 import { ModePanel } from "./ModePanel";
 import { FamilyTreeCanvas } from "./FamilyTreeCanvas";
 import { Dedication } from "./Dedication";
-import { FamilyTreeEngine, TreeOrientation } from "@/lib/familyTree/FamilyTreeEngine";
+import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
 import { familyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
-const getResponsiveDimensions = (): { dims: TreeDimensions, orientation: TreeOrientation } => {
+const getResponsiveDimensions = (): TreeDimensions => {
   const width = window.innerWidth;
-  const isMobile = width < 768; 
+  const height = window.innerHeight;
+
+  const isMobile = width < 640;
+  const isTablet = width >= 640 && width < 1024;
 
   if (isMobile) {
-    // --- MODE MICRO-CARTE (Mobile) ---
-    // C'est la config "Badge" que vous aviez aimée.
+    // --- MODE MICRO (Le retour) ---
+    // C'est la configuration la plus optimisée pour la densité
     return {
-      orientation: "vertical", // On reste vertical (Haut -> Bas)
-      dims: {
-        width,
-        height: window.innerHeight,
-        // Dimensions minuscules (50% plus petit que desktop)
-        nodeWidth: 100,   // Juste la place pour "Photo + Prénom"
-        nodeHeight: 50,   // Très fin
-        levelHeight: 90,  // Générations très rapprochées
-        coupleSpacing: 10,
-        siblingSpacing: 15, // Serré
-      }
+      width,
+      height,
+      nodeWidth: 100,  // Largeur minime (100px)
+      nodeHeight: 50,  // Hauteur minime (50px)
+      levelHeight: 90, // Générations très serrées
+      coupleSpacing: 10,
+      siblingSpacing: 15, 
     };
   }
 
-  // --- MODE DESKTOP (Classique) ---
-  return {
-    orientation: "vertical",
-    dims: {
+  if (isTablet) {
+    return {
       width,
-      height: window.innerHeight,
-      nodeWidth: 240,
-      nodeHeight: 120,
-      levelHeight: 240,
-      coupleSpacing: 60,
-      siblingSpacing: 70,
-    }
+      height,
+      nodeWidth: 160,
+      nodeHeight: 90,
+      levelHeight: 180,
+      coupleSpacing: 30,
+      siblingSpacing: 40,
+    };
+  }
+
+  // Desktop
+  return {
+    width,
+    height,
+    nodeWidth: 240,
+    nodeHeight: 120,
+    levelHeight: 240,
+    coupleSpacing: 60,
+    siblingSpacing: 70,
   };
 };
 
 export const FamilyTreeViewer = () => {
-  const [layout, setLayout] = useState(getResponsiveDimensions());
-  const [engine] = useState(() => new FamilyTreeEngine(familyData, layout.dims));
+  const [dimensions, setDimensions] = useState(getResponsiveDimensions());
+  // Note: On n'utilise plus "orientation" dans le state, retour au standard
+  const [engine] = useState(() => new FamilyTreeEngine(familyData, dimensions));
   
   const [currentMode, setCurrentMode] = useState<ViewMode>("tree");
   const [selectedPerson, setSelectedPerson] = useState<PersonNode | null>(null);
@@ -63,20 +72,26 @@ export const FamilyTreeViewer = () => {
   const isFocusHandled = useRef(false);
 
   const updateTree = useCallback(() => {
-    engine.updateDimensions(layout.dims);
-    if(engine.setOrientation) engine.setOrientation(layout.orientation);
-    
+    // On met à jour uniquement les dimensions standard
+    if (engine.updateDimensions) {
+       engine.updateDimensions(dimensions);
+    }
+    // Si l'ancienne méthode setOrientation existe encore, on la remet à vertical par sécurité
+    if ((engine as any).setOrientation) {
+        (engine as any).setOrientation("vertical");
+    }
+
     engine.updateVisibility(currentMode, selectedPerson || undefined, selectedPerson2 || undefined);
     engine.calculatePositions();
     setVisiblePersons([...engine.getVisiblePersons()]);
-  }, [engine, currentMode, selectedPerson, selectedPerson2, layout]);
+  }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
 
   useEffect(() => {
     engine.initializeExpanded(3);
     setAllPersons(engine.getAllPersons());
 
     const handleResize = () => {
-      setLayout(getResponsiveDimensions());
+      setDimensions(getResponsiveDimensions());
     };
 
     window.addEventListener("resize", handleResize);
@@ -94,7 +109,7 @@ export const FamilyTreeViewer = () => {
     updateTree();
   }, [updateTree]);
 
-  // URL Focus logic
+  // Gestion Focus URL
   useEffect(() => {
     const focusName = searchParams.get("focus");
     if (focusName && allPersons.length > 0 && !isFocusHandled.current) {
@@ -134,6 +149,7 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(person);
       setIsPersonInfoVisible(true);
     }
+    // Petit centrage doux
     setTimeout(() => {
        if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
     }, 300);
@@ -218,12 +234,12 @@ export const FamilyTreeViewer = () => {
         <FamilyTreeCanvas
           persons={visiblePersons}
           links={engine.getLinks()}
-          dimensions={layout.dims}
+          dimensions={dimensions}
           selectedPerson={selectedPerson}
           onNodeClick={handleNodeClick}
           onReset={handleReset}
           onFitToScreen={handleFit}
-          orientation={layout.orientation}
+          // Plus besoin de passer "orientation" ici, ça causait l'erreur
         />
       </main>
 

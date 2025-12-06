@@ -10,7 +10,7 @@ export function createNodeHTML(
   const hasHiddenChildren = childCount > 0 && !person.expanded;
   const isSelected = selectedPerson?.name === person.name;
 
-  // Détection du mode MICRO (Mobile) : Si largeur < 120px, c'est un badge
+  // Si largeur < 120px, c'est le mode Mobile Badge
   const isMicro = dimensions.nodeWidth < 120;
   const isCompact = !isMicro && dimensions.nodeWidth < 180;
 
@@ -22,8 +22,7 @@ export function createNodeHTML(
   const borderColor =
     person.genre === "Homme" ? "hsl(var(--male))" : "hsl(var(--female))";
 
-  // --- RENDU MICRO-CARTE (Smartphone) ---
-  // Style "Badge" horizontal compact
+  // --- RENDU MICRO-BADGE (Le plus compact et efficace) ---
   if (isMicro) {
     return `
       <div style="
@@ -33,25 +32,25 @@ export function createNodeHTML(
         background: hsl(var(--card));
         border: ${isSelected ? "2px" : "1px"} solid ${borderColor};
         border-radius: 6px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         display: flex;
-        flex-direction: row; /* Alignement horizontal : Photo | Nom */
+        flex-direction: row; /* Horizontal : Photo | Nom */
         align-items: center;
-        padding: 4px;
+        padding: 3px;
         gap: 6px;
         overflow: hidden;
         font-family: sans-serif;
         position: relative;
       ">
         <div style="
-          width: 24px;
-          height: 24px;
+          width: 26px;
+          height: 26px;
           border-radius: 50%;
           ${avatarColor}
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 11px;
           color: white;
           flex-shrink: 0;
@@ -70,10 +69,10 @@ export function createNodeHTML(
 
         ${hasHiddenChildren ? `
           <div style="
-            position: absolute; top: -2px; right: -2px;
+            position: absolute; top: -1px; right: -1px;
             background: hsl(var(--primary)); color: white;
-            width: 12px; height: 12px; border-radius: 50%;
-            font-size: 8px; display: flex; align-items: center; justify-content: center;
+            width: 10px; height: 10px; border-radius: 50%;
+            font-size: 7px; display: flex; align-items: center; justify-content: center;
             font-weight: bold;
             z-index: 10;
           ">+</div>
