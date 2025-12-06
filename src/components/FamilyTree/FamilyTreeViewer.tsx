@@ -18,16 +18,15 @@ const getResponsiveDimensions = (): TreeDimensions => {
   const isTablet = width >= 640 && width < 1024;
 
   if (isMobile) {
-    // --- MODE MICRO (Le retour) ---
-    // C'est la configuration la plus optimisée pour la densité
+    // --- MODE MOBILE (Format Badge) ---
     return {
       width,
       height,
-      nodeWidth: 100,  // Largeur minime (100px)
-      nodeHeight: 50,  // Hauteur minime (50px)
-      levelHeight: 90, // Générations très serrées
-      coupleSpacing: 10,
-      siblingSpacing: 15, 
+      nodeWidth: 110,  // Assez large pour le nom, assez petit pour l'écran
+      nodeHeight: 50,  // Hauteur minimale
+      levelHeight: 100, // Distance entre générations
+      coupleSpacing: 15,
+      siblingSpacing: 20, 
     };
   }
 
@@ -36,14 +35,14 @@ const getResponsiveDimensions = (): TreeDimensions => {
       width,
       height,
       nodeWidth: 160,
-      nodeHeight: 90,
+      nodeHeight: 80,
       levelHeight: 180,
       coupleSpacing: 30,
       siblingSpacing: 40,
     };
   }
 
-  // Desktop
+  // Desktop Standard
   return {
     width,
     height,
@@ -57,7 +56,6 @@ const getResponsiveDimensions = (): TreeDimensions => {
 
 export const FamilyTreeViewer = () => {
   const [dimensions, setDimensions] = useState(getResponsiveDimensions());
-  // Note: On n'utilise plus "orientation" dans le state, retour au standard
   const [engine] = useState(() => new FamilyTreeEngine(familyData, dimensions));
   
   const [currentMode, setCurrentMode] = useState<ViewMode>("tree");
@@ -72,11 +70,10 @@ export const FamilyTreeViewer = () => {
   const isFocusHandled = useRef(false);
 
   const updateTree = useCallback(() => {
-    // On met à jour uniquement les dimensions standard
     if (engine.updateDimensions) {
        engine.updateDimensions(dimensions);
     }
-    // Si l'ancienne méthode setOrientation existe encore, on la remet à vertical par sécurité
+    // Sécurité : On s'assure que le moteur est en mode vertical
     if ((engine as any).setOrientation) {
         (engine as any).setOrientation("vertical");
     }
@@ -96,11 +93,11 @@ export const FamilyTreeViewer = () => {
 
     window.addEventListener("resize", handleResize);
     
-    // Centrage initial
+    // Centrage initial au chargement
     setTimeout(() => {
         handleResize();
         if ((window as any).__treeReset) (window as any).__treeReset();
-    }, 200);
+    }, 300);
 
     return () => window.removeEventListener("resize", handleResize);
   }, [engine]);
@@ -149,7 +146,8 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(person);
       setIsPersonInfoVisible(true);
     }
-    // Petit centrage doux
+    
+    // Petit recentrage doux
     setTimeout(() => {
        if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
     }, 300);
@@ -239,7 +237,6 @@ export const FamilyTreeViewer = () => {
           onNodeClick={handleNodeClick}
           onReset={handleReset}
           onFitToScreen={handleFit}
-          // Plus besoin de passer "orientation" ici, ça causait l'erreur
         />
       </main>
 

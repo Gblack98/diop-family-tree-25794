@@ -5,7 +5,7 @@ import { jsPDF } from "jspdf";
 import { PersonNode, TreeLink, TreeDimensions } from "@/lib/familyTree/types";
 import { createNodeHTML } from "./nodeHTML";
 
-// Interface standard sans "orientation"
+// Interface standard
 interface FamilyTreeCanvasProps {
   persons: PersonNode[];
   links: TreeLink[];
@@ -33,11 +33,9 @@ export const FamilyTreeCanvas = ({
     if (!svgRef.current || !gRef.current) return;
     const svg = d3.select(svgRef.current);
     const g = d3.select(gRef.current);
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4]) // Permet un dézoom puissant
-      .on("zoom", (event) => {
+    const zoom = d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.1, 4]).on("zoom", (event) => {
         g.attr("transform", event.transform);
-      });
+    });
     svg.call(zoom);
     zoomRef.current = zoom;
   }, []);
@@ -55,19 +53,22 @@ export const FamilyTreeCanvas = ({
       );
     };
 
-    // RESET STANDARD (Centrage Parfait)
+    // RESET (CENTRAGE PARFAIT)
     (window as any).__treeReset = () => {
       if (!svgRef.current || !zoomRef.current || persons.length === 0) return;
       const svg = d3.select(svgRef.current);
+
       const rootNode = persons.find(p => p.level === 0) || persons[0];
       
-      // Zoom initial adapté
+      // Zoom : 0.8 sur mobile pour bien voir les badges
       const isMobile = dimensions.width < 640;
-      const initialScale = isMobile ? 0.7 : 0.9;
+      const initialScale = isMobile ? 0.8 : 0.9;
       
-      // CENTRAGE HORIZONTAL : Milieu écran - (Position X de la racine * Zoom)
+      // CENTRAGE :
+      // X : On prend le centre de l'écran, on retire la position de la racine (ajustée au zoom)
+      // Y : On laisse une marge de 50px en haut
       const x = dimensions.width / 2 - (rootNode.x * initialScale);
-      const y = 50; // Marge du haut fixe
+      const y = 50; 
 
       svg.transition().duration(750).call(
         zoomRef.current.transform,
@@ -79,7 +80,6 @@ export const FamilyTreeCanvas = ({
        if((window as any).__treeReset) (window as any).__treeReset();
     };
 
-    // Exportation (Code identique mais remis pour être sûr)
     (window as any).__treeExport = async (format: 'png' | 'pdf') => {
        if (!svgRef.current || !gRef.current) return;
       try {
@@ -143,7 +143,7 @@ export const FamilyTreeCanvas = ({
     };
   }, [dimensions.width, dimensions.height, persons]); 
 
-  // Liens Verticaux Classiques
+  // Liens (Vertical Classique)
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);

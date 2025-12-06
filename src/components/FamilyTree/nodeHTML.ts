@@ -10,9 +10,9 @@ export function createNodeHTML(
   const hasHiddenChildren = childCount > 0 && !person.expanded;
   const isSelected = selectedPerson?.name === person.name;
 
-  // Si largeur < 120px, c'est le mode Mobile Badge
-  const isMicro = dimensions.nodeWidth < 120;
-  const isCompact = !isMicro && dimensions.nodeWidth < 180;
+  // Si < 150px, on considère que c'est un badge mobile
+  const isBadge = dimensions.nodeWidth < 150;
+  const isCompact = !isBadge && dimensions.nodeWidth < 200;
 
   const avatarColor =
     person.genre === "Homme"
@@ -22,8 +22,8 @@ export function createNodeHTML(
   const borderColor =
     person.genre === "Homme" ? "hsl(var(--male))" : "hsl(var(--female))";
 
-  // --- RENDU MICRO-BADGE (Le plus compact et efficace) ---
-  if (isMicro) {
+  // --- RENDU BADGE (Le style que vous voulez) ---
+  if (isBadge) {
     return `
       <div style="
         width: ${dimensions.nodeWidth - 4}px;
@@ -31,27 +31,27 @@ export function createNodeHTML(
         margin: 2px;
         background: hsl(var(--card));
         border: ${isSelected ? "2px" : "1px"} solid ${borderColor};
-        border-radius: 6px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         display: flex;
-        flex-direction: row; /* Horizontal : Photo | Nom */
+        flex-direction: row; /* Alignement Horizontal */
         align-items: center;
-        padding: 3px;
+        padding: 3px 4px;
         gap: 6px;
         overflow: hidden;
         font-family: sans-serif;
         position: relative;
       ">
         <div style="
-          width: 26px;
-          height: 26px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
           ${avatarColor}
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 700;
-          font-size: 11px;
+          font-size: 12px;
           color: white;
           flex-shrink: 0;
         ">${initial}</div>
@@ -65,14 +65,15 @@ export function createNodeHTML(
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
+          flex: 1;
         ">${person.name}</div>
 
         ${hasHiddenChildren ? `
           <div style="
-            position: absolute; top: -1px; right: -1px;
+            position: absolute; top: -2px; right: -2px;
             background: hsl(var(--primary)); color: white;
-            width: 10px; height: 10px; border-radius: 50%;
-            font-size: 7px; display: flex; align-items: center; justify-content: center;
+            width: 14px; height: 14px; border-radius: 50%;
+            font-size: 8px; display: flex; align-items: center; justify-content: center;
             font-weight: bold;
             z-index: 10;
           ">+</div>
@@ -81,7 +82,7 @@ export function createNodeHTML(
     `;
   }
 
-  // --- RENDU STANDARD (Tablette/Desktop) ---
+  // --- RENDU DESKTOP (Carte Classique) ---
   const avatarSize = isCompact ? "32px" : "40px";
   const fontSizeName = isCompact ? "12px" : "13px";
   const padding = isCompact ? "6px" : "10px";
@@ -93,9 +94,8 @@ export function createNodeHTML(
       margin: 2px;
       background: hsl(var(--card));
       border: ${isSelected ? "3px" : "2px"} solid ${borderColor};
-      border-radius: ${isCompact ? "8px" : "12px"};
+      border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: all 0.3s;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -107,7 +107,7 @@ export function createNodeHTML(
         border-bottom: 1px solid hsl(var(--border));
         display: flex;
         align-items: center;
-        gap: ${isCompact ? "6px" : "8px"};
+        gap: 8px;
         background: hsl(var(--card));
         flex: 1;
       ">
@@ -133,10 +133,9 @@ export function createNodeHTML(
             overflow: hidden;
             text-overflow: ellipsis;
             color: hsl(var(--foreground));
-            padding-right: 16px; 
           ">${person.name}</div>
           <div style="
-            font-size: ${isCompact ? "10px" : "11px"};
+            font-size: 10px;
             color: hsl(var(--muted-foreground));
           ">Génération ${person.level}</div>
         </div>
@@ -161,12 +160,10 @@ export function createNodeHTML(
           ? `<div style="
           position: absolute; top: 6px; right: 6px;
           background: hsl(var(--primary)); color: white;
-          width: ${isCompact ? "18px" : "22px"}; height: ${isCompact ? "18px" : "22px"}; 
-          border-radius: 50%;
+          width: 20px; height: 20px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          font-weight: bold; font-size: ${isCompact ? "10px" : "11px"};
+          font-weight: bold; font-size: 10px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
-          z-index: 20;
         ">+${childCount}</div>`
           : ""
       }
