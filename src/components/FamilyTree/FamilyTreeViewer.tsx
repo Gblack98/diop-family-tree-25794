@@ -6,53 +6,51 @@ import { Legend } from "./Legend";
 import { ModePanel } from "./ModePanel";
 import { FamilyTreeCanvas } from "./FamilyTreeCanvas";
 import { Dedication } from "./Dedication";
-import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
+import { FamilyTreeEngine, TreeOrientation } from "@/lib/familyTree/FamilyTreeEngine";
 import { familyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
-const getResponsiveDimensions = (): TreeDimensions => {
+const getResponsiveDimensions = (): { dims: TreeDimensions, orientation: TreeOrientation } => {
   const width = window.innerWidth;
-  const isMobile = width < 640;
-  const isTablet = width >= 640 && width < 1024;
+  const isMobile = width < 768; 
 
   if (isMobile) {
+    // --- MODE MOBILE "LISTE COMPACTE" ---
     return {
-      width,
-      height: window.innerHeight,
-      nodeWidth: 170,
-      nodeHeight: 85,
-      levelHeight: 140,
-      coupleSpacing: 25,
-      siblingSpacing: 35,
+      orientation: "horizontal", // De Gauche à Droite
+      dims: {
+        width,
+        height: window.innerHeight,
+        // Espacement horizontal entre les colonnes (Générations)
+        levelHeight: 160, 
+        // Taille de la carte "Capsule"
+        nodeWidth: 130,   
+        nodeHeight: 45,   
+        // Espacements verticaux
+        coupleSpacing: 10,  
+        siblingSpacing: 15, // Très serré pour que ça tienne
+      }
     };
   }
 
-  if (isTablet) {
-    return {
-      width,
-      height: window.innerHeight,
-      nodeWidth: 200,
-      nodeHeight: 100,
-      levelHeight: 180,
-      coupleSpacing: 40,
-      siblingSpacing: 50,
-    };
-  }
-
+  // --- MODE DESKTOP (Classique) ---
   return {
-    width,
-    height: window.innerHeight,
-    nodeWidth: 240,
-    nodeHeight: 120,
-    levelHeight: 220,
-    coupleSpacing: 60,
-    siblingSpacing: 70,
+    orientation: "vertical",
+    dims: {
+      width,
+      height: window.innerHeight,
+      nodeWidth: 240,
+      nodeHeight: 120,
+      levelHeight: 240,
+      coupleSpacing: 60,
+      siblingSpacing: 70,
+    }
   };
 };
 
 export const FamilyTreeViewer = () => {
-  const [dimensions, setDimensions] = useState(getResponsiveDimensions());
-  const [engine] = useState(() => new FamilyTreeEngine(familyData, dimensions));
+  const [layout, setLayout] = useState(getResponsiveDimensions());
+  const [engine] = useState(() => new FamilyTreeEngine(familyData, layout.dims));
   
   const [currentMode, setCurrentMode] = useState<ViewMode>("tree");
   const [selectedPerson, setSelectedPerson] = useState<PersonNode | null>(null);
@@ -66,27 +64,24 @@ export const FamilyTreeViewer = () => {
   const isFocusHandled = useRef(false);
 
   const updateTree = useCallback(() => {
-    if (engine.updateDimensions) {
-       engine.updateDimensions(dimensions);
-    }
+    engine.updateDimensions(layout.dims);
+    engine.setOrientation(layout.orientation);
+    
     engine.updateVisibility(currentMode, selectedPerson || undefined, selectedPerson2 || undefined);
     engine.calculatePositions();
     setVisiblePersons([...engine.getVisiblePersons()]);
-  }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
+  }, [engine, currentMode, selectedPerson, selectedPerson2, layout]);
 
-  // Initialisation
   useEffect(() => {
     engine.initializeExpanded(3);
     setAllPersons(engine.getAllPersons());
 
     const handleResize = () => {
-      setDimensions(getResponsiveDimensions());
+      setLayout(getResponsiveDimensions());
     };
 
     window.addEventListener("resize", handleResize);
     
-    // MODIFICATION ICI : On appelle juste resize, mais PLUS handleFit() par défaut.
-    // L'arbre se positionnera selon le __treeReset (racine en haut, centré horizontalement)
     setTimeout(() => {
         handleResize();
         if ((window as any).__treeReset) (window as any).__treeReset();
@@ -99,10 +94,9 @@ export const FamilyTreeViewer = () => {
     updateTree();
   }, [updateTree]);
 
-  // GESTION DU FOCUS URL
+  // URL Focus logic
   useEffect(() => {
     const focusName = searchParams.get("focus");
-    
     if (focusName && allPersons.length > 0 && !isFocusHandled.current) {
       const targetPerson = allPersons.find(
         p => p.name.toLowerCase() === focusName.toLowerCase()
@@ -110,17 +104,14 @@ export const FamilyTreeViewer = () => {
 
       if (targetPerson) {
         isFocusHandled.current = true;
-
         setTimeout(() => {
             engine.expandToRoot(targetPerson);
             updateTree();
             setSelectedPerson(targetPerson);
             setIsPersonInfoVisible(true);
-            
             if ((window as any).__treeCenterOnNode) {
               (window as any).__treeCenterOnNode(targetPerson);
             }
-            
             setSearchParams({}, { replace: true });
         }, 500);
       }
@@ -129,7 +120,6 @@ export const FamilyTreeViewer = () => {
 
   const handleNodeClick = (person: PersonNode) => {
     isFocusHandled.current = true;
-
     if (selectedPerson?.name === person.name && person.enfants.length > 0) {
       engine.toggleExpand(person);
       updateTree();
@@ -144,11 +134,8 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(person);
       setIsPersonInfoVisible(true);
     }
-
     setTimeout(() => {
-       if ((window as any).__treeCenterOnNode) {
-          (window as any).__treeCenterOnNode(person);
-       }
+       if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
     }, 300);
   };
 
@@ -169,7 +156,7 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(null);
       setSelectedPerson2(null);
       setIsModePanelOpen(false);
-       setTimeout(() => handleReset(), 100); // Reset au lieu de Fit
+       setTimeout(() => handleReset(), 100);
     } else {
       setIsModePanelOpen(true);
     }
@@ -231,11 +218,12 @@ export const FamilyTreeViewer = () => {
         <FamilyTreeCanvas
           persons={visiblePersons}
           links={engine.getLinks()}
-          dimensions={dimensions}
+          dimensions={layout.dims}
           selectedPerson={selectedPerson}
           onNodeClick={handleNodeClick}
           onReset={handleReset}
           onFitToScreen={handleFit}
+          orientation={layout.orientation}
         />
       </main>
 

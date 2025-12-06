@@ -6,7 +6,7 @@ export class FamilyTreeEngine {
   private personMap: Map<string, PersonNode>;
   private allPersons: Person[];
   private dimensions: TreeDimensions;
-  private orientation: TreeOrientation = "vertical"; // Par défaut
+  private orientation: TreeOrientation = "vertical";
 
   constructor(persons: Person[], dimensions: TreeDimensions) {
     this.allPersons = persons;
@@ -20,7 +20,6 @@ export class FamilyTreeEngine {
     this.dimensions = dimensions;
   }
 
-  // NOUVEAU : Changer l'orientation (Desktop vs Mobile)
   public setOrientation(orientation: TreeOrientation) {
     this.orientation = orientation;
   }
@@ -66,7 +65,6 @@ export class FamilyTreeEngine {
 
   public initializeExpanded(maxGeneration: number = 3) {
     const roots = Array.from(this.personMap.values()).filter((p) => p.level === 0);
-
     const expandTo = (person: PersonNode, maxGen: number) => {
       if (person.level >= maxGen) return;
       person.expanded = true;
@@ -75,7 +73,6 @@ export class FamilyTreeEngine {
         if (child) expandTo(child, maxGen);
       });
     };
-
     roots.forEach((root) => expandTo(root, maxGeneration));
   }
 
@@ -112,7 +109,6 @@ export class FamilyTreeEngine {
       const person = queue.shift()!;
       if (visited.has(person.name)) continue;
       visited.add(person.name);
-
       person.visible = true;
 
       person.spouses.forEach((spouseName) => {
@@ -136,19 +132,15 @@ export class FamilyTreeEngine {
 
   private showAncestors(person: PersonNode) {
     person.visible = true;
-
     person.parents.forEach((parentName) => {
       const parent = this.personMap.get(parentName);
       if (parent) {
         parent.visible = true;
         this.showAncestors(parent);
-        
         person.parents.forEach((otherParentName) => {
           if (otherParentName !== parentName) {
             const otherParent = this.personMap.get(otherParentName);
-            if (otherParent) {
-              otherParent.visible = true;
-            }
+            if (otherParent) otherParent.visible = true;
           }
         });
       }
@@ -157,19 +149,14 @@ export class FamilyTreeEngine {
 
   private showDescendants(person: PersonNode) {
     person.visible = true;
-
     person.enfants.forEach((childName) => {
       const child = this.personMap.get(childName);
       if (child) {
         child.visible = true;
-        
         child.parents.forEach((parentName) => {
           const parent = this.personMap.get(parentName);
-          if (parent) {
-            parent.visible = true;
-          }
+          if (parent) parent.visible = true;
         });
-        
         this.showDescendants(child);
       }
     });
@@ -178,12 +165,10 @@ export class FamilyTreeEngine {
   private showPath(person1: PersonNode, person2: PersonNode) {
     const path = this.findPath(person1.name, person2.name);
     const pathSet = new Set(path);
-    
     path.forEach((name) => {
       const person = this.personMap.get(name);
       if (person) {
         person.visible = true;
-        
         person.spouses.forEach((spouseName) => {
           if (pathSet.has(spouseName)) {
             const spouse = this.personMap.get(spouseName);
@@ -197,16 +182,12 @@ export class FamilyTreeEngine {
   private findPath(start: string, end: string): string[] {
     const queue: string[][] = [[start]];
     const visited = new Set([start]);
-
     while (queue.length > 0) {
       const path = queue.shift()!;
       const current = path[path.length - 1];
-
       if (current === end) return path;
-
       const person = this.personMap.get(current)!;
       const neighbors = [...person.parents, ...person.enfants, ...person.spouses];
-
       for (const neighbor of neighbors) {
         if (!visited.has(neighbor)) {
           visited.add(neighbor);
@@ -214,7 +195,6 @@ export class FamilyTreeEngine {
         }
       }
     }
-
     return [start];
   }
 
@@ -236,68 +216,62 @@ export class FamilyTreeEngine {
   }
 
   private arrangeLevelPeople(levelPeople: PersonNode[], level: number) {
-    const arranged: { type: "single" | "couple"; people: PersonNode[]; hasChildren: boolean }[] = [];
+    const arranged: { type: "single" | "couple"; people: PersonNode[] }[] = [];
     const used = new Set<string>();
 
+    // Grouper les couples
     levelPeople.forEach((person) => {
       if (used.has(person.name)) return;
 
       let spouse: PersonNode | null = null;
-      let hasChildren = false;
-
       for (const spouseName of person.spouses) {
         const potentialSpouse = this.personMap.get(spouseName);
         if (potentialSpouse && levelPeople.find((p) => p.name === spouseName) && !used.has(spouseName)) {
-          const sharedChildren = person.enfants.filter((child) => 
-            potentialSpouse.enfants.includes(child)
-          );
-          if (sharedChildren.length > 0) {
-            spouse = potentialSpouse;
-            hasChildren = true;
-            break;
-          }
+           // On considère couple s'ils ont des enfants visibles ou juste mariés
+           spouse = potentialSpouse;
+           break;
         }
       }
 
-      if (spouse && hasChildren) {
-        if (person.genre === "Homme") {
-          arranged.push({ type: "couple", people: [person, spouse], hasChildren: true });
-        } else {
-          arranged.push({ type: "couple", people: [spouse, person], hasChildren: true });
-        }
+      if (spouse) {
+        // En mode horizontal, on met l'homme au-dessus (ou premier trouvé)
+        arranged.push({ type: "couple", people: [person, spouse] });
         used.add(person.name);
         used.add(spouse.name);
       } else {
-        arranged.push({ type: "single", people: [person], hasChildren: person.enfants.length > 0 });
+        arranged.push({ type: "single", people: [person] });
         used.add(person.name);
       }
     });
 
-    // "currentSpread" représente l'étalement (Largeur en Vertical, Hauteur en Horizontal)
     let currentSpread = 0;
 
     arranged.forEach((group) => {
       if (group.type === "couple") {
-        const [person1, person2] = group.people;
+        const [p1, p2] = group.people;
         
         if (this.orientation === "vertical") {
-            // MODE STANDARD (HAUT -> BAS)
-            person1.x = currentSpread;
-            person2.x = currentSpread + this.dimensions.nodeWidth + this.dimensions.coupleSpacing;
-            person1.y = level * this.dimensions.levelHeight;
-            person2.y = level * this.dimensions.levelHeight;
-            
-            currentSpread += this.dimensions.nodeWidth * 2 + this.dimensions.coupleSpacing + this.dimensions.siblingSpacing;
+            // --- VERTICAL (Standard Desktop) ---
+            p1.x = currentSpread;
+            p2.x = currentSpread + this.dimensions.nodeWidth + this.dimensions.coupleSpacing;
+            p1.y = level * this.dimensions.levelHeight;
+            p2.y = level * this.dimensions.levelHeight;
+            currentSpread += (this.dimensions.nodeWidth * 2) + this.dimensions.coupleSpacing + this.dimensions.siblingSpacing;
         } else {
-            // MODE MOBILE (GAUCHE -> DROITE)
-            // Ici on inverse : X dépend du niveau, Y dépend du Spread
-            person1.x = level * this.dimensions.levelHeight; // levelHeight devient "LevelWidth" ici
-            person2.x = level * this.dimensions.levelHeight;
-            
-            person1.y = currentSpread;
-            person2.y = currentSpread + this.dimensions.nodeHeight + this.dimensions.coupleSpacing; // Hauteur des noeuds s'empile
+            // --- HORIZONTAL (Mobile Optimisé) ---
+            // On empile les époux verticalement pour gagner de la place en hauteur (Spread)
+            // X devient le niveau (Profondeur)
+            const levelX = level * this.dimensions.levelHeight; // Ecartement horizontal des générations
 
-            currentSpread += this.dimensions.nodeHeight * 2 + this.dimensions.coupleSpacing + this.dimensions.siblingSpacing;
+            p1.x = levelX;
+            p1.y = currentSpread;
+            
+            // Le conjoint est juste en dessous, collé
+            p2.x = levelX; 
+            p2.y = currentSpread + this.dimensions.nodeHeight + 5; // +5px mini marge
+
+            // On avance le curseur vertical (hauteur de 2 personnes + marge couple)
+            currentSpread += (this.dimensions.nodeHeight * 2) + 5 + this.dimensions.coupleSpacing;
         }
 
       } else {
@@ -308,6 +282,7 @@ export class FamilyTreeEngine {
             person.y = level * this.dimensions.levelHeight;
             currentSpread += this.dimensions.nodeWidth + this.dimensions.siblingSpacing;
         } else {
+            // Horizontal Single
             person.x = level * this.dimensions.levelHeight;
             person.y = currentSpread;
             currentSpread += this.dimensions.nodeHeight + this.dimensions.siblingSpacing;
@@ -315,7 +290,7 @@ export class FamilyTreeEngine {
       }
     });
 
-    // Centrage du groupe
+    // Centrage du groupe pour qu'il soit joli
     const allPeople = arranged.flatMap((g) => g.people);
     if (allPeople.length > 0) {
       if (this.orientation === "vertical") {
@@ -324,7 +299,6 @@ export class FamilyTreeEngine {
           const offset = -(minX + maxX) / 2;
           allPeople.forEach((p) => (p.x += offset));
       } else {
-          // Centrage vertical en mode horizontal
           const minY = Math.min(...allPeople.map((p) => p.y));
           const maxY = Math.max(...allPeople.map((p) => p.y));
           const offset = -(minY + maxY) / 2;
@@ -333,75 +307,46 @@ export class FamilyTreeEngine {
     }
   }
 
-  public getVisiblePersons(): PersonNode[] {
-    return Array.from(this.personMap.values()).filter((p) => p.visible);
-  }
-
-  public getAllPersons(): PersonNode[] {
-    return Array.from(this.personMap.values());
-  }
+  public getVisiblePersons(): PersonNode[] { return Array.from(this.personMap.values()).filter((p) => p.visible); }
+  public getAllPersons(): PersonNode[] { return Array.from(this.personMap.values()); }
 
   public getLinks(): TreeLink[] {
-    const parentLinks: TreeLink[] = [];
-    const spouseLinks: TreeLink[] = [];
+    const links: TreeLink[] = [];
     const processedPairs = new Set<string>();
     const visiblePersons = this.getVisiblePersons();
 
     visiblePersons.forEach((person) => {
+      // Parent -> Enfant
       person.enfants.forEach((childName) => {
         const child = this.personMap.get(childName);
         if (child && child.visible) {
-          parentLinks.push({
-            source: person,
-            target: child,
-            type: "parent",
-          });
+          links.push({ source: person, target: child, type: "parent" });
         }
       });
 
+      // Conjoint <-> Conjoint
       person.spouses.forEach((spouseName) => {
         const spouse = this.personMap.get(spouseName);
         if (spouse && spouse.visible) {
-          const sharedChildren = person.enfants.filter((child) => 
-            spouse.enfants.includes(child)
-          );
-          
-          if (sharedChildren.length > 0) {
             const pair = [person.name, spouseName].sort().join("|");
             if (!processedPairs.has(pair)) {
               processedPairs.add(pair);
-              spouseLinks.push({
-                source: person,
-                target: spouse,
-                type: "spouse",
-              });
+              links.push({ source: person, target: spouse, type: "spouse" });
             }
-          }
         }
       });
     });
-
-    return [...spouseLinks, ...parentLinks];
+    return links;
   }
 
-  public getPerson(name: string): PersonNode | undefined {
-    return this.personMap.get(name);
-  }
-
-  public toggleExpand(person: PersonNode) {
-    person.expanded = !person.expanded;
-  }
-
+  public getPerson(name: string): PersonNode | undefined { return this.personMap.get(name); }
+  public toggleExpand(person: PersonNode) { person.expanded = !person.expanded; }
+  
   public expandToRoot(person: PersonNode) {
     let current = person;
     while (current.parents.length > 0) {
       const parent = this.personMap.get(current.parents[0]);
-      if (parent) {
-        parent.expanded = true;
-        current = parent;
-      } else {
-        break;
-      }
+      if (parent) { parent.expanded = true; current = parent; } else break;
     }
   }
 }

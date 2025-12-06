@@ -4,7 +4,9 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { PersonNode, TreeLink, TreeDimensions } from "@/lib/familyTree/types";
 import { createNodeHTML } from "./nodeHTML";
+import { TreeOrientation } from "@/lib/familyTree/FamilyTreeEngine";
 
+// AJOUT DE L'ORIENTATION DANS LES PROPS
 interface FamilyTreeCanvasProps {
   persons: PersonNode[];
   links: TreeLink[];
@@ -13,6 +15,7 @@ interface FamilyTreeCanvasProps {
   onNodeClick: (person: PersonNode) => void;
   onReset: () => void;
   onFitToScreen: () => void;
+  orientation: TreeOrientation; // <--- C'est ici que ça manquait
 }
 
 export const FamilyTreeCanvas = ({
@@ -23,12 +26,12 @@ export const FamilyTreeCanvas = ({
   onNodeClick,
   onReset,
   onFitToScreen,
+  orientation, // <--- On le récupère ici
 }: FamilyTreeCanvasProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown>>();
 
-  // Initialisation du zoom
   useEffect(() => {
     if (!svgRef.current || !gRef.current) return;
 
@@ -46,16 +49,16 @@ export const FamilyTreeCanvas = ({
     zoomRef.current = zoom;
   }, []);
 
-  // Définition des fonctions globales (Reset, Export, etc.)
   useEffect(() => {
-    // 1. CENTRER SUR UNE PERSONNE
+    // CENTRER SUR UNE PERSONNE
     (window as any).__treeCenterOnNode = (node: PersonNode) => {
       if (!svgRef.current || !zoomRef.current) return;
       const svg = d3.select(svgRef.current);
       
       const scale = 1.1; 
+      // Centrage simple
       const x = -node.x * scale + dimensions.width / 2;
-      const y = -node.y * scale + dimensions.height / 2 - (dimensions.width < 640 ? 50 : 0);
+      const y = -node.y * scale + dimensions.height / 2;
 
       svg.transition().duration(750).call(
         zoomRef.current.transform,
@@ -63,7 +66,7 @@ export const FamilyTreeCanvas = ({
       );
     };
 
-    // 2. AJUSTER À L'ÉCRAN (FIT)
+    // FIT SCREEN
     (window as any).__treeFit = () => {
       if (!svgRef.current || !gRef.current || !zoomRef.current) return;
       
@@ -90,20 +93,25 @@ export const FamilyTreeCanvas = ({
       );
     };
 
-    // 3. RESET STANDARD (Ce que vous vouliez : ne plus "tout" voir, mais juste revenir en haut)
+    // RESET (Adapté à l'orientation)
     (window as any).__treeReset = () => {
       if (!svgRef.current || !zoomRef.current || persons.length === 0) return;
       const svg = d3.select(svgRef.current);
 
-      // On vise la racine (Première génération)
       const rootNode = persons.find(p => p.level === 0) || persons[0];
+      const initialScale = dimensions.width < 640 ? 0.9 : 0.9;
       
-      // Zoom standard, lisible (pas trop petit)
-      const initialScale = dimensions.width < 640 ? 0.7 : 0.9;
+      let x, y;
       
-      // On centre horizontalement la racine, et on la colle en haut (marge de 80px)
-      const x = -rootNode.x * initialScale + dimensions.width / 2;
-      const y = 80; 
+      if (orientation === "vertical") {
+          // Mode Desktop (Vertical)
+          x = -rootNode.x * initialScale + dimensions.width / 2;
+          y = 80;
+      } else {
+          // Mode Mobile (Horizontal) : Racine à gauche
+          x = 20; 
+          y = -rootNode.y * initialScale + dimensions.height / 2;
+      }
 
       svg.transition().duration(750).call(
         zoomRef.current.transform,
@@ -111,7 +119,7 @@ export const FamilyTreeCanvas = ({
       );
     };
 
-    // 4. EXPORT (Réparé et complet)
+    // EXPORT
     (window as any).__treeExport = async (format: 'png' | 'pdf') => {
       if (!svgRef.current || !gRef.current) return;
       
@@ -121,11 +129,10 @@ export const FamilyTreeCanvas = ({
         const bounds = g.getBBox();
         
         if (bounds.width === 0 || bounds.height === 0) {
-          alert('Arbre vide ou non chargé');
+          alert('Arbre vide');
           return;
         }
 
-        // Création d'un conteneur temporaire blanc pour la capture
         const padding = 50;
         const exportWidth = bounds.width + padding * 2;
         const exportHeight = bounds.height + padding * 2;
@@ -136,17 +143,15 @@ export const FamilyTreeCanvas = ({
         exportContainer.style.top = '0';
         exportContainer.style.width = `${exportWidth}px`;
         exportContainer.style.height = `${exportHeight}px`;
-        exportContainer.style.backgroundColor = '#ffffff'; // Fond blanc
+        exportContainer.style.backgroundColor = '#ffffff'; 
         document.body.appendChild(exportContainer);
         
-        // Clonage du SVG pour ne pas toucher à l'affichage actuel
         const clonedSvg = svg.cloneNode(true) as SVGSVGElement;
         clonedSvg.setAttribute('width', String(exportWidth));
         clonedSvg.setAttribute('height', String(exportHeight));
         clonedSvg.style.width = `${exportWidth}px`;
         clonedSvg.style.height = `${exportHeight}px`;
         
-        // On recentre le contenu du clone
         const clonedG = clonedSvg.querySelector('g');
         if (clonedG) {
           const translateX = -bounds.x + padding;
@@ -156,12 +161,11 @@ export const FamilyTreeCanvas = ({
 
         exportContainer.appendChild(clonedSvg);
         
-        // Petit délai pour le rendu des polices/images
         await new Promise(resolve => setTimeout(resolve, 300));
         
         const canvas = await html2canvas(exportContainer, {
           backgroundColor: '#ffffff',
-          scale: 2, // Haute qualité (Retina)
+          scale: 2,
           logging: false,
           useCORS: true,
           allowTaint: true,
@@ -179,7 +183,6 @@ export const FamilyTreeCanvas = ({
           const imgWidth = canvas.width;
           const imgHeight = canvas.height;
           
-          // Calcul A4/A0 intelligent
           const mmWidth = imgWidth * 0.264583 / 2; 
           const mmHeight = imgHeight * 0.264583 / 2;
           
@@ -194,7 +197,6 @@ export const FamilyTreeCanvas = ({
         }
       } catch (error) {
         console.error('Erreur export:', error);
-        alert('Erreur lors de l\'exportation. Vérifiez que les images sont accessibles.');
       }
     };
 
@@ -204,9 +206,9 @@ export const FamilyTreeCanvas = ({
       delete (window as any).__treeCenterOnNode;
       delete (window as any).__treeExport;
     };
-  }, [dimensions.width, dimensions.height, persons]); 
+  }, [dimensions.width, dimensions.height, persons, orientation]); 
 
-  // --- RENDU LIENS ET NOEUDS (Inchangé) ---
+  // --- RENDU DES LIENS (COURBES) ---
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);
@@ -224,14 +226,26 @@ export const FamilyTreeCanvas = ({
         if (d.type === "spouse") {
           return `M ${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`;
         } else {
-          const sourceY = d.source.y + dimensions.nodeHeight / 2;
-          const targetY = d.target.y - dimensions.nodeHeight / 2;
-          const midY = (sourceY + targetY) / 2;
-          return `M ${d.source.x} ${sourceY} C ${d.source.x} ${midY}, ${d.target.x} ${midY}, ${d.target.x} ${targetY}`;
+          // LOGIQUE COURBES : Vertical (Haut-Bas) vs Horizontal (Gauche-Droite)
+          if (orientation === "vertical") {
+              const sourceY = d.source.y + dimensions.nodeHeight / 2;
+              const targetY = d.target.y - dimensions.nodeHeight / 2;
+              const midY = (sourceY + targetY) / 2;
+              return `M ${d.source.x} ${sourceY} C ${d.source.x} ${midY}, ${d.target.x} ${midY}, ${d.target.x} ${targetY}`;
+          } else {
+              // MODE MOBILE : Courbe Horizontale
+              const sourceX = d.source.x + dimensions.nodeWidth / 2;
+              const targetX = d.target.x - dimensions.nodeWidth / 2;
+              const midX = (sourceX + targetX) / 2;
+              // Ajustement fin pour partir du centre vertical du noeud
+              // (En mode horizontal, Y est le centre vertical)
+              return `M ${sourceX} ${d.source.y} C ${midX} ${d.source.y}, ${midX} ${d.target.y}, ${targetX} ${d.target.y}`;
+          }
         }
       });
-  }, [links, dimensions]);
+  }, [links, dimensions, orientation]);
 
+  // --- RENDU DES NOEUDS (Inchangé) ---
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);
