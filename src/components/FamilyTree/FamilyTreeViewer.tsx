@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "./Header";
 import { PersonInfoPanel } from "./PersonInfoPanel";
@@ -10,46 +10,42 @@ import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
 import { familyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
-// NOUVEAU : Dimensions "Micro" pour mobile
 const getResponsiveDimensions = (): TreeDimensions => {
   const width = window.innerWidth;
-  const height = window.innerHeight;
-
-  const isTablet = width < 1024;
+  // Dimensions "Goldilocks" (ni trop petit, ni trop grand)
   const isMobile = width < 640;
+  const isTablet = width >= 640 && width < 1024;
 
   if (isMobile) {
     return {
       width,
-      height,
-      // MODE MICRO : Très compact
-      nodeWidth: 100,  // Largeur réduite de moitié par rapport au desktop
-      nodeHeight: 50,  // Hauteur minimale (juste nom + photo)
-      levelHeight: 90, // Les générations sont plus rapprochées
-      coupleSpacing: 10,
-      siblingSpacing: 15, // Espace entre frères/sœurs réduit au minimum
+      height: window.innerHeight,
+      nodeWidth: 170,
+      nodeHeight: 85,
+      levelHeight: 140,
+      coupleSpacing: 25,
+      siblingSpacing: 35,
     };
   }
 
   if (isTablet) {
     return {
       width,
-      height,
-      nodeWidth: 160,
-      nodeHeight: 90,
+      height: window.innerHeight,
+      nodeWidth: 200,
+      nodeHeight: 100,
       levelHeight: 180,
-      coupleSpacing: 30,
-      siblingSpacing: 40,
+      coupleSpacing: 40,
+      siblingSpacing: 50,
     };
   }
 
-  // Desktop standard
   return {
     width,
-    height,
+    height: window.innerHeight,
     nodeWidth: 240,
-    nodeHeight: 135,
-    levelHeight: 240,
+    nodeHeight: 120,
+    levelHeight: 220,
     coupleSpacing: 60,
     siblingSpacing: 70,
   };
@@ -65,12 +61,14 @@ export const FamilyTreeViewer = () => {
   const [visiblePersons, setVisiblePersons] = useState<PersonNode[]>([]);
   const [allPersons, setAllPersons] = useState<PersonNode[]>([]);
   const [isModePanelOpen, setIsModePanelOpen] = useState(false);
-  const [isPersonInfoVisible, setIsPersonInfoVisible] = useState(true);
+  const [isPersonInfoVisible, setIsPersonInfoVisible] = useState(false);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // LE CORRECTIF : Ce ref empêche la boucle infinie
+  const isFocusHandled = useRef(false);
 
   const updateTree = useCallback(() => {
-    // IMPORTANT : Mise à jour des dimensions dans le moteur
     if (engine.updateDimensions) {
        engine.updateDimensions(dimensions);
     }
@@ -79,35 +77,45 @@ export const FamilyTreeViewer = () => {
     setVisiblePersons([...engine.getVisiblePersons()]);
   }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
 
+  // Initialisation
   useEffect(() => {
     engine.initializeExpanded(3);
     setAllPersons(engine.getAllPersons());
 
     const handleResize = () => {
-      const newDims = getResponsiveDimensions();
-      setDimensions(newDims);
+      setDimensions(getResponsiveDimensions());
     };
 
     window.addEventListener("resize", handleResize);
-    // Petit délai pour assurer le bon calcul au chargement
-    setTimeout(() => handleResize(), 100);
+    
+    // Centrage initial
+    setTimeout(() => {
+        handleResize();
+        if ((window as any).__treeFit) (window as any).__treeFit();
+    }, 200);
 
     return () => window.removeEventListener("resize", handleResize);
   }, [engine]);
 
+  // Update quand l'état change
   useEffect(() => {
     updateTree();
   }, [updateTree]);
 
-  // Gestion du focus depuis l'URL (Archives -> Arbre)
+  // GESTION DU FOCUS URL (Corrigée)
   useEffect(() => {
     const focusName = searchParams.get("focus");
-    if (focusName && allPersons.length > 0) {
+    
+    // On ne lance la logique QUE si on n'a pas déjà géré le focus
+    if (focusName && allPersons.length > 0 && !isFocusHandled.current) {
       const targetPerson = allPersons.find(
         p => p.name.toLowerCase() === focusName.toLowerCase()
       );
 
       if (targetPerson) {
+        // Marquer comme géré pour ne plus jamais y revenir
+        isFocusHandled.current = true;
+
         setTimeout(() => {
             engine.expandToRoot(targetPerson);
             updateTree();
@@ -117,13 +125,52 @@ export const FamilyTreeViewer = () => {
             if ((window as any).__treeCenterOnNode) {
               (window as any).__treeCenterOnNode(targetPerson);
             }
-            const newUrl = window.location.pathname;
-            window.history.replaceState({}, '', newUrl);
+            
+            // Nettoyer l'URL proprement via React Router pour éviter que ça revienne
+            setSearchParams({}, { replace: true });
         }, 500);
       }
     }
-  }, [allPersons, searchParams, engine, updateTree]);
+  }, [allPersons, searchParams, engine, updateTree, setSearchParams]);
 
+  const handleNodeClick = (person: PersonNode) => {
+    // Si on clique, on est sûr que ce n'est plus le chargement initial
+    isFocusHandled.current = true;
+
+    if (selectedPerson?.name === person.name && person.enfants.length > 0) {
+      engine.toggleExpand(person);
+      updateTree();
+    } 
+    else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {
+      setSelectedPerson(person);
+      setIsPersonInfoVisible(true);
+      engine.toggleExpand(person);
+      updateTree();
+    }
+    else {
+      setSelectedPerson(person);
+      setIsPersonInfoVisible(true);
+    }
+
+    // Petit centrage doux
+    setTimeout(() => {
+       if ((window as any).__treeCenterOnNode) {
+          (window as any).__treeCenterOnNode(person);
+       }
+    }, 300);
+  };
+
+  // ... (Le reste des handlers handleSearchSelect, etc. restent identiques)
+  const handleSearchSelect = (person: PersonNode) => {
+    isFocusHandled.current = true; // Important aussi ici
+    engine.expandToRoot(person);
+    updateTree();
+    setSelectedPerson(person);
+    setIsPersonInfoVisible(true);
+    setTimeout(() => {
+      if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
+    }, 100);
+  };
 
   const handleModeChange = (mode: ViewMode) => {
     setCurrentMode(mode);
@@ -137,45 +184,11 @@ export const FamilyTreeViewer = () => {
     }
   };
 
-  const handleNodeClick = (person: PersonNode) => {
-    if (selectedPerson?.name === person.name && person.enfants.length > 0) {
-      engine.toggleExpand(person);
-      updateTree();
-      // On re-centre légèrement après expansion
-      setTimeout(() => handleFit(), 550);
-    } 
-    else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {
-      setSelectedPerson(person);
-      setIsPersonInfoVisible(true);
-      engine.toggleExpand(person);
-      updateTree();
-      setTimeout(() => handleFit(), 550);
-    }
-    else {
-      setSelectedPerson(person);
-      setIsPersonInfoVisible(true);
-    }
-  };
-
-  const handleSearchSelect = (person: PersonNode) => {
-    engine.expandToRoot(person);
-    updateTree();
-    setSelectedPerson(person);
-    setIsPersonInfoVisible(true);
-    
-    setTimeout(() => {
-      if ((window as any).__treeCenterOnNode) {
-        (window as any).__treeCenterOnNode(person);
-      }
-    }, 100);
-  };
-
   const handleToggleExpand = (person: PersonNode) => {
     engine.toggleExpand(person);
     updateTree();
     setSelectedPerson(person); 
-    setIsPersonInfoVisible(true);
-     setTimeout(() => handleFit(), 550);
+    setIsPersonInfoVisible(true); 
   };
 
   const handleModeApply = (person1?: PersonNode, person2?: PersonNode) => {
@@ -183,10 +196,7 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(person1);
       setSelectedPerson2(person2 || null);
       setIsModePanelOpen(false);
-      
-      setTimeout(() => {
-        handleFit();
-      }, 100);
+      setTimeout(() => handleFit(), 100);
     }
   };
 
@@ -204,22 +214,14 @@ export const FamilyTreeViewer = () => {
     }
   };
 
-  const handleReset = () => {
-    if ((window as any).__treeReset) (window as any).__treeReset();
-  };
-
-  const handleFit = () => {
-    if ((window as any).__treeFit) (window as any).__treeFit();
-  };
-
-  const handleExport = (format: 'png' | 'pdf') => {
-    if ((window as any).__treeExport) (window as any).__treeExport(format);
-  };
+  const handleReset = () => { if ((window as any).__treeReset) (window as any).__treeReset(); };
+  const handleFit = () => { if ((window as any).__treeFit) (window as any).__treeFit(); };
+  const handleExport = (format: 'png' | 'pdf') => { if ((window as any).__treeExport) (window as any).__treeExport(format); };
 
   const generations = new Set(allPersons.map((p) => p.level)).size;
 
   return (
-    <div className="h-dvh w-dvw overflow-hidden bg-background font-sans">
+    <div className="h-dvh w-dvw overflow-hidden bg-background font-sans relative">
       <Header
         totalMembers={allPersons.length}
         totalGenerations={generations}
@@ -234,7 +236,7 @@ export const FamilyTreeViewer = () => {
 
       <Dedication />
 
-      <main className="w-full h-full">
+      <main className="w-full h-full pt-[60px] pb-0">
         <FamilyTreeCanvas
           persons={visiblePersons}
           links={engine.getLinks()}

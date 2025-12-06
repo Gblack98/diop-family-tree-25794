@@ -1,5 +1,6 @@
 import { PersonNode } from "@/lib/familyTree/types";
-import { X, Users, Heart, Baby, GitCommit, LucideIcon } from "lucide-react";
+import { X, Users, Heart, Baby, GitCommit, LucideIcon, ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface PersonInfoPanelProps {
   person: PersonNode | null;
@@ -16,19 +17,21 @@ interface InfoSectionProps {
 }
 
 const InfoSection = ({ icon: Icon, title, count, items, emptyText }: InfoSectionProps) => (
-  <div>
-    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-      <Icon className="w-3 h-3" />
-      {title} ({count})
+  <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+    <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wide mb-2">
+      <Icon className="w-3.5 h-3.5" />
+      {title} <span className="text-muted-foreground ml-auto text-[10px] bg-background px-1.5 py-0.5 rounded-full border border-border">{count}</span>
     </div>
     {items.length > 0 ? (
-      <ul className="space-y-1">
+      <ul className="space-y-1.5">
         {items.map((item) => (
-          <li key={item} className="px-2.5 py-1.5 bg-muted/60 rounded-md text-xs">{item}</li>
+          <li key={item} className="text-sm font-medium text-foreground pl-1 border-l-2 border-primary/20 hover:border-primary transition-colors cursor-default">
+            {item}
+          </li>
         ))}
       </ul>
     ) : (
-      <p className="text-xs text-muted-foreground/80">{emptyText}</p>
+      <p className="text-xs text-muted-foreground italic pl-1">{emptyText}</p>
     )}
   </div>
 );
@@ -38,97 +41,144 @@ export const PersonInfoPanel = ({
   onClose,
   onToggleExpand,
 }: PersonInfoPanelProps) => {
-  // Si aucune personne n'est sélectionnée, on n'affiche rien.
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Animation d'entrée fluide
+  useEffect(() => {
+    if (person) {
+      // Petit délai pour laisser le temps au DOM de se préparer
+      requestAnimationFrame(() => setIsVisible(true));
+    } else {
+      setIsVisible(false);
+    }
+  }, [person]);
+
   if (!person) return null;
 
   const initial = person.name.charAt(0).toUpperCase();
-  const avatarColor =
-    person.genre === "Homme"
-      ? "from-[hsl(var(--male))] to-blue-600"
-      : "from-[hsl(var(--female))] to-pink-600";
+  const avatarGradient = person.genre === "Homme"
+      ? "bg-gradient-to-br from-blue-500 to-blue-700"
+      : "bg-gradient-to-br from-pink-500 to-rose-600";
 
   return (
     <>
-      {/* Overlay pour fermer en cliquant en dehors */}
+      {/* Overlay mobile (assombrit le fond pour le focus) */}
       <div 
-        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[59] animate-in fade-in duration-200"
+        className={`fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[50] transition-opacity duration-300 sm:hidden ${
+          isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
         onClick={onClose}
       />
       
-      {/* Panel */}
+      {/* Container Principal : Drawer Mobile / Card Desktop */}
       <div 
-        key={person.name}
-        className="fixed bottom-0 sm:bottom-4 sm:right-4 left-0 sm:left-auto w-full sm:w-72 md:w-80 bg-card backdrop-blur-xl border-t sm:border border-border shadow-2xl z-[60] animate-in slide-in-from-bottom-full sm:slide-in-from-right-full duration-300 sm:rounded-xl max-h-[60dvh] sm:max-h-[65dvh] flex flex-col"
+        className={`
+          fixed z-[60] bg-card border-border shadow-2xl flex flex-col
+          transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+          
+          /* MOBILE: Bottom Sheet (Tiroir du bas) */
+          bottom-0 left-0 right-0 
+          rounded-t-2xl border-t
+          max-h-[85dvh] h-auto
+          ${isVisible ? "translate-y-0" : "translate-y-[100%]"}
+
+          /* DESKTOP: Floating Card (Carte flottante) */
+          sm:bottom-6 sm:right-6 sm:left-auto sm:top-auto
+          sm:w-80 sm:rounded-xl sm:border
+          sm:max-h-[80vh]
+          sm:${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"}
+        `}
       >
-        <div className="p-3 sm:p-4 safe-area-inset-bottom flex flex-col flex-1 min-h-0">
-        {/* Poignée pour le design mobile */}
-        <div className="sm:hidden flex justify-center pb-1.5 flex-shrink-0">
-          <div className="w-10 h-1 rounded-full bg-muted-foreground/30"></div>
+        {/* Poignée Mobile (Indicateur de scroll) */}
+        <div 
+          className="w-full flex justify-center pt-3 pb-1 sm:hidden cursor-grab active:cursor-grabbing touch-none" 
+          onClick={onClose}
+        >
+          <div className="w-12 h-1.5 rounded-full bg-muted-foreground/20" />
         </div>
 
-        {/* En-tête (ne défile pas) */}
-        <div className="flex items-start gap-3 pb-3 border-b border-border/20 flex-shrink-0">
-          <div
-            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0 bg-gradient-to-br ${avatarColor}`}
-          >
+        {/* En-tête de la fiche */}
+        <div className="p-4 pb-2 flex items-start gap-4 flex-shrink-0">
+          <div className={`w-14 h-14 sm:w-12 sm:h-12 rounded-full shadow-md flex items-center justify-center text-white font-bold text-xl sm:text-lg flex-shrink-0 ring-4 ring-background ${avatarGradient}`}>
             {initial}
           </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-sm sm:text-base leading-tight truncate">{person.name}</h2>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-              <span>{person.genre}</span>
-              <GitCommit className="w-2.5 h-2.5 text-border rotate-90" />
-              <span>Gen. {person.level}</span>
+          
+          <div className="flex-1 min-w-0 pt-0.5">
+            <h2 className="font-bold text-lg leading-tight text-foreground truncate pr-6">
+              {person.name}
+            </h2>
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-secondary text-secondary-foreground">
+                {person.genre}
+              </span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <GitCommit className="w-3 h-3" />
+                Gén. {person.level}
+              </span>
             </div>
           </div>
-          <button
+
+          <button 
             onClick={onClose}
-            className="p-1 hover:bg-accent/80 rounded-lg transition-colors flex-shrink-0 active:scale-95"
-            aria-label="Fermer"
+            className="hidden sm:flex p-1.5 hover:bg-muted rounded-full text-muted-foreground transition-colors absolute top-3 right-3"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto -mx-3 sm:-mx-4">
-            <div className="p-3 sm:p-4 space-y-3">
-              <InfoSection 
-                icon={Users}
-                title="Parents"
-                count={person.parents.length}
-                items={person.parents}
-                emptyText="Information non disponible"
-              />
-              <InfoSection 
-                icon={Heart}
-                title="Conjoint(s)"
-                count={person.spouses.length}
-                items={person.spouses}
-                emptyText="Information non disponible"
-              />
-              <InfoSection 
-                icon={Baby}
-                title="Enfants"
-                count={person.enfants.length}
-                items={person.enfants}
-                emptyText="Information non disponible"
-              />
-            </div>
-        </div>
-        
-        {/* Pied de page (ne défile pas) */}
-        {person.enfants.length > 0 && (
-          <div className="pt-3 mt-auto border-t border-border/20 flex-shrink-0">
+        {/* Contenu Scrollable */}
+        <div className="overflow-y-auto px-4 py-2 space-y-3 flex-1 safe-area-bottom">
+           {/* Bouton d'action principal (Voir enfants) */}
+           {person.enfants.length > 0 && (
             <button
               onClick={() => onToggleExpand(person)}
-              className="w-full px-3 py-2 bg-primary text-primary-foreground rounded-lg text-xs sm:text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all shadow"
+              className={`
+                w-full py-2.5 px-4 rounded-lg text-sm font-semibold shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 mb-2
+                ${person.expanded 
+                  ? "bg-secondary text-secondary-foreground hover:bg-secondary/80" 
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"}
+              `}
             >
-              {person.expanded ? "Réduire" : "Étendre"}
+              {person.expanded ? (
+                <>
+                  <ChevronDown className="w-4 h-4 rotate-180" /> Masquer les enfants
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" /> Voir les enfants ({person.enfants.length})
+                </>
+              )}
             </button>
-          </div>
-        )}
+          )}
+
+          <InfoSection 
+            icon={Users}
+            title="Parents"
+            count={person.parents.length}
+            items={person.parents}
+            emptyText="Parents non renseignés"
+          />
+          
+          <InfoSection 
+            icon={Heart}
+            title="Conjoint(s)"
+            count={person.spouses.length}
+            items={person.spouses}
+            emptyText="Sans conjoint"
+          />
+          
+          <InfoSection 
+            icon={Baby}
+            title="Enfants"
+            count={person.enfants.length}
+            items={person.enfants}
+            emptyText="Sans enfants"
+          />
+          
+          {/* Marge de sécurité en bas pour le scroll mobile */}
+          <div className="h-6 sm:h-2" />
+        </div>
       </div>
-    </div>
     </>
   );
 };
