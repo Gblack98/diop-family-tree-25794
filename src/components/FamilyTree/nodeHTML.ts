@@ -35,12 +35,13 @@ export function createNodeHTML(
         border-radius: 6px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         display: flex;
-        flex-direction: row; /* Alignement horizontal */
+        flex-direction: row;
         align-items: center;
         padding: 4px;
         gap: 6px;
         overflow: hidden;
         font-family: sans-serif;
+        position: relative;
       ">
         <div style="
           width: 24px;
@@ -69,10 +70,12 @@ export function createNodeHTML(
 
         ${hasHiddenChildren ? `
           <div style="
-            position: absolute; top: -2px; right: -2px;
+            position: absolute; top: 3px; right: 3px;
             background: hsl(var(--primary)); color: white;
-            width: 12px; height: 12px; border-radius: 50%;
-            font-size: 8px; display: flex; align-items: center; justify-content: center;
+            width: 14px; height: 14px; border-radius: 50%;
+            font-size: 9px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            z-index: 10;
           ">+</div>
         ` : ''}
       </div>
@@ -98,6 +101,7 @@ export function createNodeHTML(
       flex-direction: column;
       overflow: hidden;
       font-family: sans-serif;
+      position: relative;
     ">
       <div style="
         padding: ${padding};
@@ -130,6 +134,7 @@ export function createNodeHTML(
             overflow: hidden;
             text-overflow: ellipsis;
             color: hsl(var(--foreground));
+            padding-right: 16px; /* Espace pour le badge */
           ">${person.name}</div>
           <div style="
             font-size: ${isCompact ? "10px" : "11px"};
@@ -155,12 +160,14 @@ export function createNodeHTML(
       ${
         hasHiddenChildren
           ? `<div style="
-          position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+          position: absolute; top: 6px; right: 6px;
           background: hsl(var(--primary)); color: white;
-          width: 20px; height: 20px; border-radius: 50%;
+          width: ${isCompact ? "18px" : "22px"}; height: ${isCompact ? "18px" : "22px"}; 
+          border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          font-weight: bold; font-size: 10px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid hsl(var(--card));
+          font-weight: bold; font-size: ${isCompact ? "10px" : "11px"};
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+          z-index: 20;
         ">+${childCount}</div>`
           : ""
       }

@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import { PersonNode, TreeLink, TreeDimensions } from "@/lib/familyTree/types";
 import { createNodeHTML } from "./nodeHTML";
 
@@ -26,7 +28,6 @@ export const FamilyTreeCanvas = ({
   const gRef = useRef<SVGGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown>>();
 
-  // Initialisation du zoom
   useEffect(() => {
     if (!svgRef.current || !gRef.current) return;
 
@@ -35,7 +36,7 @@ export const FamilyTreeCanvas = ({
 
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4]) // Zoom max un peu plus grand
+      .scaleExtent([0.1, 4])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
       });
@@ -44,15 +45,14 @@ export const FamilyTreeCanvas = ({
     zoomRef.current = zoom;
   }, []);
 
-  // Définition des fonctions globales (Fit, Reset, CenterOnNode)
   useEffect(() => {
-    // CENTRER SUR UN NOEUD SPÉCIFIQUE
+    // --- GESTION DES COMMANDES (Centrer, Fit, Reset) ---
+
     (window as any).__treeCenterOnNode = (node: PersonNode) => {
       if (!svgRef.current || !zoomRef.current) return;
       const svg = d3.select(svgRef.current);
       
-      const scale = 1.1; // Zoom agréable pour voir la personne
-      // On centre le noeud au milieu de l'écran (avec un offset pour le panel du bas sur mobile)
+      const scale = 1.1; 
       const x = -node.x * scale + dimensions.width / 2;
       const y = -node.y * scale + dimensions.height / 2 - (dimensions.width < 640 ? 50 : 0);
 
@@ -62,7 +62,6 @@ export const FamilyTreeCanvas = ({
       );
     };
 
-    // AJUSTER TOUT L'ARBRE (FIT)
     (window as any).__treeFit = () => {
       if (!svgRef.current || !gRef.current || !zoomRef.current) return;
       
@@ -72,50 +71,147 @@ export const FamilyTreeCanvas = ({
       
       if (bounds.width === 0 || bounds.height === 0) return;
 
-      // Calcul du centre géométrique de l'arbre
       const midX = bounds.x + bounds.width / 2;
       const midY = bounds.y + bounds.height / 2;
-
-      // Marge de sécurité (0.9 = 90% de l'écran utilisé)
       const margin = 0.9;
       const scale = margin / Math.max(bounds.width / dimensions.width, bounds.height / dimensions.height);
-      
-      // Limiter le zoom min/max pour ne pas avoir un arbre minuscule ou énorme
       const clampledScale = Math.min(Math.max(scale, 0.2), 1.5);
 
       const translate = [
         dimensions.width / 2 - clampledScale * midX,
-        dimensions.height / 2 - clampledScale * midY + 40, // +40 pour descendre un peu sous le header
+        dimensions.height / 2 - clampledScale * midY + 40, 
       ];
 
-      svg
-        .transition()
-        .duration(750)
-        .call(
-          zoomRef.current.transform,
-          d3.zoomIdentity.translate(translate[0], translate[1]).scale(clampledScale)
-        );
+      svg.transition().duration(750).call(
+        zoomRef.current.transform,
+        d3.zoomIdentity.translate(translate[0], translate[1]).scale(clampledScale)
+      );
     };
 
-    // RESET (Retour en haut de l'arbre)
+    // NOUVEAU RESET : Position standard (Racine en haut au centre)
     (window as any).__treeReset = () => {
-       (window as any).__treeFit(); // Par défaut, on "Fit" tout l'écran maintenant, c'est mieux
+      if (!svgRef.current || !zoomRef.current || persons.length === 0) return;
+      const svg = d3.select(svgRef.current);
+
+      // On vise la racine (Generation 0)
+      const rootNode = persons.find(p => p.level === 0) || persons[0];
+      
+      // Zoom initial par défaut
+      const initialScale = dimensions.width < 640 ? 0.6 : 0.8;
+      
+      // On centre horizontalement sur la racine, et on la place un peu en haut
+      const x = -rootNode.x * initialScale + dimensions.width / 2;
+      const y = 80; // Marge du haut fixe
+
+      svg.transition().duration(750).call(
+        zoomRef.current.transform,
+        d3.zoomIdentity.translate(x, y).scale(initialScale)
+      );
     };
 
-    // Export (gardé tel quel mais je le remets pour être complet)
-     (window as any).__treeExport = async (format: 'png' | 'pdf') => {
-        // ... (votre code d'export existant est très bien, gardez-le)
+    // --- FONCTION D'EXPORTATION CORRIGÉE ---
+    (window as any).__treeExport = async (format: 'png' | 'pdf') => {
+      if (!svgRef.current || !gRef.current) return;
+      
+      try {
+        const svg = svgRef.current;
+        const g = gRef.current;
+        const bounds = g.getBBox();
+        
+        if (bounds.width === 0 || bounds.height === 0) {
+          alert('Arbre vide ou non chargé');
+          return;
+        }
+
+        // 1. Préparation du conteneur temporaire
+        const padding = 50;
+        const exportWidth = bounds.width + padding * 2;
+        const exportHeight = bounds.height + padding * 2;
+        
+        const exportContainer = document.createElement('div');
+        exportContainer.style.position = 'absolute';
+        exportContainer.style.left = '-9999px';
+        exportContainer.style.top = '0';
+        exportContainer.style.width = `${exportWidth}px`;
+        exportContainer.style.height = `${exportHeight}px`;
+        exportContainer.style.backgroundColor = '#ffffff'; // Fond blanc important pour le PNG
+        document.body.appendChild(exportContainer);
+        
+        // 2. Clonage du SVG
+        const clonedSvg = svg.cloneNode(true) as SVGSVGElement;
+        
+        // 3. Ajustement du clone pour qu'il soit parfaitement cadré
+        clonedSvg.setAttribute('width', String(exportWidth));
+        clonedSvg.setAttribute('height', String(exportHeight));
+        clonedSvg.style.width = `${exportWidth}px`;
+        clonedSvg.style.height = `${exportHeight}px`;
+        
+        // On cherche le groupe <g> à l'intérieur du clone pour le déplacer
+        const clonedG = clonedSvg.querySelector('g');
+        if (clonedG) {
+          // On annule le zoom actuel et on translate pour centrer dans l'export
+          const translateX = -bounds.x + padding;
+          const translateY = -bounds.y + padding;
+          clonedG.setAttribute('transform', `translate(${translateX}, ${translateY}) scale(1)`);
+        }
+
+        exportContainer.appendChild(clonedSvg);
+        
+        // 4. Capture avec html2canvas
+        // Le délai permet au navigateur de rendre les polices et images dans le clone
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        const canvas = await html2canvas(exportContainer, {
+          backgroundColor: '#ffffff',
+          scale: 2, // Haute résolution
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+        });
+        
+        // Nettoyage
+        document.body.removeChild(exportContainer);
+        
+        if (format === 'png') {
+          // Export PNG
+          const link = document.createElement('a');
+          link.download = `famille-diop-${new Date().toISOString().split('T')[0]}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        } else {
+          // Export PDF
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = canvas.width;
+          const imgHeight = canvas.height;
+          
+          // Conversion pixels -> mm (approximation A0/A1 selon la taille)
+          const mmWidth = imgWidth * 0.264583 / 2; 
+          const mmHeight = imgHeight * 0.264583 / 2;
+          
+          const pdf = new jsPDF({
+            orientation: mmWidth > mmHeight ? 'landscape' : 'portrait',
+            unit: 'mm',
+            format: [mmWidth + 20, mmHeight + 20], // Marge de 10mm
+          });
+
+          pdf.addImage(imgData, 'PNG', 10, 10, mmWidth, mmHeight);
+          pdf.save(`famille-diop-${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+      } catch (error) {
+        console.error('Erreur export:', error);
+        alert('Une erreur est survenue lors de l\'exportation. Vérifiez la console.');
+      }
     };
 
     return () => {
       delete (window as any).__treeReset;
       delete (window as any).__treeFit;
       delete (window as any).__treeCenterOnNode;
-      // delete (window as any).__treeExport;
+      delete (window as any).__treeExport;
     };
-  }, [dimensions.width, dimensions.height]); 
+  }, [dimensions.width, dimensions.height, persons]); 
 
-  // --- Rendu des Liens (Même logique, ajustement des épaisseurs pour le style) ---
+  // --- RENDU DES LIENS ET NOEUDS (Reste identique) ---
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);
@@ -125,7 +221,7 @@ export const FamilyTreeCanvas = ({
     const linkEnter = linkSelection.enter().append("path")
       .attr("class", d => `link ${d.type}-link`)
       .attr("fill", "none")
-      .attr("stroke-width", d => d.type === "spouse" ? 2.5 : 1.5) // Spouse plus visible
+      .attr("stroke-width", d => d.type === "spouse" ? 2.5 : 1.5)
       .attr("stroke", d => d.type === "spouse" ? "hsl(var(--spouse-link))" : "hsl(var(--tree-link))")
       .attr("opacity", 0.6);
 
@@ -141,7 +237,6 @@ export const FamilyTreeCanvas = ({
       });
   }, [links, dimensions]);
 
-  // --- Rendu des Noeuds ---
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);
@@ -156,7 +251,7 @@ export const FamilyTreeCanvas = ({
         event.stopPropagation();
         onNodeClick(d);
       })
-      .attr("transform", d => { // Apparition depuis le parent
+      .attr("transform", d => {
           const parent = persons.find(p => p.enfants.includes(d.name));
           return `translate(${parent?.x ?? d.x}, ${parent?.y ?? d.y})`;
       });
@@ -170,7 +265,6 @@ export const FamilyTreeCanvas = ({
     const nodeUpdate = nodeSelection.merge(nodeEnter);
     nodeUpdate.transition().duration(500).attr("transform", d => `translate(${d.x}, ${d.y})`);
     
-    // Mise à jour taille et contenu
     nodeUpdate.select("foreignObject")
       .attr("width", dimensions.nodeWidth).attr("height", dimensions.nodeHeight)
       .attr("x", -dimensions.nodeWidth / 2).attr("y", -dimensions.nodeHeight / 2)

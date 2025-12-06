@@ -12,7 +12,6 @@ import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
 const getResponsiveDimensions = (): TreeDimensions => {
   const width = window.innerWidth;
-  // Dimensions "Goldilocks" (ni trop petit, ni trop grand)
   const isMobile = width < 640;
   const isTablet = width >= 640 && width < 1024;
 
@@ -64,8 +63,6 @@ export const FamilyTreeViewer = () => {
   const [isPersonInfoVisible, setIsPersonInfoVisible] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  // LE CORRECTIF : Ce ref empêche la boucle infinie
   const isFocusHandled = useRef(false);
 
   const updateTree = useCallback(() => {
@@ -88,32 +85,30 @@ export const FamilyTreeViewer = () => {
 
     window.addEventListener("resize", handleResize);
     
-    // Centrage initial
+    // MODIFICATION ICI : On appelle juste resize, mais PLUS handleFit() par défaut.
+    // L'arbre se positionnera selon le __treeReset (racine en haut, centré horizontalement)
     setTimeout(() => {
         handleResize();
-        if ((window as any).__treeFit) (window as any).__treeFit();
+        if ((window as any).__treeReset) (window as any).__treeReset();
     }, 200);
 
     return () => window.removeEventListener("resize", handleResize);
   }, [engine]);
 
-  // Update quand l'état change
   useEffect(() => {
     updateTree();
   }, [updateTree]);
 
-  // GESTION DU FOCUS URL (Corrigée)
+  // GESTION DU FOCUS URL
   useEffect(() => {
     const focusName = searchParams.get("focus");
     
-    // On ne lance la logique QUE si on n'a pas déjà géré le focus
     if (focusName && allPersons.length > 0 && !isFocusHandled.current) {
       const targetPerson = allPersons.find(
         p => p.name.toLowerCase() === focusName.toLowerCase()
       );
 
       if (targetPerson) {
-        // Marquer comme géré pour ne plus jamais y revenir
         isFocusHandled.current = true;
 
         setTimeout(() => {
@@ -126,7 +121,6 @@ export const FamilyTreeViewer = () => {
               (window as any).__treeCenterOnNode(targetPerson);
             }
             
-            // Nettoyer l'URL proprement via React Router pour éviter que ça revienne
             setSearchParams({}, { replace: true });
         }, 500);
       }
@@ -134,7 +128,6 @@ export const FamilyTreeViewer = () => {
   }, [allPersons, searchParams, engine, updateTree, setSearchParams]);
 
   const handleNodeClick = (person: PersonNode) => {
-    // Si on clique, on est sûr que ce n'est plus le chargement initial
     isFocusHandled.current = true;
 
     if (selectedPerson?.name === person.name && person.enfants.length > 0) {
@@ -152,7 +145,6 @@ export const FamilyTreeViewer = () => {
       setIsPersonInfoVisible(true);
     }
 
-    // Petit centrage doux
     setTimeout(() => {
        if ((window as any).__treeCenterOnNode) {
           (window as any).__treeCenterOnNode(person);
@@ -160,9 +152,8 @@ export const FamilyTreeViewer = () => {
     }, 300);
   };
 
-  // ... (Le reste des handlers handleSearchSelect, etc. restent identiques)
   const handleSearchSelect = (person: PersonNode) => {
-    isFocusHandled.current = true; // Important aussi ici
+    isFocusHandled.current = true;
     engine.expandToRoot(person);
     updateTree();
     setSelectedPerson(person);
@@ -178,7 +169,7 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(null);
       setSelectedPerson2(null);
       setIsModePanelOpen(false);
-       setTimeout(() => handleFit(), 100);
+       setTimeout(() => handleReset(), 100); // Reset au lieu de Fit
     } else {
       setIsModePanelOpen(true);
     }
