@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom"; // IMPORT AJOUTÉ
+import { useSearchParams } from "react-router-dom";
 import { Header } from "./Header";
 import { PersonInfoPanel } from "./PersonInfoPanel";
 import { Legend } from "./Legend";
@@ -10,28 +10,47 @@ import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
 import { familyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
-// Enhanced responsive dimensions logic
+// NOUVELLE LOGIQUE RESPONSIVE (beaucoup plus compacte sur mobile)
 const getResponsiveDimensions = (): TreeDimensions => {
   const width = window.innerWidth;
   const height = window.innerHeight;
 
-  // Progressively scale down sizes for smaller screens
-  const scaleFactor = Math.min(1, width / 1280);
+  const isMobile = width < 768; // Tablette et moins
+  const isSmallMobile = width < 480; // Smartphones
 
-  const nodeWidth = Math.max(180, 240 * scaleFactor);
-  const nodeHeight = Math.max(120, 150 * scaleFactor);
-  const levelHeight = Math.max(220, 280 * scaleFactor);
-  const coupleSpacing = Math.max(20, 50 * scaleFactor);
-  const siblingSpacing = Math.max(40, 140 * scaleFactor);
+  if (isSmallMobile) {
+    return {
+      width,
+      height,
+      nodeWidth: 150, // Très compact
+      nodeHeight: 90,
+      levelHeight: 160,
+      coupleSpacing: 20,
+      siblingSpacing: 30,
+    };
+  }
 
+  if (isMobile) {
+    return {
+      width,
+      height,
+      nodeWidth: 180,
+      nodeHeight: 110,
+      levelHeight: 200,
+      coupleSpacing: 30,
+      siblingSpacing: 50,
+    };
+  }
+
+  // Desktop standard
   return {
-    width: width,
-    height: height, // Use full height for the canvas container
-    nodeWidth,
-    nodeHeight,
-    levelHeight,
-    coupleSpacing,
-    siblingSpacing,
+    width,
+    height,
+    nodeWidth: 240,
+    nodeHeight: 140,
+    levelHeight: 260,
+    coupleSpacing: 60,
+    siblingSpacing: 80,
   };
 };
 
@@ -47,14 +66,15 @@ export const FamilyTreeViewer = () => {
   const [isModePanelOpen, setIsModePanelOpen] = useState(false);
   const [isPersonInfoVisible, setIsPersonInfoVisible] = useState(true);
 
-  // Hook pour lire les paramètres d'URL (pour le lien depuis Archives)
   const [searchParams] = useSearchParams();
 
   const updateTree = useCallback(() => {
+    // IMPORTANT : On s'assure que l'engine a les bonnes dimensions avant de calculer
+    engine.updateDimensions(dimensions);
     engine.updateVisibility(currentMode, selectedPerson || undefined, selectedPerson2 || undefined);
     engine.calculatePositions();
     setVisiblePersons([...engine.getVisiblePersons()]);
-  }, [engine, currentMode, selectedPerson, selectedPerson2]);
+  }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
 
   // Initial setup and resize handler
   useEffect(() => {
@@ -64,43 +84,39 @@ export const FamilyTreeViewer = () => {
     const handleResize = () => {
       const newDims = getResponsiveDimensions();
       setDimensions(newDims);
+      // L'effet updateTree se déclenchera automatiquement car 'dimensions' change
     };
 
     window.addEventListener("resize", handleResize);
-    handleResize(); // Initial call
+    
+    // Appel initial pour caler le layout
+    setTimeout(() => handleResize(), 100);
 
     return () => window.removeEventListener("resize", handleResize);
   }, [engine]);
 
-  // Update tree whenever dependencies change
   useEffect(() => {
     updateTree();
   }, [updateTree]);
 
-  // NOUVEAU : Effet pour gérer le "focus" depuis l'URL (Archives -> Arbre)
+  // Gestion du paramètre ?focus=Nom
   useEffect(() => {
     const focusName = searchParams.get("focus");
-    // On vérifie si on a un paramètre focus et si les personnes sont chargées
     if (focusName && allPersons.length > 0) {
       const targetPerson = allPersons.find(
         p => p.name.toLowerCase() === focusName.toLowerCase()
       );
 
       if (targetPerson) {
-        // Petit délai pour assurer que le canvas est prêt
         setTimeout(() => {
-            // On utilise la logique de recherche existante pour centrer/ouvrir
             engine.expandToRoot(targetPerson);
             updateTree();
             setSelectedPerson(targetPerson);
             setIsPersonInfoVisible(true);
             
-            // On centre la vue via la fonction globale exposée par le Canvas
             if ((window as any).__treeCenterOnNode) {
               (window as any).__treeCenterOnNode(targetPerson);
             }
-
-            // Optionnel : Nettoyer l'URL pour ne pas re-zoomer si on rafraichit la page
             const newUrl = window.location.pathname;
             window.history.replaceState({}, '', newUrl);
         }, 500);
@@ -122,13 +138,11 @@ export const FamilyTreeViewer = () => {
   };
 
   const handleNodeClick = (person: PersonNode) => {
-    // If clicking on the same person and they have children, toggle expansion
     if (selectedPerson?.name === person.name && person.enfants.length > 0) {
       engine.toggleExpand(person);
       updateTree();
       setTimeout(() => handleFit(), 550);
     } 
-    // If clicking on a different person with hidden children, auto-expand
     else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {
       setSelectedPerson(person);
       setIsPersonInfoVisible(true);
@@ -136,7 +150,6 @@ export const FamilyTreeViewer = () => {
       updateTree();
       setTimeout(() => handleFit(), 550);
     }
-    // Otherwise just select the person
     else {
       setSelectedPerson(person);
       setIsPersonInfoVisible(true);
@@ -149,7 +162,6 @@ export const FamilyTreeViewer = () => {
     setSelectedPerson(person);
     setIsPersonInfoVisible(true);
     
-    // Center view on the selected person
     setTimeout(() => {
       if ((window as any).__treeCenterOnNode) {
         (window as any).__treeCenterOnNode(person);
@@ -160,7 +172,7 @@ export const FamilyTreeViewer = () => {
   const handleToggleExpand = (person: PersonNode) => {
     engine.toggleExpand(person);
     updateTree();
-    setSelectedPerson(person); // Keep the panel open on the same person
+    setSelectedPerson(person); 
     setIsPersonInfoVisible(true);
      setTimeout(() => handleFit(), 550);
   };

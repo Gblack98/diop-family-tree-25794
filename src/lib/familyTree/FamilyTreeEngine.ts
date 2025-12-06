@@ -13,6 +13,11 @@ export class FamilyTreeEngine {
     this.identifySpouses();
   }
 
+  // NOUVEAU : Méthode essentielle pour le responsive
+  public updateDimensions(dimensions: TreeDimensions) {
+    this.dimensions = dimensions;
+  }
+
   private buildPersonMap() {
     this.allPersons.forEach((p) => {
       this.personMap.set(p.name, {
@@ -125,14 +130,12 @@ export class FamilyTreeEngine {
   private showAncestors(person: PersonNode) {
     person.visible = true;
 
-    // Only show direct parents (those who are actually parents of this person)
     person.parents.forEach((parentName) => {
       const parent = this.personMap.get(parentName);
       if (parent) {
         parent.visible = true;
         this.showAncestors(parent);
         
-        // Only show the other parent if they share this person as a child
         person.parents.forEach((otherParentName) => {
           if (otherParentName !== parentName) {
             const otherParent = this.personMap.get(otherParentName);
@@ -148,13 +151,11 @@ export class FamilyTreeEngine {
   private showDescendants(person: PersonNode) {
     person.visible = true;
 
-    // Show children and recurse
     person.enfants.forEach((childName) => {
       const child = this.personMap.get(childName);
       if (child) {
         child.visible = true;
         
-        // Show both parents of this child (to see the couple)
         child.parents.forEach((parentName) => {
           const parent = this.personMap.get(parentName);
           if (parent) {
@@ -162,7 +163,6 @@ export class FamilyTreeEngine {
           }
         });
         
-        // Recurse to show descendants of this child
         this.showDescendants(child);
       }
     });
@@ -177,7 +177,6 @@ export class FamilyTreeEngine {
       if (person) {
         person.visible = true;
         
-        // Only show spouses if they are also in the path
         person.spouses.forEach((spouseName) => {
           if (pathSet.has(spouseName)) {
             const spouse = this.personMap.get(spouseName);
@@ -233,18 +232,15 @@ export class FamilyTreeEngine {
     const arranged: { type: "single" | "couple"; people: PersonNode[]; hasChildren: boolean }[] = [];
     const used = new Set<string>();
 
-    // Group couples who have children together
     levelPeople.forEach((person) => {
       if (used.has(person.name)) return;
 
-      // Find spouse who shares children with this person
       let spouse: PersonNode | null = null;
       let hasChildren = false;
 
       for (const spouseName of person.spouses) {
         const potentialSpouse = this.personMap.get(spouseName);
         if (potentialSpouse && levelPeople.find((p) => p.name === spouseName) && !used.has(spouseName)) {
-          // Check if they share children
           const sharedChildren = person.enfants.filter((child) => 
             potentialSpouse.enfants.includes(child)
           );
@@ -326,7 +322,6 @@ export class FamilyTreeEngine {
         }
       });
 
-      // Show all spouse links for couples with shared children
       person.spouses.forEach((spouseName) => {
         const spouse = this.personMap.get(spouseName);
         if (spouse && spouse.visible) {
@@ -334,7 +329,6 @@ export class FamilyTreeEngine {
             spouse.enfants.includes(child)
           );
           
-          // Draw link if they share children (remove proximity constraint)
           if (sharedChildren.length > 0) {
             const pair = [person.name, spouseName].sort().join("|");
             if (!processedPairs.has(pair)) {
