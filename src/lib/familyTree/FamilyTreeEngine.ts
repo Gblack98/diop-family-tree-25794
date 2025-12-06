@@ -1,9 +1,12 @@
 import { Person, PersonNode, TreeLink, ViewMode, TreeDimensions } from "./types";
 
+export type TreeOrientation = "vertical" | "horizontal";
+
 export class FamilyTreeEngine {
   private personMap: Map<string, PersonNode>;
   private allPersons: Person[];
   private dimensions: TreeDimensions;
+  private orientation: TreeOrientation = "vertical"; // Par défaut
 
   constructor(persons: Person[], dimensions: TreeDimensions) {
     this.allPersons = persons;
@@ -13,9 +16,13 @@ export class FamilyTreeEngine {
     this.identifySpouses();
   }
 
-  // NOUVEAU : Méthode essentielle pour le responsive
   public updateDimensions(dimensions: TreeDimensions) {
     this.dimensions = dimensions;
+  }
+
+  // NOUVEAU : Changer l'orientation (Desktop vs Mobile)
+  public setOrientation(orientation: TreeOrientation) {
+    this.orientation = orientation;
   }
 
   private buildPersonMap() {
@@ -266,33 +273,63 @@ export class FamilyTreeEngine {
       }
     });
 
-    let currentX = 0;
+    // "currentSpread" représente l'étalement (Largeur en Vertical, Hauteur en Horizontal)
+    let currentSpread = 0;
 
     arranged.forEach((group) => {
       if (group.type === "couple") {
         const [person1, person2] = group.people;
-        person1.x = currentX;
-        person2.x = currentX + this.dimensions.nodeWidth + this.dimensions.coupleSpacing;
-        person1.y = level * this.dimensions.levelHeight;
-        person2.y = level * this.dimensions.levelHeight;
-        currentX +=
-          this.dimensions.nodeWidth * 2 +
-          this.dimensions.coupleSpacing +
-          this.dimensions.siblingSpacing;
+        
+        if (this.orientation === "vertical") {
+            // MODE STANDARD (HAUT -> BAS)
+            person1.x = currentSpread;
+            person2.x = currentSpread + this.dimensions.nodeWidth + this.dimensions.coupleSpacing;
+            person1.y = level * this.dimensions.levelHeight;
+            person2.y = level * this.dimensions.levelHeight;
+            
+            currentSpread += this.dimensions.nodeWidth * 2 + this.dimensions.coupleSpacing + this.dimensions.siblingSpacing;
+        } else {
+            // MODE MOBILE (GAUCHE -> DROITE)
+            // Ici on inverse : X dépend du niveau, Y dépend du Spread
+            person1.x = level * this.dimensions.levelHeight; // levelHeight devient "LevelWidth" ici
+            person2.x = level * this.dimensions.levelHeight;
+            
+            person1.y = currentSpread;
+            person2.y = currentSpread + this.dimensions.nodeHeight + this.dimensions.coupleSpacing; // Hauteur des noeuds s'empile
+
+            currentSpread += this.dimensions.nodeHeight * 2 + this.dimensions.coupleSpacing + this.dimensions.siblingSpacing;
+        }
+
       } else {
         const person = group.people[0];
-        person.x = currentX;
-        person.y = level * this.dimensions.levelHeight;
-        currentX += this.dimensions.nodeWidth + this.dimensions.siblingSpacing;
+        
+        if (this.orientation === "vertical") {
+            person.x = currentSpread;
+            person.y = level * this.dimensions.levelHeight;
+            currentSpread += this.dimensions.nodeWidth + this.dimensions.siblingSpacing;
+        } else {
+            person.x = level * this.dimensions.levelHeight;
+            person.y = currentSpread;
+            currentSpread += this.dimensions.nodeHeight + this.dimensions.siblingSpacing;
+        }
       }
     });
 
+    // Centrage du groupe
     const allPeople = arranged.flatMap((g) => g.people);
     if (allPeople.length > 0) {
-      const minX = Math.min(...allPeople.map((p) => p.x));
-      const maxX = Math.max(...allPeople.map((p) => p.x));
-      const offset = -(minX + maxX) / 2;
-      allPeople.forEach((p) => (p.x += offset));
+      if (this.orientation === "vertical") {
+          const minX = Math.min(...allPeople.map((p) => p.x));
+          const maxX = Math.max(...allPeople.map((p) => p.x));
+          const offset = -(minX + maxX) / 2;
+          allPeople.forEach((p) => (p.x += offset));
+      } else {
+          // Centrage vertical en mode horizontal
+          const minY = Math.min(...allPeople.map((p) => p.y));
+          const maxY = Math.max(...allPeople.map((p) => p.y));
+          const offset = -(minY + maxY) / 2;
+          allPeople.forEach((p) => (p.y += offset));
+      }
     }
   }
 
