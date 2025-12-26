@@ -6,6 +6,7 @@ import { Legend } from "./Legend";
 import { ModePanel } from "./ModePanel";
 import { FamilyTreeCanvas } from "./FamilyTreeCanvas";
 import { Dedication } from "./Dedication";
+import { FamilyDetailModal } from "./FamilyDetailModal";
 import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
 import { familyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
@@ -65,6 +66,7 @@ export const FamilyTreeViewer = () => {
   const [allPersons, setAllPersons] = useState<PersonNode[]>([]);
   const [isModePanelOpen, setIsModePanelOpen] = useState(false);
   const [isPersonInfoVisible, setIsPersonInfoVisible] = useState(false);
+  const [largeFamilyPerson, setLargeFamilyPerson] = useState<PersonNode | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const isFocusHandled = useRef(false);
@@ -132,6 +134,13 @@ export const FamilyTreeViewer = () => {
 
   const handleNodeClick = (person: PersonNode) => {
     isFocusHandled.current = true;
+
+    // Si c'est une grande famille (8+ enfants), ouvrir le modal
+    if (person.isLargeFamily) {
+      setLargeFamilyPerson(person);
+      return;
+    }
+
     if (selectedPerson?.name === person.name && person.enfants.length > 0) {
       engine.toggleExpand(person);
       updateTree();
@@ -256,6 +265,11 @@ export const FamilyTreeViewer = () => {
       />
 
       <Legend />
+
+      <FamilyDetailModal
+        person={largeFamilyPerson}
+        onClose={() => setLargeFamilyPerson(null)}
+      />
     </div>
   );
 };

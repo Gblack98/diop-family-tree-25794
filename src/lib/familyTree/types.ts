@@ -13,6 +13,7 @@ export interface PersonNode extends Person {
   spouses: string[];
   expanded: boolean;
   visible: boolean;
+  isLargeFamily?: boolean; // 8+ enfants - affichage dans modal séparé
 }
 
 export interface TreeLink {

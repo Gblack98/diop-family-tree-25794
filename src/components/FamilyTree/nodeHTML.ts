@@ -1,7 +1,7 @@
 import { PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
 export function createNodeHTML(
-  person: PersonNode, 
+  person: PersonNode,
   selectedPerson: PersonNode | null,
   dimensions: TreeDimensions
 ): string {
@@ -9,6 +9,7 @@ export function createNodeHTML(
   const childCount = person.enfants.length;
   const hasHiddenChildren = childCount > 0 && !person.expanded;
   const isSelected = selectedPerson?.name === person.name;
+  const isLargeFamily = person.isLargeFamily; // 8+ enfants
 
   // Si < 150px, on considère que c'est un badge mobile
   const isBadge = dimensions.nodeWidth < 150;
@@ -77,6 +78,17 @@ export function createNodeHTML(
             font-weight: bold;
             z-index: 10;
           ">+</div>
+        ` : ''}
+        ${isLargeFamily ? `
+          <div style="
+            position: absolute; bottom: -2px; right: -2px;
+            background: hsl(30 100% 50%); color: white;
+            width: 16px; height: 16px; border-radius: 50%;
+            font-size: 9px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          ">👥</div>
         ` : ''}
       </div>
     `;
@@ -163,8 +175,21 @@ export function createNodeHTML(
           width: 20px; height: 20px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
           font-weight: bold; font-size: 10px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         ">+${childCount}</div>`
+          : ""
+      }
+      ${
+        isLargeFamily
+          ? `<div style="
+          position: absolute; bottom: 6px; right: 6px;
+          background: hsl(30 100% 50%); color: white;
+          width: 24px; height: 24px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-weight: bold; font-size: 12px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          cursor: pointer;
+        ">👥</div>`
           : ""
       }
     </div>
