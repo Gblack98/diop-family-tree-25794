@@ -216,28 +216,34 @@ export class FamilyTreeEngine {
   }
 
   private arrangeLevelPeople(levelPeople: PersonNode[], level: number) {
-    const arranged: { type: "single" | "couple"; people: PersonNode[] }[] = [];
+    // Calculate dynamic spacing based on family size - MORE AGGRESSIVE
+    const totalPeople = levelPeople.length;
+    const densityFactor = Math.max(0.3, 1 - (totalPeople * 0.02)); // More aggressive reduction
+
+    const dynamicSiblingSpacing = Math.max(10, this.dimensions.siblingSpacing * densityFactor);
+    const dynamicCoupleSpacing = Math.max(5, this.dimensions.coupleSpacing * densityFactor);
+
+    // Group people into family units (person + all their spouses as a vertical stack)
+    const arranged: { type: "single" | "polygamous"; people: PersonNode[] }[] = [];
     const used = new Set<string>();
 
-    // Grouper les couples
     levelPeople.forEach((person) => {
       if (used.has(person.name)) return;
 
-      let spouse: PersonNode | null = null;
+      // Find ALL spouses at this level (for polygamous families)
+      const spousesAtLevel: PersonNode[] = [];
       for (const spouseName of person.spouses) {
         const potentialSpouse = this.personMap.get(spouseName);
         if (potentialSpouse && levelPeople.find((p) => p.name === spouseName) && !used.has(spouseName)) {
-           // On considère couple s'ils ont des enfants visibles ou juste mariés
-           spouse = potentialSpouse;
-           break;
+          spousesAtLevel.push(potentialSpouse);
         }
       }
 
-      if (spouse) {
-        // En mode horizontal, on met l'homme au-dessus (ou premier trouvé)
-        arranged.push({ type: "couple", people: [person, spouse] });
+      if (spousesAtLevel.length > 0) {
+        // Polygamous or monogamous - stack vertically
+        arranged.push({ type: "polygamous", people: [person, ...spousesAtLevel] });
         used.add(person.name);
-        used.add(spouse.name);
+        spousesAtLevel.forEach(s => used.add(s.name));
       } else {
         arranged.push({ type: "single", people: [person] });
         used.add(person.name);
@@ -247,45 +253,46 @@ export class FamilyTreeEngine {
     let currentSpread = 0;
 
     arranged.forEach((group) => {
-      if (group.type === "couple") {
-        const [p1, p2] = group.people;
-        
+      if (group.type === "polygamous") {
+        // Stack all spouses vertically to save horizontal space
+        const stackHeight = this.dimensions.nodeHeight + 5; // ULTRA compact vertical spacing
+
         if (this.orientation === "vertical") {
-            // --- VERTICAL (Standard Desktop) ---
-            p1.x = currentSpread;
-            p2.x = currentSpread + this.dimensions.nodeWidth + this.dimensions.coupleSpacing;
-            p1.y = level * this.dimensions.levelHeight;
-            p2.y = level * this.dimensions.levelHeight;
-            currentSpread += (this.dimensions.nodeWidth * 2) + this.dimensions.coupleSpacing + this.dimensions.siblingSpacing;
+          // VERTICAL MODE: Stack spouses vertically
+          const centerY = level * this.dimensions.levelHeight;
+          const totalHeight = group.people.length * stackHeight;
+          const startY = centerY - (totalHeight / 2) + (stackHeight / 2);
+
+          group.people.forEach((person, index) => {
+            person.x = currentSpread;
+            person.y = startY + (index * stackHeight);
+          });
+
+          currentSpread += this.dimensions.nodeWidth + dynamicSiblingSpacing;
         } else {
-            // --- HORIZONTAL (Mobile Optimisé) ---
-            // On empile les époux verticalement pour gagner de la place en hauteur (Spread)
-            // X devient le niveau (Profondeur)
-            const levelX = level * this.dimensions.levelHeight; // Ecartement horizontal des générations
+          // HORIZONTAL MODE: Keep vertical stacking
+          const levelX = level * this.dimensions.levelHeight;
 
-            p1.x = levelX;
-            p1.y = currentSpread;
-            
-            // Le conjoint est juste en dessous, collé
-            p2.x = levelX; 
-            p2.y = currentSpread + this.dimensions.nodeHeight + 5; // +5px mini marge
+          group.people.forEach((person, index) => {
+            person.x = levelX;
+            person.y = currentSpread + (index * stackHeight);
+          });
 
-            // On avance le curseur vertical (hauteur de 2 personnes + marge couple)
-            currentSpread += (this.dimensions.nodeHeight * 2) + 5 + this.dimensions.coupleSpacing;
+          currentSpread += (group.people.length * stackHeight) + dynamicCoupleSpacing;
         }
 
       } else {
+        // Single person
         const person = group.people[0];
-        
+
         if (this.orientation === "vertical") {
-            person.x = currentSpread;
-            person.y = level * this.dimensions.levelHeight;
-            currentSpread += this.dimensions.nodeWidth + this.dimensions.siblingSpacing;
+          person.x = currentSpread;
+          person.y = level * this.dimensions.levelHeight;
+          currentSpread += this.dimensions.nodeWidth + dynamicSiblingSpacing;
         } else {
-            // Horizontal Single
-            person.x = level * this.dimensions.levelHeight;
-            person.y = currentSpread;
-            currentSpread += this.dimensions.nodeHeight + this.dimensions.siblingSpacing;
+          person.x = level * this.dimensions.levelHeight;
+          person.y = currentSpread;
+          currentSpread += this.dimensions.nodeHeight + dynamicSiblingSpacing;
         }
       }
     });
@@ -312,30 +319,20 @@ export class FamilyTreeEngine {
 
   public getLinks(): TreeLink[] {
     const links: TreeLink[] = [];
-    const processedPairs = new Set<string>();
     const visiblePersons = this.getVisiblePersons();
 
     visiblePersons.forEach((person) => {
-      // Parent -> Enfant
+      // Parent -> Enfant UNIQUEMENT
+      // On ne dessine PAS les liens entre conjoints pour éviter l'encombrement
+      // L'empilement vertical montre déjà les relations conjugales
       person.enfants.forEach((childName) => {
         const child = this.personMap.get(childName);
         if (child && child.visible) {
           links.push({ source: person, target: child, type: "parent" });
         }
       });
-
-      // Conjoint <-> Conjoint
-      person.spouses.forEach((spouseName) => {
-        const spouse = this.personMap.get(spouseName);
-        if (spouse && spouse.visible) {
-            const pair = [person.name, spouseName].sort().join("|");
-            if (!processedPairs.has(pair)) {
-              processedPairs.add(pair);
-              links.push({ source: person, target: spouse, type: "spouse" });
-            }
-        }
-      });
     });
+
     return links;
   }
 

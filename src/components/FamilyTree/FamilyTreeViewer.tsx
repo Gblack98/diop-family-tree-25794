@@ -18,15 +18,15 @@ const getResponsiveDimensions = (): TreeDimensions => {
   const isTablet = width >= 640 && width < 1024;
 
   if (isMobile) {
-    // --- MODE MOBILE (Format Badge) ---
+    // --- MODE MOBILE (Ultra Compact) ---
     return {
       width,
       height,
-      nodeWidth: 110,  // Assez large pour le nom, assez petit pour l'écran
-      nodeHeight: 50,  // Hauteur minimale
-      levelHeight: 100, // Distance entre générations
-      coupleSpacing: 15,
-      siblingSpacing: 20, 
+      nodeWidth: 90,
+      nodeHeight: 40,
+      levelHeight: 120,
+      coupleSpacing: 5,
+      siblingSpacing: 12,
     };
   }
 
@@ -34,23 +34,23 @@ const getResponsiveDimensions = (): TreeDimensions => {
     return {
       width,
       height,
-      nodeWidth: 160,
-      nodeHeight: 80,
-      levelHeight: 180,
-      coupleSpacing: 30,
-      siblingSpacing: 40,
+      nodeWidth: 130,
+      nodeHeight: 55,
+      levelHeight: 150,
+      coupleSpacing: 8,
+      siblingSpacing: 20,
     };
   }
 
-  // Desktop Standard
+  // Desktop - ULTRA COMPACT pour familles nombreuses
   return {
     width,
     height,
-    nodeWidth: 240,
-    nodeHeight: 120,
-    levelHeight: 240,
-    coupleSpacing: 60,
-    siblingSpacing: 70,
+    nodeWidth: 160, // Beaucoup plus petit
+    nodeHeight: 70,  // Plus compact
+    levelHeight: 180, // Réduit pour moins d'espace vertical
+    coupleSpacing: 8,  // Très serré
+    siblingSpacing: 25, // Très réduit
   };
 };
 
