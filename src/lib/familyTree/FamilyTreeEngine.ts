@@ -70,8 +70,10 @@ export class FamilyTreeEngine {
     const expandTo = (person: PersonNode, maxGen: number) => {
       if (person.level >= maxGen) return;
 
-      // Expand all families regardless of size
-      person.expanded = true;
+      // Collapse intelligent : familles 15+ enfants restent collapsed
+      // pour maintenir la lisibilité de l'arbre
+      const isVeryLargeFamily = person.enfants.length >= 15;
+      person.expanded = !isVeryLargeFamily;
 
       person.enfants.forEach((childName) => {
         const child = this.personMap.get(childName);

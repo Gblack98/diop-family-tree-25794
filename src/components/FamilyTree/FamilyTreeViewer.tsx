@@ -86,8 +86,9 @@ export const FamilyTreeViewer = () => {
   }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
 
   useEffect(() => {
-    // Expand toutes les générations par défaut (sauf grandes familles)
-    engine.initializeExpanded(100);
+    // Expansion intelligente : seulement 2 premières générations pour lisibilité
+    // Les familles nombreuses (15+) restent collapsed même dans ces générations
+    engine.initializeExpanded(2);
     setAllPersons(engine.getAllPersons());
 
     const handleResize = () => {
@@ -140,35 +141,11 @@ export const FamilyTreeViewer = () => {
     setSelectedPerson(person);
     setIsPersonInfoVisible(true);
 
-    // Expand la personne pour montrer ses enfants
-    if (!person.expanded && person.enfants.length > 0) {
+    // Toggle expansion : cliquer expand/collapse la personne et ses enfants
+    if (person.enfants.length > 0) {
       engine.toggleExpand(person);
+      updateTree();
     }
-
-    // Expand aussi les relations (parents, conjoints) pour tout montrer
-    person.parents.forEach(parentName => {
-      const parent = engine.getPerson(parentName);
-      if (parent && !parent.expanded && parent.enfants.length > 0) {
-        engine.toggleExpand(parent);
-      }
-    });
-
-    person.spouses.forEach(spouseName => {
-      const spouse = engine.getPerson(spouseName);
-      if (spouse && !spouse.expanded && spouse.enfants.length > 0) {
-        engine.toggleExpand(spouse);
-      }
-    });
-
-    // Expand les enfants pour montrer leurs relations
-    person.enfants.forEach(childName => {
-      const child = engine.getPerson(childName);
-      if (child && !child.expanded && child.enfants.length > 0) {
-        engine.toggleExpand(child);
-      }
-    });
-
-    updateTree();
 
     // Recentrer sur la personne
     setTimeout(() => {
