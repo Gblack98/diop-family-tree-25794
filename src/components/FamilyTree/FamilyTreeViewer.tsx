@@ -142,32 +142,16 @@ export const FamilyTreeViewer = () => {
   const handleNodeClick = useCallback((person: PersonNode) => {
     isFocusHandled.current = true;
 
-    // Si c'est une grande famille (8+ enfants), ouvrir le modal
-    if (person.isLargeFamily) {
-      setLargeFamilyPerson(person);
-      return;
-    }
+    // Pour TOUTE personne : ouvrir le modal de détails
+    // Cela montre conjoints, enfants et parents de façon organisée
+    setLargeFamilyPerson(person);
+    setSelectedPerson(person);
 
-    if (selectedPerson?.name === person.name && person.enfants.length > 0) {
-      engine.toggleExpand(person);
-      updateTree();
-    }
-    else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {
-      setSelectedPerson(person);
-      setIsPersonInfoVisible(true);
-      engine.toggleExpand(person);
-      updateTree();
-    }
-    else {
-      setSelectedPerson(person);
-      setIsPersonInfoVisible(true);
-    }
-
-    // Petit recentrage doux
+    // Recentrer sur la personne
     setTimeout(() => {
        if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
     }, 300);
-  }, [selectedPerson, engine, updateTree]);
+  }, []);
 
   const handleSearchSelect = useCallback((person: PersonNode) => {
     isFocusHandled.current = true;
