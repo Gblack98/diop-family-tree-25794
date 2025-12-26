@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "./Header";
 import { PersonInfoPanel } from "./PersonInfoPanel";
@@ -6,6 +6,7 @@ import { Legend } from "./Legend";
 import { ModePanel } from "./ModePanel";
 import { FamilyTreeCanvas } from "./FamilyTreeCanvas";
 import { Dedication } from "./Dedication";
+import { FamilyDetailModal } from "./FamilyDetailModal";
 import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
 import { familyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
@@ -18,15 +19,15 @@ const getResponsiveDimensions = (): TreeDimensions => {
   const isTablet = width >= 640 && width < 1024;
 
   if (isMobile) {
-    // --- MODE MOBILE (Format Badge) ---
+    // --- MODE MOBILE (Ultra Compact) ---
     return {
       width,
       height,
-      nodeWidth: 110,  // Assez large pour le nom, assez petit pour l'écran
-      nodeHeight: 50,  // Hauteur minimale
-      levelHeight: 100, // Distance entre générations
-      coupleSpacing: 15,
-      siblingSpacing: 20, 
+      nodeWidth: 90,
+      nodeHeight: 40,
+      levelHeight: 120,
+      coupleSpacing: 5,
+      siblingSpacing: 12,
     };
   }
 
@@ -34,23 +35,23 @@ const getResponsiveDimensions = (): TreeDimensions => {
     return {
       width,
       height,
-      nodeWidth: 160,
-      nodeHeight: 80,
-      levelHeight: 180,
-      coupleSpacing: 30,
-      siblingSpacing: 40,
+      nodeWidth: 130,
+      nodeHeight: 55,
+      levelHeight: 150,
+      coupleSpacing: 8,
+      siblingSpacing: 20,
     };
   }
 
-  // Desktop Standard
+  // Desktop - ULTRA COMPACT pour familles nombreuses
   return {
     width,
     height,
-    nodeWidth: 240,
-    nodeHeight: 120,
-    levelHeight: 240,
-    coupleSpacing: 60,
-    siblingSpacing: 70,
+    nodeWidth: 160, // Beaucoup plus petit
+    nodeHeight: 70,  // Plus compact
+    levelHeight: 180, // Réduit pour moins d'espace vertical
+    coupleSpacing: 8,  // Très serré
+    siblingSpacing: 25, // Très réduit
   };
 };
 
@@ -65,6 +66,7 @@ export const FamilyTreeViewer = () => {
   const [allPersons, setAllPersons] = useState<PersonNode[]>([]);
   const [isModePanelOpen, setIsModePanelOpen] = useState(false);
   const [isPersonInfoVisible, setIsPersonInfoVisible] = useState(false);
+  const [largeFamilyPerson, setLargeFamilyPerson] = useState<PersonNode | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const isFocusHandled = useRef(false);
@@ -84,29 +86,24 @@ export const FamilyTreeViewer = () => {
   }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
 
   useEffect(() => {
-    engine.initializeExpanded(3);
+    // Expansion intelligente : seulement 2 premières générations pour lisibilité
+    // Les familles nombreuses (15+) restent collapsed même dans ces générations
+    engine.initializeExpanded(2);
     setAllPersons(engine.getAllPersons());
 
-    let resizeTimeout: ReturnType<typeof setTimeout>;
     const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        setDimensions(getResponsiveDimensions());
-      }, 200); // Debounce resize events by 200ms
+      setDimensions(getResponsiveDimensions());
     };
 
     window.addEventListener("resize", handleResize);
-
+    
     // Centrage initial au chargement
     setTimeout(() => {
-        setDimensions(getResponsiveDimensions());
+        handleResize();
         if ((window as any).__treeReset) (window as any).__treeReset();
     }, 300);
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      clearTimeout(resizeTimeout);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, [engine]);
 
   useEffect(() => {
@@ -139,26 +136,22 @@ export const FamilyTreeViewer = () => {
 
   const handleNodeClick = useCallback((person: PersonNode) => {
     isFocusHandled.current = true;
-    if (selectedPerson?.name === person.name && person.enfants.length > 0) {
+
+    // Afficher le PersonInfoPanel
+    setSelectedPerson(person);
+    setIsPersonInfoVisible(true);
+
+    // Toggle expansion : cliquer expand/collapse la personne et ses enfants
+    if (person.enfants.length > 0) {
       engine.toggleExpand(person);
       updateTree();
-    }
-    else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {
-      setSelectedPerson(person);
-      setIsPersonInfoVisible(true);
-      engine.toggleExpand(person);
-      updateTree();
-    }
-    else {
-      setSelectedPerson(person);
-      setIsPersonInfoVisible(true);
     }
 
-    // Petit recentrage doux
+    // Recentrer sur la personne
     setTimeout(() => {
        if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
     }, 300);
-  }, [selectedPerson, engine, updateTree]);
+  }, [engine, updateTree]);
 
   const handleSearchSelect = useCallback((person: PersonNode) => {
     isFocusHandled.current = true;
@@ -171,19 +164,22 @@ export const FamilyTreeViewer = () => {
     }, 100);
   }, [engine, updateTree]);
 
+  // Declare these handlers first since they're used as dependencies
+  const handleReset = useCallback(() => { if ((window as any).__treeReset) (window as any).__treeReset(); }, []);
+  const handleFit = useCallback(() => { if ((window as any).__treeFit) (window as any).__treeFit(); }, []);
+  const handleExport = useCallback((format: 'png' | 'pdf') => { if ((window as any).__treeExport) (window as any).__treeExport(format); }, []);
+
   const handleModeChange = useCallback((mode: ViewMode) => {
     setCurrentMode(mode);
     if (mode === "tree") {
       setSelectedPerson(null);
       setSelectedPerson2(null);
       setIsModePanelOpen(false);
-       setTimeout(() => {
-         if ((window as any).__treeReset) (window as any).__treeReset();
-       }, 100);
+       setTimeout(() => handleReset(), 100);
     } else {
       setIsModePanelOpen(true);
     }
-  }, []);
+  }, [handleReset]);
 
   const handleToggleExpand = useCallback((person: PersonNode) => {
     engine.toggleExpand(person);
@@ -197,11 +193,9 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(person1);
       setSelectedPerson2(person2 || null);
       setIsModePanelOpen(false);
-      setTimeout(() => {
-        if ((window as any).__treeFit) (window as any).__treeFit();
-      }, 100);
+      setTimeout(() => handleFit(), 100);
     }
-  }, []);
+  }, [handleFit]);
 
   const handleModeCancel = useCallback(() => {
     setCurrentMode("tree");
@@ -217,27 +211,7 @@ export const FamilyTreeViewer = () => {
     }
   }, [currentMode, selectedPerson]);
 
-  const handleReset = useCallback(() => {
-    if ((window as any).__treeReset) (window as any).__treeReset();
-  }, []);
-
-  const handleFit = useCallback(() => {
-    if ((window as any).__treeFit) (window as any).__treeFit();
-  }, []);
-
-  const handleExport = useCallback((format: 'png' | 'pdf') => {
-    if ((window as any).__treeExport) (window as any).__treeExport(format);
-  }, []);
-
-  const generations = useMemo(
-    () => new Set(allPersons.map((p) => p.level)).size,
-    [allPersons]
-  );
-
-  const links = useMemo(
-    () => engine.getLinks(),
-    [visiblePersons] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+  const generations = useMemo(() => new Set(allPersons.map((p) => p.level)).size, [allPersons]);
 
   return (
     <div className="h-dvh w-dvw overflow-hidden bg-background font-sans relative">
@@ -251,14 +225,14 @@ export const FamilyTreeViewer = () => {
         onExport={handleExport}
         persons={allPersons}
         onSelectPerson={handleSearchSelect}
-      />
+      />  
 
       <Dedication />
 
       <main className="w-full h-full pt-[60px] pb-0">
         <FamilyTreeCanvas
           persons={visiblePersons}
-          links={links}
+          links={engine.getLinks()}
           dimensions={dimensions}
           selectedPerson={selectedPerson}
           onNodeClick={handleNodeClick}
@@ -283,6 +257,12 @@ export const FamilyTreeViewer = () => {
       />
 
       <Legend />
+
+      <FamilyDetailModal
+        person={largeFamilyPerson}
+        allPersons={allPersons}
+        onClose={() => setLargeFamilyPerson(null)}
+      />
     </div>
   );
 };

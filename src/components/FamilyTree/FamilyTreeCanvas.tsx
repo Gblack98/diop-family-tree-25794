@@ -58,17 +58,26 @@ export const FamilyTreeCanvas = ({
       if (!svgRef.current || !zoomRef.current || persons.length === 0) return;
       const svg = d3.select(svgRef.current);
 
-      const rootNode = persons.find(p => p.level === 0) || persons[0];
-      
-      // Zoom : 0.8 sur mobile pour bien voir les badges
-      const isMobile = dimensions.width < 640;
-      const initialScale = isMobile ? 0.8 : 0.9;
-      
-      // CENTRAGE :
-      // X : On prend le centre de l'écran, on retire la position de la racine (ajustée au zoom)
-      // Y : On laisse une marge de 50px en haut
-      const x = dimensions.width / 2 - (rootNode.x * initialScale);
-      const y = 50; 
+      // Trouver les limites de l'arbre
+      const minX = Math.min(...persons.map(p => p.x));
+      const maxX = Math.max(...persons.map(p => p.x));
+      const minY = Math.min(...persons.map(p => p.y));
+      const maxY = Math.max(...persons.map(p => p.y));
+
+      const treeWidth = maxX - minX + dimensions.nodeWidth;
+      const treeHeight = maxY - minY + dimensions.nodeHeight;
+
+      // Calculer le zoom pour que tout rentre avec marges
+      const scaleX = (dimensions.width - 100) / treeWidth;
+      const scaleY = (dimensions.height - 100) / treeHeight;
+      const initialScale = Math.min(scaleX, scaleY, 1); // Max 1 pour ne pas agrandir
+
+      // Centrer l'arbre
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+
+      const x = dimensions.width / 2 - (centerX * initialScale);
+      const y = dimensions.height / 2 - (centerY * initialScale);
 
       svg.transition().duration(750).call(
         zoomRef.current.transform,
@@ -85,39 +94,56 @@ export const FamilyTreeCanvas = ({
       try {
         const svg = svgRef.current;
         const g = gRef.current;
-        const bounds = g.getBBox();
-        if (bounds.width === 0) return;
+
+        // Trouver les vraies limites de TOUS les éléments visibles
+        const allNodes = g.querySelectorAll('.node');
+        if (allNodes.length === 0) return;
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+        allNodes.forEach((node: any) => {
+          const transform = node.getAttribute('transform');
+          const match = transform?.match(/translate\(([^,]+),([^)]+)\)/);
+          if (match) {
+            const x = parseFloat(match[1]);
+            const y = parseFloat(match[2]);
+            minX = Math.min(minX, x - dimensions.nodeWidth/2);
+            maxX = Math.max(maxX, x + dimensions.nodeWidth/2);
+            minY = Math.min(minY, y - dimensions.nodeHeight/2);
+            maxY = Math.max(maxY, y + dimensions.nodeHeight/2);
+          }
+        });
 
         const padding = 50;
-        const exportWidth = bounds.width + padding * 2;
-        const exportHeight = bounds.height + padding * 2;
-        
+        const exportWidth = maxX - minX + padding * 2;
+        const exportHeight = maxY - minY + padding * 2;
+
         const exportContainer = document.createElement('div');
         exportContainer.style.position = 'absolute';
         exportContainer.style.left = '-9999px';
         exportContainer.style.width = `${exportWidth}px`;
         exportContainer.style.height = `${exportHeight}px`;
-        exportContainer.style.backgroundColor = '#ffffff'; 
+        exportContainer.style.backgroundColor = '#ffffff';
         document.body.appendChild(exportContainer);
-        
+
         const clonedSvg = svg.cloneNode(true) as SVGSVGElement;
         clonedSvg.setAttribute('width', String(exportWidth));
         clonedSvg.setAttribute('height', String(exportHeight));
         clonedSvg.style.width = `${exportWidth}px`;
         clonedSvg.style.height = `${exportHeight}px`;
-        
+
         const clonedG = clonedSvg.querySelector('g');
         if (clonedG) {
-          const translateX = -bounds.x + padding;
-          const translateY = -bounds.y + padding;
-          clonedG.setAttribute('transform', `translate(${translateX}, ${translateY}) scale(1)`);
+          const translateX = -minX + padding;
+          const translateY = -minY + padding;
+          clonedG.setAttribute('transform', `translate(${translateX}, ${translateY})`);
         }
         exportContainer.appendChild(clonedSvg);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         const canvas = await html2canvas(exportContainer, { backgroundColor: '#ffffff', scale: 2 });
         document.body.removeChild(exportContainer);
-        
+
         if (format === 'png') {
           const link = document.createElement('a');
           link.download = `famille-diop-${new Date().toISOString().split('T')[0]}.png`;
@@ -125,7 +151,7 @@ export const FamilyTreeCanvas = ({
           link.click();
         } else {
           const imgData = canvas.toDataURL('image/png');
-          const mmWidth = canvas.width * 0.264583 / 2; 
+          const mmWidth = canvas.width * 0.264583 / 2;
           const mmHeight = canvas.height * 0.264583 / 2;
           const pdf = new jsPDF({
             orientation: mmWidth > mmHeight ? 'landscape' : 'portrait',
@@ -172,17 +198,6 @@ export const FamilyTreeCanvas = ({
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);
-
-    // Pre-compute parent map for O(1) lookups instead of O(n)
-    const parentMap = new Map<string, PersonNode>();
-    persons.forEach(p => {
-      p.enfants.forEach(childName => {
-        if (!parentMap.has(childName)) {
-          parentMap.set(childName, p);
-        }
-      });
-    });
-
     const nodeSelection = g.selectAll<SVGGElement, PersonNode>(".node").data(persons, d => d.name);
     nodeSelection.exit().transition().duration(300).attr("opacity", 0).remove();
     const nodeEnter = nodeSelection.enter().append("g")
@@ -190,7 +205,7 @@ export const FamilyTreeCanvas = ({
       .style("cursor", "pointer")
       .on("click", (event, d) => { event.stopPropagation(); onNodeClick(d); })
       .attr("transform", d => {
-          const parent = parentMap.get(d.name);
+          const parent = persons.find(p => p.enfants.includes(d.name));
           return `translate(${parent?.x ?? d.x}, ${parent?.y ?? d.y})`;
       });
     nodeEnter.append("foreignObject")
@@ -198,7 +213,7 @@ export const FamilyTreeCanvas = ({
       .attr("x", -dimensions.nodeWidth / 2).attr("y", -dimensions.nodeHeight / 2)
       .append("xhtml:div").attr("xmlns", "http://www.w3.org/1999/xhtml")
       .html(d => createNodeHTML(d, selectedPerson, dimensions));
-
+    
     const nodeUpdate = nodeSelection.merge(nodeEnter);
     nodeUpdate.transition().duration(500).attr("transform", d => `translate(${d.x}, ${d.y})`);
     nodeUpdate.select("foreignObject")
