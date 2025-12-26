@@ -70,12 +70,8 @@ export class FamilyTreeEngine {
     const expandTo = (person: PersonNode, maxGen: number) => {
       if (person.level >= maxGen) return;
 
-      // Ne pas auto-expand les familles nombreuses (8+ enfants)
-      // Elles s'ouvriront dans un modal séparé
-      const isLargeFamily = person.enfants.length >= 8;
-      if (!isLargeFamily) {
-        person.expanded = true;
-      }
+      // Expand all families regardless of size
+      person.expanded = true;
 
       person.enfants.forEach((childName) => {
         const child = this.personMap.get(childName);

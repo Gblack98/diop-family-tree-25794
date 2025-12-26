@@ -4,80 +4,81 @@
 
 @layer base {
   :root {
-    /* Fond : Un blanc cassé/crème très subtil, plus chaleureux que le blanc clinique */
-    --background: 30 15% 96%;
+    /* Fond : Gradient subtil moderne */
+    --background: 240 20% 98%;
     --foreground: 222 47% 11%;
 
-    /* Cartes : Blanc pur pour ressortir sur le fond crème */
+    /* Cartes : Blanc pur avec effet glassmorphism */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primaire : Un Vert "Héritage" profond */
-    --primary: 156 70% 30%; 
-    --primary-foreground: 210 40% 98%;
+    /* Primaire : Violet moderne et élégant */
+    --primary: 250 70% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 20% 90%; /* Beige sable */
+    --secondary: 240 20% 96%; /* Gris-bleu clair */
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96.1%;
+    --muted: 240 20% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 30 20% 92%; /* Accent chaud */
-    --accent-foreground: 222 47% 11%;
+    --accent: 250 70% 95%; /* Violet très clair */
+    --accent-foreground: 250 70% 40%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 156 70% 30%;
+    --border: 240 10% 92%;
+    --input: 240 10% 92%;
+    --ring: 250 70% 60%;
 
-    --radius: 0.75rem;
-    
-    /* Couleurs spécifiques Arbre */
-    --male: 200 80% 45%;   /* Bleu acier plus mature */
-    --female: 340 70% 65%; /* Rose vieux rose plus élégant */
-    
-    --tree-link: 30 10% 70%; /* Liens couleur pierre */
-    --spouse-link: 340 60% 65%;
+    --radius: 1rem;
+
+    /* Couleurs spécifiques Arbre - Dégradés vibrants */
+    --male: 250 70% 60%;   /* Violet moderne */
+    --female: 330 80% 65%; /* Rose vibrant */
+
+    --tree-link: 240 8% 75%; /* Gris doux pour les liens */
+    --spouse-link: 330 60% 70%; /* Rose pour conjoints */
   }
 
   .dark {
-    /* Mode sombre élégant (Gris ardoise profond) */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    /* Mode sombre moderne avec accents vibrants */
+    --background: 240 15% 10%;
+    --foreground: 0 0% 98%;
 
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 12% 14%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 12% 14%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 156 60% 45%;
-    --primary-foreground: 222 47.4% 11.2%;
+    --primary: 250 70% 65%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 12% 18%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 12% 18%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 250 70% 20%;
+    --accent-foreground: 250 70% 90%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 156 60% 45%;
-    
-    --male: 200 70% 55%;
-    --female: 340 60% 65%;
-    --tree-link: 215 20% 40%;
+    --border: 240 8% 22%;
+    --input: 240 8% 22%;
+    --ring: 250 70% 65%;
+
+    --male: 250 70% 65%;
+    --female: 330 80% 70%;
+    --tree-link: 240 5% 40%;
+    --spouse-link: 330 60% 60%;
   }
 }
 
