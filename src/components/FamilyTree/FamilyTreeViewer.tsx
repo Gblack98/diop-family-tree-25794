@@ -157,6 +157,11 @@ export const FamilyTreeViewer = () => {
     }, 100);
   }, [engine, updateTree]);
 
+  // Declare these handlers first since they're used as dependencies
+  const handleReset = useCallback(() => { if ((window as any).__treeReset) (window as any).__treeReset(); }, []);
+  const handleFit = useCallback(() => { if ((window as any).__treeFit) (window as any).__treeFit(); }, []);
+  const handleExport = useCallback((format: 'png' | 'pdf') => { if ((window as any).__treeExport) (window as any).__treeExport(format); }, []);
+
   const handleModeChange = useCallback((mode: ViewMode) => {
     setCurrentMode(mode);
     if (mode === "tree") {
@@ -198,10 +203,6 @@ export const FamilyTreeViewer = () => {
       setCurrentMode("tree");
     }
   }, [currentMode, selectedPerson]);
-
-  const handleReset = useCallback(() => { if ((window as any).__treeReset) (window as any).__treeReset(); }, []);
-  const handleFit = useCallback(() => { if ((window as any).__treeFit) (window as any).__treeFit(); }, []);
-  const handleExport = useCallback((format: 'png' | 'pdf') => { if ((window as any).__treeExport) (window as any).__treeExport(format); }, []);
 
   const generations = useMemo(() => new Set(allPersons.map((p) => p.level)).size, [allPersons]);
 
