@@ -172,6 +172,17 @@ export const FamilyTreeCanvas = ({
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);
+
+    // Pre-compute parent map for O(1) lookups instead of O(n)
+    const parentMap = new Map<string, PersonNode>();
+    persons.forEach(p => {
+      p.enfants.forEach(childName => {
+        if (!parentMap.has(childName)) {
+          parentMap.set(childName, p);
+        }
+      });
+    });
+
     const nodeSelection = g.selectAll<SVGGElement, PersonNode>(".node").data(persons, d => d.name);
     nodeSelection.exit().transition().duration(300).attr("opacity", 0).remove();
     const nodeEnter = nodeSelection.enter().append("g")
@@ -179,7 +190,7 @@ export const FamilyTreeCanvas = ({
       .style("cursor", "pointer")
       .on("click", (event, d) => { event.stopPropagation(); onNodeClick(d); })
       .attr("transform", d => {
-          const parent = persons.find(p => p.enfants.includes(d.name));
+          const parent = parentMap.get(d.name);
           return `translate(${parent?.x ?? d.x}, ${parent?.y ?? d.y})`;
       });
     nodeEnter.append("foreignObject")
@@ -187,7 +198,7 @@ export const FamilyTreeCanvas = ({
       .attr("x", -dimensions.nodeWidth / 2).attr("y", -dimensions.nodeHeight / 2)
       .append("xhtml:div").attr("xmlns", "http://www.w3.org/1999/xhtml")
       .html(d => createNodeHTML(d, selectedPerson, dimensions));
-    
+
     const nodeUpdate = nodeSelection.merge(nodeEnter);
     nodeUpdate.transition().duration(500).attr("transform", d => `translate(${d.x}, ${d.y})`);
     nodeUpdate.select("foreignObject")

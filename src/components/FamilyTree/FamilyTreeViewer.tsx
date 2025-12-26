@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "./Header";
 import { PersonInfoPanel } from "./PersonInfoPanel";
@@ -87,19 +87,26 @@ export const FamilyTreeViewer = () => {
     engine.initializeExpanded(3);
     setAllPersons(engine.getAllPersons());
 
+    let resizeTimeout: ReturnType<typeof setTimeout>;
     const handleResize = () => {
-      setDimensions(getResponsiveDimensions());
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        setDimensions(getResponsiveDimensions());
+      }, 200); // Debounce resize events by 200ms
     };
 
     window.addEventListener("resize", handleResize);
-    
+
     // Centrage initial au chargement
     setTimeout(() => {
-        handleResize();
+        setDimensions(getResponsiveDimensions());
         if ((window as any).__treeReset) (window as any).__treeReset();
     }, 300);
 
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(resizeTimeout);
+    };
   }, [engine]);
 
   useEffect(() => {
@@ -130,12 +137,12 @@ export const FamilyTreeViewer = () => {
     }
   }, [allPersons, searchParams, engine, updateTree, setSearchParams]);
 
-  const handleNodeClick = (person: PersonNode) => {
+  const handleNodeClick = useCallback((person: PersonNode) => {
     isFocusHandled.current = true;
     if (selectedPerson?.name === person.name && person.enfants.length > 0) {
       engine.toggleExpand(person);
       updateTree();
-    } 
+    }
     else if (selectedPerson?.name !== person.name && person.enfants.length > 0 && !person.expanded) {
       setSelectedPerson(person);
       setIsPersonInfoVisible(true);
@@ -146,14 +153,14 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson(person);
       setIsPersonInfoVisible(true);
     }
-    
+
     // Petit recentrage doux
     setTimeout(() => {
        if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
     }, 300);
-  };
+  }, [selectedPerson, engine, updateTree]);
 
-  const handleSearchSelect = (person: PersonNode) => {
+  const handleSearchSelect = useCallback((person: PersonNode) => {
     isFocusHandled.current = true;
     engine.expandToRoot(person);
     updateTree();
@@ -162,55 +169,75 @@ export const FamilyTreeViewer = () => {
     setTimeout(() => {
       if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
     }, 100);
-  };
+  }, [engine, updateTree]);
 
-  const handleModeChange = (mode: ViewMode) => {
+  const handleModeChange = useCallback((mode: ViewMode) => {
     setCurrentMode(mode);
     if (mode === "tree") {
       setSelectedPerson(null);
       setSelectedPerson2(null);
       setIsModePanelOpen(false);
-       setTimeout(() => handleReset(), 100);
+       setTimeout(() => {
+         if ((window as any).__treeReset) (window as any).__treeReset();
+       }, 100);
     } else {
       setIsModePanelOpen(true);
     }
-  };
+  }, []);
 
-  const handleToggleExpand = (person: PersonNode) => {
+  const handleToggleExpand = useCallback((person: PersonNode) => {
     engine.toggleExpand(person);
     updateTree();
-    setSelectedPerson(person); 
-    setIsPersonInfoVisible(true); 
-  };
+    setSelectedPerson(person);
+    setIsPersonInfoVisible(true);
+  }, [engine, updateTree]);
 
-  const handleModeApply = (person1?: PersonNode, person2?: PersonNode) => {
+  const handleModeApply = useCallback((person1?: PersonNode, person2?: PersonNode) => {
     if (person1) {
       setSelectedPerson(person1);
       setSelectedPerson2(person2 || null);
       setIsModePanelOpen(false);
-      setTimeout(() => handleFit(), 100);
+      setTimeout(() => {
+        if ((window as any).__treeFit) (window as any).__treeFit();
+      }, 100);
     }
-  };
+  }, []);
 
-  const handleModeCancel = () => {
+  const handleModeCancel = useCallback(() => {
     setCurrentMode("tree");
     setSelectedPerson(null);
     setSelectedPerson2(null);
     setIsModePanelOpen(false);
-  };
+  }, []);
 
-  const handleModePanelClose = () => {
+  const handleModePanelClose = useCallback(() => {
     setIsModePanelOpen(false);
     if (currentMode !== "tree" && !selectedPerson) {
       setCurrentMode("tree");
     }
-  };
+  }, [currentMode, selectedPerson]);
 
-  const handleReset = () => { if ((window as any).__treeReset) (window as any).__treeReset(); };
-  const handleFit = () => { if ((window as any).__treeFit) (window as any).__treeFit(); };
-  const handleExport = (format: 'png' | 'pdf') => { if ((window as any).__treeExport) (window as any).__treeExport(format); };
+  const handleReset = useCallback(() => {
+    if ((window as any).__treeReset) (window as any).__treeReset();
+  }, []);
 
-  const generations = new Set(allPersons.map((p) => p.level)).size;
+  const handleFit = useCallback(() => {
+    if ((window as any).__treeFit) (window as any).__treeFit();
+  }, []);
+
+  const handleExport = useCallback((format: 'png' | 'pdf') => {
+    if ((window as any).__treeExport) (window as any).__treeExport(format);
+  }, []);
+
+  const generations = useMemo(
+    () => new Set(allPersons.map((p) => p.level)).size,
+    [allPersons]
+  );
+
+  const links = useMemo(
+    () => engine.getLinks(),
+    [visiblePersons] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   return (
     <div className="h-dvh w-dvw overflow-hidden bg-background font-sans relative">
@@ -224,14 +251,14 @@ export const FamilyTreeViewer = () => {
         onExport={handleExport}
         persons={allPersons}
         onSelectPerson={handleSearchSelect}
-      />  
+      />
 
       <Dedication />
 
       <main className="w-full h-full pt-[60px] pb-0">
         <FamilyTreeCanvas
           persons={visiblePersons}
-          links={engine.getLinks()}
+          links={links}
           dimensions={dimensions}
           selectedPerson={selectedPerson}
           onNodeClick={handleNodeClick}
