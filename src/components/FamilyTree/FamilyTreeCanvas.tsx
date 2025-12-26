@@ -58,17 +58,26 @@ export const FamilyTreeCanvas = ({
       if (!svgRef.current || !zoomRef.current || persons.length === 0) return;
       const svg = d3.select(svgRef.current);
 
-      const rootNode = persons.find(p => p.level === 0) || persons[0];
-      
-      // Zoom : 0.8 sur mobile pour bien voir les badges
-      const isMobile = dimensions.width < 640;
-      const initialScale = isMobile ? 0.8 : 0.9;
-      
-      // CENTRAGE :
-      // X : On prend le centre de l'écran, on retire la position de la racine (ajustée au zoom)
-      // Y : On laisse une marge de 50px en haut
-      const x = dimensions.width / 2 - (rootNode.x * initialScale);
-      const y = 50; 
+      // Trouver les limites de l'arbre
+      const minX = Math.min(...persons.map(p => p.x));
+      const maxX = Math.max(...persons.map(p => p.x));
+      const minY = Math.min(...persons.map(p => p.y));
+      const maxY = Math.max(...persons.map(p => p.y));
+
+      const treeWidth = maxX - minX + dimensions.nodeWidth;
+      const treeHeight = maxY - minY + dimensions.nodeHeight;
+
+      // Calculer le zoom pour que tout rentre avec marges
+      const scaleX = (dimensions.width - 100) / treeWidth;
+      const scaleY = (dimensions.height - 100) / treeHeight;
+      const initialScale = Math.min(scaleX, scaleY, 1); // Max 1 pour ne pas agrandir
+
+      // Centrer l'arbre
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+
+      const x = dimensions.width / 2 - (centerX * initialScale);
+      const y = dimensions.height / 2 - (centerY * initialScale);
 
       svg.transition().duration(750).call(
         zoomRef.current.transform,

@@ -18,15 +18,15 @@ const getResponsiveDimensions = (): TreeDimensions => {
   const isTablet = width >= 640 && width < 1024;
 
   if (isMobile) {
-    // --- MODE MOBILE (Format Badge Compact) ---
+    // --- MODE MOBILE (Ultra Compact) ---
     return {
       width,
       height,
-      nodeWidth: 110,
-      nodeHeight: 45, // Plus compact pour empilage vertical
-      levelHeight: 150, // Augmenté pour l'empilage vertical des conjoints
-      coupleSpacing: 8, // Réduit car maintenant vertical
-      siblingSpacing: 15, // Plus compact horizontalement
+      nodeWidth: 90,
+      nodeHeight: 40,
+      levelHeight: 120,
+      coupleSpacing: 5,
+      siblingSpacing: 12,
     };
   }
 
@@ -34,23 +34,23 @@ const getResponsiveDimensions = (): TreeDimensions => {
     return {
       width,
       height,
-      nodeWidth: 160,
-      nodeHeight: 70, // Plus compact
-      levelHeight: 200, // Augmenté pour l'empilage
-      coupleSpacing: 12,
-      siblingSpacing: 30,
+      nodeWidth: 130,
+      nodeHeight: 55,
+      levelHeight: 150,
+      coupleSpacing: 8,
+      siblingSpacing: 20,
     };
   }
 
-  // Desktop - Optimisé pour familles nombreuses
+  // Desktop - ULTRA COMPACT pour familles nombreuses
   return {
     width,
     height,
-    nodeWidth: 220, // Légèrement réduit
-    nodeHeight: 100, // Plus compact
-    levelHeight: 280, // Augmenté pour l'empilage vertical
-    coupleSpacing: 15, // Réduit car vertical
-    siblingSpacing: 50, // Réduit pour économiser l'espace horizontal
+    nodeWidth: 160, // Beaucoup plus petit
+    nodeHeight: 70,  // Plus compact
+    levelHeight: 180, // Réduit pour moins d'espace vertical
+    coupleSpacing: 8,  // Très serré
+    siblingSpacing: 25, // Très réduit
   };
 };
 

@@ -237,12 +237,12 @@ export class FamilyTreeEngine {
   }
 
   private arrangeLevelPeople(levelPeople: PersonNode[], level: number) {
-    // Calculate dynamic spacing based on family size
+    // Calculate dynamic spacing based on family size - MORE AGGRESSIVE
     const totalPeople = levelPeople.length;
-    const densityFactor = Math.max(0.4, 1 - (totalPeople * 0.015)); // Reduce spacing for large families
+    const densityFactor = Math.max(0.3, 1 - (totalPeople * 0.02)); // More aggressive reduction
 
-    const dynamicSiblingSpacing = Math.max(20, this.dimensions.siblingSpacing * densityFactor);
-    const dynamicCoupleSpacing = Math.max(10, this.dimensions.coupleSpacing * densityFactor);
+    const dynamicSiblingSpacing = Math.max(10, this.dimensions.siblingSpacing * densityFactor);
+    const dynamicCoupleSpacing = Math.max(5, this.dimensions.coupleSpacing * densityFactor);
 
     // Group people into family units (person + all their spouses as a vertical stack)
     const arranged: { type: "single" | "polygamous"; people: PersonNode[] }[] = [];
@@ -276,7 +276,7 @@ export class FamilyTreeEngine {
     arranged.forEach((group) => {
       if (group.type === "polygamous") {
         // Stack all spouses vertically to save horizontal space
-        const stackHeight = this.dimensions.nodeHeight + 8; // Compact vertical spacing
+        const stackHeight = this.dimensions.nodeHeight + 5; // ULTRA compact vertical spacing
 
         if (this.orientation === "vertical") {
           // VERTICAL MODE: Stack spouses vertically
@@ -350,36 +350,20 @@ export class FamilyTreeEngine {
 
   public getLinks(): TreeLink[] {
     const links: TreeLink[] = [];
-    const processedPairs = new Set<string>();
     const visiblePersons = this.getVisiblePersons();
 
     visiblePersons.forEach((person) => {
-      // Parent -> Enfant
+      // Parent -> Enfant UNIQUEMENT
+      // On ne dessine PAS les liens entre conjoints pour éviter l'encombrement
+      // L'empilement vertical montre déjà les relations conjugales
       person.enfants.forEach((childName) => {
         const child = this.personMap.get(childName);
         if (child && child.visible) {
           links.push({ source: person, target: child, type: "parent" });
         }
       });
-
-      // Conjoint <-> Conjoint (only for spouses not vertically stacked)
-      person.spouses.forEach((spouseName) => {
-        const spouse = this.personMap.get(spouseName);
-        if (spouse && spouse.visible) {
-          const pair = person.name < spouseName ? `${person.name}|${spouseName}` : `${spouseName}|${person.name}`;
-          if (!processedPairs.has(pair)) {
-            processedPairs.add(pair);
-
-            // Only draw spouse links if they're not vertically stacked (same x position)
-            // Vertically stacked spouses are visually grouped, no link needed
-            const isVerticallyStacked = Math.abs(person.x - spouse.x) < 10;
-            if (!isVerticallyStacked) {
-              links.push({ source: person, target: spouse, type: "spouse" });
-            }
-          }
-        }
-      });
     });
+
     return links;
   }
 
