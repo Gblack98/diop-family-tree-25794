@@ -86,7 +86,8 @@ export const FamilyTreeViewer = () => {
   }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
 
   useEffect(() => {
-    engine.initializeExpanded(3);
+    // Expand toutes les générations par défaut (sauf grandes familles)
+    engine.initializeExpanded(100);
     setAllPersons(engine.getAllPersons());
 
     const handleResize = () => {
@@ -253,6 +254,7 @@ export const FamilyTreeViewer = () => {
 
       <FamilyDetailModal
         person={largeFamilyPerson}
+        allPersons={allPersons}
         onClose={() => setLargeFamilyPerson(null)}
       />
     </div>

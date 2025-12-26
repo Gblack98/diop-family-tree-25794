@@ -4,11 +4,16 @@ import { X, Users, Heart, Baby } from "lucide-react";
 
 interface FamilyDetailModalProps {
   person: PersonNode | null;
+  allPersons: PersonNode[];
   onClose: () => void;
 }
 
-export const FamilyDetailModal = ({ person, onClose }: FamilyDetailModalProps) => {
+export const FamilyDetailModal = ({ person, allPersons, onClose }: FamilyDetailModalProps) => {
   if (!person) return null;
+
+  // Create a map for quick lookup
+  const personMap = new Map<string, PersonNode>();
+  allPersons.forEach(p => personMap.set(p.name, p));
 
   const initial = person.name.charAt(0).toUpperCase();
   const avatarGradient = person.genre === "Homme"
@@ -39,14 +44,25 @@ export const FamilyDetailModal = ({ person, onClose }: FamilyDetailModalProps) =
                 Conjoint(s) ({person.spouses.length})
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {person.spouses.map((spouseName) => (
-                  <div key={spouseName} className="flex items-center gap-2 p-2 bg-background rounded border">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white font-bold text-sm">
-                      {spouseName.charAt(0).toUpperCase()}
+                {person.spouses.map((spouseName) => {
+                  const spouse = personMap.get(spouseName);
+                  const isHomme = spouse?.genre === "Homme";
+                  const roleLabel = isHomme ? "Mari" : "Épouse";
+                  const bgGradient = isHomme
+                    ? "bg-gradient-to-br from-blue-500 to-blue-700"
+                    : "bg-gradient-to-br from-pink-500 to-rose-600";
+                  return (
+                    <div key={spouseName} className="flex items-center gap-2 p-2 bg-background rounded border">
+                      <div className={`w-8 h-8 rounded-full ${bgGradient} flex items-center justify-center text-white font-bold text-sm`}>
+                        {spouseName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col flex-1">
+                        <span className="text-sm font-medium">{spouseName}</span>
+                        <span className="text-xs text-muted-foreground">{roleLabel}</span>
+                      </div>
                     </div>
-                    <span className="text-sm font-medium">{spouseName}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -57,16 +73,31 @@ export const FamilyDetailModal = ({ person, onClose }: FamilyDetailModalProps) =
               <Baby className="w-4 h-4" />
               Enfants ({person.enfants.length})
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {person.enfants.map((childName) => (
-                <div key={childName} className="flex items-center gap-2 p-2 bg-background rounded border hover:border-primary transition-colors cursor-default">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-sm">
-                    {childName.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium truncate">{childName}</span>
-                </div>
-              ))}
-            </div>
+            {person.enfants.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun enfant</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {person.enfants.map((childName) => {
+                  const child = personMap.get(childName);
+                  const isHomme = child?.genre === "Homme";
+                  const roleLabel = isHomme ? "Fils" : "Fille";
+                  const bgGradient = isHomme
+                    ? "bg-gradient-to-br from-blue-500 to-blue-700"
+                    : "bg-gradient-to-br from-pink-500 to-rose-600";
+                  return (
+                    <div key={childName} className="flex items-center gap-2 p-2 bg-background rounded border hover:border-primary transition-colors cursor-default">
+                      <div className={`w-8 h-8 rounded-full ${bgGradient} flex items-center justify-center text-white font-bold text-sm`}>
+                        {childName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-sm font-medium truncate">{childName}</span>
+                        <span className="text-xs text-muted-foreground">{roleLabel}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Parents */}
@@ -77,14 +108,25 @@ export const FamilyDetailModal = ({ person, onClose }: FamilyDetailModalProps) =
                 Parents ({person.parents.length})
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {person.parents.map((parentName) => (
-                  <div key={parentName} className="flex items-center gap-2 p-2 bg-background rounded border">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm">
-                      {parentName.charAt(0).toUpperCase()}
+                {person.parents.map((parentName) => {
+                  const parent = personMap.get(parentName);
+                  const isHomme = parent?.genre === "Homme";
+                  const roleLabel = isHomme ? "Père" : "Mère";
+                  const bgGradient = isHomme
+                    ? "bg-gradient-to-br from-blue-500 to-blue-700"
+                    : "bg-gradient-to-br from-pink-500 to-rose-600";
+                  return (
+                    <div key={parentName} className="flex items-center gap-2 p-2 bg-background rounded border">
+                      <div className={`w-8 h-8 rounded-full ${bgGradient} flex items-center justify-center text-white font-bold text-sm`}>
+                        {parentName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col flex-1">
+                        <span className="text-sm font-medium">{parentName}</span>
+                        <span className="text-xs text-muted-foreground">{roleLabel}</span>
+                      </div>
                     </div>
-                    <span className="text-sm font-medium">{parentName}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
