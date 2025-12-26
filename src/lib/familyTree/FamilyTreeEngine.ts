@@ -41,33 +41,26 @@ export class FamilyTreeEngine {
   }
 
   private identifySpouses() {
-    // Optimized O(n) implementation - identify spouses by children with multiple parents
-    const spouseMap = new Map<string, Set<string>>();
-
-    // Single pass: find all children with multiple parents
     this.allPersons.forEach((person) => {
-      if (person.parents && person.parents.length > 1) {
-        // This person has multiple parents - they are spouses
-        for (let i = 0; i < person.parents.length; i++) {
-          const parent1 = person.parents[i];
-          if (!spouseMap.has(parent1)) {
-            spouseMap.set(parent1, new Set());
+      if (person.enfants && person.enfants.length > 0) {
+        person.enfants.forEach((childName) => {
+          const child = this.personMap.get(childName);
+          if (child && child.parents && child.parents.length > 1) {
+            child.parents.forEach((parentName) => {
+              if (parentName !== person.name && this.personMap.has(parentName)) {
+                const personNode = this.personMap.get(person.name)!;
+                const parentNode = this.personMap.get(parentName)!;
+                
+                if (!personNode.spouses.includes(parentName)) {
+                  personNode.spouses.push(parentName);
+                }
+                if (!parentNode.spouses.includes(person.name)) {
+                  parentNode.spouses.push(person.name);
+                }
+              }
+            });
           }
-          // Add all other parents as spouses
-          for (let j = 0; j < person.parents.length; j++) {
-            if (i !== j) {
-              spouseMap.get(parent1)!.add(person.parents[j]);
-            }
-          }
-        }
-      }
-    });
-
-    // Apply spouse relationships to person nodes
-    spouseMap.forEach((spouses, personName) => {
-      const personNode = this.personMap.get(personName);
-      if (personNode) {
-        personNode.spouses = Array.from(spouses);
+        });
       }
     });
   }
@@ -148,18 +141,17 @@ export class FamilyTreeEngine {
 
   private showAncestors(person: PersonNode) {
     person.visible = true;
-    // Make all parents visible first (single pass)
     person.parents.forEach((parentName) => {
       const parent = this.personMap.get(parentName);
       if (parent) {
         parent.visible = true;
-      }
-    });
-    // Then recurse on each parent
-    person.parents.forEach((parentName) => {
-      const parent = this.personMap.get(parentName);
-      if (parent) {
         this.showAncestors(parent);
+        person.parents.forEach((otherParentName) => {
+          if (otherParentName !== parentName) {
+            const otherParent = this.personMap.get(otherParentName);
+            if (otherParent) otherParent.visible = true;
+          }
+        });
       }
     });
   }
@@ -197,31 +189,18 @@ export class FamilyTreeEngine {
   }
 
   private findPath(start: string, end: string): string[] {
-    // Optimized BFS using parent pointers instead of array spreading
-    const queue: string[] = [start];
+    const queue: string[][] = [[start]];
     const visited = new Set([start]);
-    const parentMap = new Map<string, string>();
-
     while (queue.length > 0) {
-      const current = queue.shift()!;
-      if (current === end) {
-        // Reconstruct path from parent pointers
-        const path: string[] = [];
-        let node: string | undefined = end;
-        while (node !== undefined) {
-          path.unshift(node);
-          node = parentMap.get(node);
-        }
-        return path;
-      }
-
+      const path = queue.shift()!;
+      const current = path[path.length - 1];
+      if (current === end) return path;
       const person = this.personMap.get(current)!;
       const neighbors = [...person.parents, ...person.enfants, ...person.spouses];
       for (const neighbor of neighbors) {
         if (!visited.has(neighbor)) {
           visited.add(neighbor);
-          parentMap.set(neighbor, current);
-          queue.push(neighbor);
+          queue.push([...path, neighbor]);
         }
       }
     }
@@ -338,23 +317,13 @@ export class FamilyTreeEngine {
     const allPeople = arranged.flatMap((g) => g.people);
     if (allPeople.length > 0) {
       if (this.orientation === "vertical") {
-          // Single pass to find both min and max
-          let minX = allPeople[0].x;
-          let maxX = allPeople[0].x;
-          for (let i = 1; i < allPeople.length; i++) {
-            if (allPeople[i].x < minX) minX = allPeople[i].x;
-            if (allPeople[i].x > maxX) maxX = allPeople[i].x;
-          }
+          const minX = Math.min(...allPeople.map((p) => p.x));
+          const maxX = Math.max(...allPeople.map((p) => p.x));
           const offset = -(minX + maxX) / 2;
           allPeople.forEach((p) => (p.x += offset));
       } else {
-          // Single pass to find both min and max
-          let minY = allPeople[0].y;
-          let maxY = allPeople[0].y;
-          for (let i = 1; i < allPeople.length; i++) {
-            if (allPeople[i].y < minY) minY = allPeople[i].y;
-            if (allPeople[i].y > maxY) maxY = allPeople[i].y;
-          }
+          const minY = Math.min(...allPeople.map((p) => p.y));
+          const maxY = Math.max(...allPeople.map((p) => p.y));
           const offset = -(minY + maxY) / 2;
           allPeople.forEach((p) => (p.y += offset));
       }
