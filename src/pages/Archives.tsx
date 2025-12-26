@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { archivesData, Archive } from "@/data/archivesData";
 import { ArchiveHeader } from "@/components/Archives/ArchiveHeader";
@@ -15,33 +15,44 @@ const normalizeText = (text: string) => {
     .replace(/[\u0300-\u036f]/g, "");
 };
 
+// Pre-normalize all archive content once at module load
+const normalizedArchives = archivesData.map(archive => ({
+  ...archive,
+  _normalizedContent: normalizeText([
+    archive.title,
+    archive.person,
+    archive.content,
+    archive.fullContent || "",
+    archive.date,
+    ...(archive.achievements || [])
+  ].join(" "))
+}));
+
 const Archives = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedArchive, setSelectedArchive] = useState<Archive | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search input
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
 
   const filteredArchives = useMemo(() => {
-    return archivesData.filter((archive) => {
+    return normalizedArchives.filter((archive) => {
       const matchesCategory = selectedCategory === "all" || archive.category === selectedCategory;
       if (!matchesCategory) return false;
 
-      if (!searchTerm.trim()) return true;
+      if (!debouncedSearch.trim()) return true;
 
-      const searchableContent = [
-        archive.title,
-        archive.person,
-        archive.content,
-        archive.fullContent || "",
-        archive.date,
-        ...(archive.achievements || [])
-      ].join(" ");
-
-      const normalizedContent = normalizeText(searchableContent);
-      const searchKeywords = normalizeText(searchTerm).split(" ").filter(Boolean);
-
-      return searchKeywords.every((keyword) => normalizedContent.includes(keyword));
+      const searchKeywords = normalizeText(debouncedSearch).split(" ").filter(Boolean);
+      return searchKeywords.every((keyword) => archive._normalizedContent.includes(keyword));
     });
-  }, [selectedCategory, searchTerm]);
+  }, [selectedCategory, debouncedSearch]);
 
   return (
     // CORRECTION ICI : h-dvh (hauteur écran) + overflow-y-auto (scroll autorisé)
@@ -56,15 +67,15 @@ const Archives = () => {
         <div className="max-w-xl mx-auto mb-8 relative group animate-in fade-in slide-in-from-top duration-500">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 group-focus-within:text-primary transition-colors" />
-            <Input 
-              placeholder="Rechercher (ex: 'Médecin 1972', 'Gabar Dakar')..." 
+            <Input
+              placeholder="Rechercher (ex: 'Médecin 1972', 'Gabar Dakar')..."
               className="pl-10 pr-10 bg-muted/50 border-muted-foreground/20 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all h-12 text-base shadow-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
-            {searchTerm && (
-              <button 
-                onClick={() => setSearchTerm("")}
+            {searchInput && (
+              <button
+                onClick={() => setSearchInput("")}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted transition-colors"
               >
                 <X className="h-4 w-4" />
@@ -97,9 +108,9 @@ const Archives = () => {
         {filteredArchives.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center animate-in fade-in zoom-in duration-300">
              <EmptyState />
-             {searchTerm && (
+             {debouncedSearch && (
                <p className="mt-4 text-muted-foreground">
-                 Aucun résultat pour "<span className="font-medium text-foreground">{searchTerm}</span>".
+                 Aucun résultat pour "<span className="font-medium text-foreground">{debouncedSearch}</span>".
                </p>
              )}
           </div>
