@@ -26,6 +26,7 @@ export class FamilyTreeEngine {
 
   private buildPersonMap() {
     this.allPersons.forEach((p) => {
+      const isLargeFamily = p.enfants.length >= 8;
       this.personMap.set(p.name, {
         ...p,
         level: p.generation,
@@ -34,6 +35,7 @@ export class FamilyTreeEngine {
         spouses: [],
         expanded: false,
         visible: false,
+        isLargeFamily,
       });
     });
   }
@@ -74,7 +76,14 @@ export class FamilyTreeEngine {
     const roots = Array.from(this.personMap.values()).filter((p) => p.level === 0);
     const expandTo = (person: PersonNode, maxGen: number) => {
       if (person.level >= maxGen) return;
-      person.expanded = true;
+
+      // Ne pas auto-expand les familles nombreuses (8+ enfants)
+      // Elles s'ouvriront dans un modal séparé
+      const isLargeFamily = person.enfants.length >= 8;
+      if (!isLargeFamily) {
+        person.expanded = true;
+      }
+
       person.enfants.forEach((childName) => {
         const child = this.personMap.get(childName);
         if (child) expandTo(child, maxGen);
