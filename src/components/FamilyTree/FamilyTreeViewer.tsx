@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "./Header";
 import { PersonInfoPanel } from "./PersonInfoPanel";
@@ -132,7 +132,7 @@ export const FamilyTreeViewer = () => {
     }
   }, [allPersons, searchParams, engine, updateTree, setSearchParams]);
 
-  const handleNodeClick = (person: PersonNode) => {
+  const handleNodeClick = useCallback((person: PersonNode) => {
     isFocusHandled.current = true;
 
     // Pour TOUTE personne : ouvrir le modal de détails
@@ -146,7 +146,7 @@ export const FamilyTreeViewer = () => {
     }, 300);
   }, []);
 
-  const handleSearchSelect = (person: PersonNode) => {
+  const handleSearchSelect = useCallback((person: PersonNode) => {
     isFocusHandled.current = true;
     engine.expandToRoot(person);
     updateTree();
@@ -155,9 +155,9 @@ export const FamilyTreeViewer = () => {
     setTimeout(() => {
       if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
     }, 100);
-  };
+  }, [engine, updateTree]);
 
-  const handleModeChange = (mode: ViewMode) => {
+  const handleModeChange = useCallback((mode: ViewMode) => {
     setCurrentMode(mode);
     if (mode === "tree") {
       setSelectedPerson(null);
@@ -167,43 +167,43 @@ export const FamilyTreeViewer = () => {
     } else {
       setIsModePanelOpen(true);
     }
-  };
+  }, [handleReset]);
 
-  const handleToggleExpand = (person: PersonNode) => {
+  const handleToggleExpand = useCallback((person: PersonNode) => {
     engine.toggleExpand(person);
     updateTree();
-    setSelectedPerson(person); 
-    setIsPersonInfoVisible(true); 
-  };
+    setSelectedPerson(person);
+    setIsPersonInfoVisible(true);
+  }, [engine, updateTree]);
 
-  const handleModeApply = (person1?: PersonNode, person2?: PersonNode) => {
+  const handleModeApply = useCallback((person1?: PersonNode, person2?: PersonNode) => {
     if (person1) {
       setSelectedPerson(person1);
       setSelectedPerson2(person2 || null);
       setIsModePanelOpen(false);
       setTimeout(() => handleFit(), 100);
     }
-  };
+  }, [handleFit]);
 
-  const handleModeCancel = () => {
+  const handleModeCancel = useCallback(() => {
     setCurrentMode("tree");
     setSelectedPerson(null);
     setSelectedPerson2(null);
     setIsModePanelOpen(false);
-  };
+  }, []);
 
-  const handleModePanelClose = () => {
+  const handleModePanelClose = useCallback(() => {
     setIsModePanelOpen(false);
     if (currentMode !== "tree" && !selectedPerson) {
       setCurrentMode("tree");
     }
-  };
+  }, [currentMode, selectedPerson]);
 
-  const handleReset = () => { if ((window as any).__treeReset) (window as any).__treeReset(); };
-  const handleFit = () => { if ((window as any).__treeFit) (window as any).__treeFit(); };
-  const handleExport = (format: 'png' | 'pdf') => { if ((window as any).__treeExport) (window as any).__treeExport(format); };
+  const handleReset = useCallback(() => { if ((window as any).__treeReset) (window as any).__treeReset(); }, []);
+  const handleFit = useCallback(() => { if ((window as any).__treeFit) (window as any).__treeFit(); }, []);
+  const handleExport = useCallback((format: 'png' | 'pdf') => { if ((window as any).__treeExport) (window as any).__treeExport(format); }, []);
 
-  const generations = new Set(allPersons.map((p) => p.level)).size;
+  const generations = useMemo(() => new Set(allPersons.map((p) => p.level)).size, [allPersons]);
 
   return (
     <div className="h-dvh w-dvw overflow-hidden bg-background font-sans relative">
