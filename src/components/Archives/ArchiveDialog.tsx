@@ -4,13 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Archive } from "@/data/archivesData";
 import { Network, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { ImageCarousel } from "./ImageCarousel";
 
 interface ArchiveDialogProps {
   archive: Archive;
@@ -58,39 +52,10 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
         </div>
       </DialogHeader>
       
-      {/* Zone Média : Image unique ou Carrousel */}
+      {/* Zone Média : Carousel d'images amélioré avec zoom et plein écran */}
       {displayImages.length > 0 && (
         <div className="mt-2 mb-4 w-full">
-          {displayImages.length === 1 ? (
-            <div className="aspect-video overflow-hidden rounded-lg border bg-muted shadow-sm">
-              <img 
-                src={displayImages[0]} 
-                alt={archive.title}
-                className="w-full h-full object-contain"
-              />
-            </div>
-          ) : (
-            <Carousel className="w-full relative group">
-              <CarouselContent>
-                {displayImages.map((img, index) => (
-                  <CarouselItem key={index}>
-                    <div className="aspect-video overflow-hidden rounded-lg border bg-muted shadow-sm flex items-center justify-center relative">
-                      <img 
-                        src={img} 
-                        alt={`${archive.title} - ${index + 1}`}
-                        className="w-full h-full object-contain"
-                      />
-                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-                        {index + 1} / {displayImages.length}
-                      </div>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white" />
-              <CarouselNext className="right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white" />
-            </Carousel>
-          )}
+          <ImageCarousel images={displayImages} title={archive.title} />
         </div>
       )}
       
