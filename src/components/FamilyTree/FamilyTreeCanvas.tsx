@@ -94,39 +94,56 @@ export const FamilyTreeCanvas = ({
       try {
         const svg = svgRef.current;
         const g = gRef.current;
-        const bounds = g.getBBox();
-        if (bounds.width === 0) return;
+
+        // Trouver les vraies limites de TOUS les éléments visibles
+        const allNodes = g.querySelectorAll('.node');
+        if (allNodes.length === 0) return;
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+        allNodes.forEach((node: any) => {
+          const transform = node.getAttribute('transform');
+          const match = transform?.match(/translate\(([^,]+),([^)]+)\)/);
+          if (match) {
+            const x = parseFloat(match[1]);
+            const y = parseFloat(match[2]);
+            minX = Math.min(minX, x - dimensions.nodeWidth/2);
+            maxX = Math.max(maxX, x + dimensions.nodeWidth/2);
+            minY = Math.min(minY, y - dimensions.nodeHeight/2);
+            maxY = Math.max(maxY, y + dimensions.nodeHeight/2);
+          }
+        });
 
         const padding = 50;
-        const exportWidth = bounds.width + padding * 2;
-        const exportHeight = bounds.height + padding * 2;
-        
+        const exportWidth = maxX - minX + padding * 2;
+        const exportHeight = maxY - minY + padding * 2;
+
         const exportContainer = document.createElement('div');
         exportContainer.style.position = 'absolute';
         exportContainer.style.left = '-9999px';
         exportContainer.style.width = `${exportWidth}px`;
         exportContainer.style.height = `${exportHeight}px`;
-        exportContainer.style.backgroundColor = '#ffffff'; 
+        exportContainer.style.backgroundColor = '#ffffff';
         document.body.appendChild(exportContainer);
-        
+
         const clonedSvg = svg.cloneNode(true) as SVGSVGElement;
         clonedSvg.setAttribute('width', String(exportWidth));
         clonedSvg.setAttribute('height', String(exportHeight));
         clonedSvg.style.width = `${exportWidth}px`;
         clonedSvg.style.height = `${exportHeight}px`;
-        
+
         const clonedG = clonedSvg.querySelector('g');
         if (clonedG) {
-          const translateX = -bounds.x + padding;
-          const translateY = -bounds.y + padding;
-          clonedG.setAttribute('transform', `translate(${translateX}, ${translateY}) scale(1)`);
+          const translateX = -minX + padding;
+          const translateY = -minY + padding;
+          clonedG.setAttribute('transform', `translate(${translateX}, ${translateY})`);
         }
         exportContainer.appendChild(clonedSvg);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         const canvas = await html2canvas(exportContainer, { backgroundColor: '#ffffff', scale: 2 });
         document.body.removeChild(exportContainer);
-        
+
         if (format === 'png') {
           const link = document.createElement('a');
           link.download = `famille-diop-${new Date().toISOString().split('T')[0]}.png`;
@@ -134,7 +151,7 @@ export const FamilyTreeCanvas = ({
           link.click();
         } else {
           const imgData = canvas.toDataURL('image/png');
-          const mmWidth = canvas.width * 0.264583 / 2; 
+          const mmWidth = canvas.width * 0.264583 / 2;
           const mmHeight = canvas.height * 0.264583 / 2;
           const pdf = new jsPDF({
             orientation: mmWidth > mmHeight ? 'landscape' : 'portrait',
