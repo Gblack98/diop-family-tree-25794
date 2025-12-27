@@ -42,6 +42,8 @@ export const PersonInfoPanel = ({
   onToggleExpand,
 }: PersonInfoPanelProps) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchOffset, setTouchOffset] = useState(0);
 
   // Animation d'entrée fluide
   useEffect(() => {
@@ -52,6 +54,31 @@ export const PersonInfoPanel = ({
       setIsVisible(false);
     }
   }, [person]);
+
+  // Swipe down to close (mobile only)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const currentTouch = e.touches[0].clientY;
+    const diff = currentTouch - touchStart;
+
+    // Only allow dragging down
+    if (diff > 0) {
+      setTouchOffset(diff);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    // If dragged down more than 100px, close the panel
+    if (touchOffset > 100) {
+      onClose();
+    }
+    setTouchOffset(0);
+    setTouchStart(null);
+  };
 
   if (!person) return null;
 
@@ -71,13 +98,13 @@ export const PersonInfoPanel = ({
       />
       
       {/* Container Principal : Drawer Mobile / Card Desktop */}
-      <div 
+      <div
         className={`
           fixed z-[60] bg-card border-border shadow-2xl flex flex-col
-          transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
-          
+          ${touchOffset === 0 ? "transition-transform duration-300" : ""} ease-[cubic-bezier(0.32,0.72,0,1)]
+
           /* MOBILE: Bottom Sheet (Tiroir du bas) */
-          bottom-0 left-0 right-0 
+          bottom-0 left-0 right-0
           rounded-t-2xl border-t
           max-h-[85dvh] h-auto
           ${isVisible ? "translate-y-0" : "translate-y-[100%]"}
@@ -88,11 +115,16 @@ export const PersonInfoPanel = ({
           sm:max-h-[80vh]
           sm:${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"}
         `}
+        style={{
+          transform: touchOffset > 0 ? `translateY(${touchOffset}px)` : undefined,
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Poignée Mobile (Indicateur de scroll) */}
-        <div 
-          className="w-full flex justify-center pt-3 pb-1 sm:hidden cursor-grab active:cursor-grabbing touch-none" 
-          onClick={onClose}
+        <div
+          className="w-full flex justify-center pt-3 pb-1 sm:hidden cursor-grab active:cursor-grabbing touch-none"
         >
           <div className="w-12 h-1.5 rounded-full bg-muted-foreground/20" />
         </div>
