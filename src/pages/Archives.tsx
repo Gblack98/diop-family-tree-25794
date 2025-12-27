@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/Archives/EmptyState";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X, ArrowUpDown, Grid3x3, List, Download } from "lucide-react";
+import { MobileBottomNav } from "@/components/FamilyTree/MobileBottomNav";
 import {
   Select,
   SelectContent,
@@ -32,6 +33,7 @@ const Archives = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [currentTreeMode, setCurrentTreeMode] = useState<"tree" | "ancestors" | "descendants" | "path">("tree");
 
   const filteredAndSortedArchives = useMemo(() => {
     let filtered = archivesData.filter((archive) => {
@@ -77,8 +79,8 @@ const Archives = () => {
   }, [selectedCategory, searchTerm, sortBy]);
 
   return (
-    // CORRECTION ICI : h-dvh (hauteur écran) + overflow-y-auto (scroll autorisé)
-    <div className="h-dvh w-full overflow-y-auto bg-background">
+    // CORRECTION ICI : h-dvh (hauteur écran) + overflow-y-auto (scroll autorisé) + pb-16 sur mobile pour bottom nav
+    <div className="h-dvh w-full overflow-y-auto bg-background pb-0 sm:pb-0 pb-16">
       <ArchiveHeader 
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
@@ -185,6 +187,11 @@ const Archives = () => {
           </div>
         )}
       </main>
+
+      <MobileBottomNav
+        currentMode={currentTreeMode}
+        onModeChange={(mode) => setCurrentTreeMode(mode as typeof currentTreeMode)}
+      />
     </div>
   );
 };

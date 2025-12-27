@@ -7,6 +7,8 @@ import { ModePanel } from "./ModePanel";
 import { FamilyTreeCanvas } from "./FamilyTreeCanvas";
 import { Dedication } from "./Dedication";
 import { FamilyDetailModal } from "./FamilyDetailModal";
+import { MobileTreeView } from "./MobileTreeView";
+import { MobileBottomNav } from "./MobileBottomNav";
 import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
 import { familyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
@@ -58,7 +60,8 @@ const getResponsiveDimensions = (): TreeDimensions => {
 export const FamilyTreeViewer = () => {
   const [dimensions, setDimensions] = useState(getResponsiveDimensions());
   const [engine] = useState(() => new FamilyTreeEngine(familyData, dimensions));
-  
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
   const [currentMode, setCurrentMode] = useState<ViewMode>("tree");
   const [selectedPerson, setSelectedPerson] = useState<PersonNode | null>(null);
   const [selectedPerson2, setSelectedPerson2] = useState<PersonNode | null>(null);
@@ -93,10 +96,11 @@ export const FamilyTreeViewer = () => {
 
     const handleResize = () => {
       setDimensions(getResponsiveDimensions());
+      setIsMobile(window.innerWidth < 640);
     };
 
     window.addEventListener("resize", handleResize);
-    
+
     // Centrage initial au chargement
     setTimeout(() => {
         handleResize();
@@ -229,16 +233,24 @@ export const FamilyTreeViewer = () => {
 
       <Dedication />
 
-      <main className="w-full h-full pt-[60px] pb-0">
-        <FamilyTreeCanvas
-          persons={visiblePersons}
-          links={engine.getLinks()}
-          dimensions={dimensions}
-          selectedPerson={selectedPerson}
-          onNodeClick={handleNodeClick}
-          onReset={handleReset}
-          onFitToScreen={handleFit}
-        />
+      <main className="w-full h-full pt-[60px] pb-0 sm:pb-0 pb-16">
+        {isMobile ? (
+          <MobileTreeView
+            persons={visiblePersons}
+            onPersonClick={handleNodeClick}
+            selectedPerson={selectedPerson}
+          />
+        ) : (
+          <FamilyTreeCanvas
+            persons={visiblePersons}
+            links={engine.getLinks()}
+            dimensions={dimensions}
+            selectedPerson={selectedPerson}
+            onNodeClick={handleNodeClick}
+            onReset={handleReset}
+            onFitToScreen={handleFit}
+          />
+        )}
       </main>
 
       <PersonInfoPanel
@@ -262,6 +274,11 @@ export const FamilyTreeViewer = () => {
         person={largeFamilyPerson}
         allPersons={allPersons}
         onClose={() => setLargeFamilyPerson(null)}
+      />
+
+      <MobileBottomNav
+        currentMode={currentMode}
+        onModeChange={handleModeChange}
       />
     </div>
   );
