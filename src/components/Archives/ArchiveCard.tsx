@@ -42,7 +42,7 @@ export const ArchiveCard = ({ archive, index, onClick }: ArchiveCardProps) => {
           <img
             src={archive.image || archive.images?.[0]}
             alt={archive.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-violet-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <ExternalLink className="absolute top-3 right-3 w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110 drop-shadow-lg" />
