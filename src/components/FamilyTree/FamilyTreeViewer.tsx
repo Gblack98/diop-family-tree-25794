@@ -21,15 +21,15 @@ const getResponsiveDimensions = (): TreeDimensions => {
   const isTablet = width >= 640 && width < 1024;
 
   if (isMobile) {
-    // --- MODE MOBILE (Ultra Compact) ---
+    // --- MODE MOBILE (Optimisé pour lisibilité tactile) ---
     return {
       width,
       height,
-      nodeWidth: 90,
-      nodeHeight: 40,
-      levelHeight: 120,
-      coupleSpacing: 5,
-      siblingSpacing: 12,
+      nodeWidth: 120,  // Plus large pour être touch-friendly
+      nodeHeight: 50,  // Plus haut pour meilleure lisibilité
+      levelHeight: 140, // Plus d'espace entre générations
+      coupleSpacing: 8,
+      siblingSpacing: 20, // Plus d'espace entre frères/soeurs
     };
   }
 
@@ -234,23 +234,15 @@ export const FamilyTreeViewer = () => {
       <Dedication />
 
       <main className="w-full h-full pt-[60px] pb-0 sm:pb-0 pb-16">
-        {isMobile ? (
-          <MobileTreeView
-            persons={visiblePersons}
-            onPersonClick={handleNodeClick}
-            selectedPerson={selectedPerson}
-          />
-        ) : (
-          <FamilyTreeCanvas
-            persons={visiblePersons}
-            links={engine.getLinks()}
-            dimensions={dimensions}
-            selectedPerson={selectedPerson}
-            onNodeClick={handleNodeClick}
-            onReset={handleReset}
-            onFitToScreen={handleFit}
-          />
-        )}
+        <FamilyTreeCanvas
+          persons={visiblePersons}
+          links={engine.getLinks()}
+          dimensions={dimensions}
+          selectedPerson={selectedPerson}
+          onNodeClick={handleNodeClick}
+          onReset={handleReset}
+          onFitToScreen={handleFit}
+        />
       </main>
 
       <PersonInfoPanel

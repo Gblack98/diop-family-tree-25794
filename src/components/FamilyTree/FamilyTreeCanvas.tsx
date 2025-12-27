@@ -33,9 +33,14 @@ export const FamilyTreeCanvas = ({
     if (!svgRef.current || !gRef.current) return;
     const svg = d3.select(svgRef.current);
     const g = d3.select(gRef.current);
-    const zoom = d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.1, 4]).on("zoom", (event) => {
+
+    // Zoom avec support tactile optimisé
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 4])
+      .on("zoom", (event) => {
         g.attr("transform", event.transform);
-    });
+      });
+
     svg.call(zoom);
     zoomRef.current = zoom;
   }, []);
