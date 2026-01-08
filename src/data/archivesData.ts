@@ -39,19 +39,44 @@ export const archiveCategories: CategoryConfig[] = [
 export const archivesData: Archive[] = [
   {
     id: 1,
-    person: "Ibrahima Gabar Diop",
+    person: "Ibrahima Gabar Diop (Badara)",
     category: ArchiveCategory.BIOGRAPHY,
-    title: "Biographie d'Ibrahima Gabar Diop",
-    content: "Né le 25 janvier 1947 à Dakar. Une vie dédiée au service public et à la famille.",
-    fullContent: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    date: "1947-présent",
-    // EXEMPLE MULTI-IMAGES (Carrousel)
+    title: "Général de Division Ibrahima Gabar Diop",
+    content: "Général de division de l'armée sénégalaise, né en 1963. Une carrière militaire exemplaire au service de la nation.",
+    fullContent: `Le Général de Division Ibrahima Gabar Diop, dit "Badara", est une figure emblématique de l'armée sénégalaise. Né en 1963, il a consacré sa vie au service de la nation avec honneur et distinction.
+
+**Carrière Militaire**
+
+Sa carrière militaire s'étend sur plus de quatre décennies, marquée par des postes de haute responsabilité et une expertise reconnue dans la sécurité et la défense nationale.
+
+**Postes Stratégiques**
+
+- **Directeur Général de l'Agence Nationale de la Prévention et de la Surveillance (ANNPS)** : À ce poste crucial, il a dirigé les stratégies de prévention et de surveillance au niveau national, contribuant significativement à la sécurité du Sénégal.
+
+- **Commandant Militaire du Président (CEMP)** : En tant que Commandant d'État-Major Particulier du Président de la République, il a assuré la sécurité rapprochée du Chef de l'État, démontrant la confiance placée en lui par les plus hautes autorités.
+
+- **Commandant du Groupement National des Sapeurs-Pompiers (GNSP)** : À la tête du GNSP, il a modernisé et professionnalisé ce corps essentiel, améliorant considérablement la capacité de réponse aux urgences au Sénégal.
+
+**Leadership et Vision**
+
+Le Général Diop est reconnu pour son leadership éclairé, son intégrité et sa vision stratégique. Il a formé de nombreux officiers qui servent aujourd'hui dans les forces armées sénégalaises et a contribué au rayonnement de l'armée sénégalaise sur la scène internationale.
+
+**Engagement Familial**
+
+Au-delà de sa carrière militaire, le Général Ibrahima Gabar Diop reste profondément attaché aux valeurs familiales. Il perpétue l'héritage de ses ancêtres et transmet les traditions de la famille Diop aux nouvelles générations.
+
+Son parcours exemplaire inspire respect et admiration, incarnant les valeurs de service, d'honneur et de dévouement à la patrie.`,
+    date: "1963 - présent",
     images: [
       "/images/archives/ibrahima-gabar-diop.jpg",
-      // Ajoutez d'autres chemins d'images ici si vous en avez, ex: "/images/archives/ibrahima-jeune.jpg"
     ],
     image: "/images/archives/ibrahima-gabar-diop.jpg",
-    achievements: ["Directeur Général de l’ANNPS", "CEMP du président de la République du Sénégal", "Commandant du GNSP"]
+    achievements: [
+      "Général de Division de l'Armée Sénégalaise",
+      "Directeur Général de l'ANNPS",
+      "Commandant d'État-Major Particulier (CEMP) du Président",
+      "Commandant du Groupement National des Sapeurs-Pompiers"
+    ]
   },
   {
     id: 2,
@@ -134,5 +159,77 @@ export const archivesData: Archive[] = [
     content: "Portrait conservé précieusement.",
     date: "XXXX",
     image: "/images/archives/magatte-diop.jpg"
+  },
+  {
+    id: 11,
+    person: "Badara Gabar Diop",
+    category: ArchiveCategory.PHOTO,
+    title: "Galerie Photos - Badara Gabar Diop",
+    content: "Collection de photos familiales de Badara Gabar Diop, fondateur de la lignée.",
+    date: "Archives familiales",
+    images: [
+      "/images/archive-whatsapp/badara-gabar-diop/WhatsApp Image 2025-10-19 at 09.05.36 (1).jpeg",
+      "/images/archive-whatsapp/badara-gabar-diop/WhatsApp Image 2025-10-19 at 09.08.32 (2).jpeg",
+      "/images/archive-whatsapp/badara-gabar-diop/WhatsApp Image 2025-10-19 at 09.08.32 (4).jpeg",
+      "/images/archive-whatsapp/badara-gabar-diop/WhatsApp Image 2025-10-19 at 09.08.32 (11).jpeg",
+    ],
+    image: "/images/archive-whatsapp/badara-gabar-diop/WhatsApp Image 2025-10-19 at 09.05.36 (1).jpeg"
+  },
+  {
+    id: 12,
+    person: "Amadou Bamba Diop (Badara)",
+    category: ArchiveCategory.PHOTO,
+    title: "Galerie Photos - Amadou Bamba Diop",
+    content: "Collection de photos d'Amadou Bamba Diop, fils de Badara Gabar.",
+    date: "Archives familiales",
+    images: [
+      "/images/archive-whatsapp/amadou-bamba-diop-badara/WhatsApp Image 2025-10-19 at 09.08.31 (1).jpeg",
+      "/images/archive-whatsapp/amadou-bamba-diop-badara/WhatsApp Image 2025-10-19 at 09.08.32 (8).jpeg",
+      "/images/archive-whatsapp/amadou-bamba-diop-badara/WhatsApp Image 2025-10-19 at 09.08.32 (9).jpeg",
+      "/images/archive-whatsapp/amadou-bamba-diop-badara/WhatsApp Image 2025-10-19 at 09.08.32 (10).jpeg",
+      "/images/archive-whatsapp/amadou-bamba-diop-badara/WhatsApp Image 2025-10-19 at 09.08.32 (14).jpeg",
+    ],
+    image: "/images/archive-whatsapp/amadou-bamba-diop-badara/WhatsApp Image 2025-10-19 at 09.08.31 (1).jpeg"
+  },
+  {
+    id: 13,
+    person: "Amadou Diop (Badara)",
+    category: ArchiveCategory.PHOTO,
+    title: "Galerie Photos - Amadou Diop",
+    content: "Photos d'Amadou Diop de la lignée Badara.",
+    date: "Archives familiales",
+    images: [
+      "/images/archive-whatsapp/amadou-diop-badara/WhatsApp Image 2025-10-19 at 09.05.36 (3).jpeg",
+      "/images/archive-whatsapp/amadou-diop-badara/WhatsApp Image 2025-10-19 at 09.05.36 (5).jpeg",
+      "/images/archive-whatsapp/amadou-diop-badara/WhatsApp Image 2025-10-19 at 09.08.32.jpeg",
+    ],
+    image: "/images/archive-whatsapp/amadou-diop-badara/WhatsApp Image 2025-10-19 at 09.05.36 (3).jpeg"
+  },
+  {
+    id: 14,
+    person: "Gabar Biram Médor Diop (Badara)",
+    category: ArchiveCategory.PHOTO,
+    title: "Portrait de Gabar Biram Médor Diop",
+    content: "Photo de Gabar Biram Médor Diop, membre de la famille Diop.",
+    date: "Archives familiales",
+    image: "/images/archive-whatsapp/gabar-birame-medor-diop-badara/WhatsApp Image 2025-10-19 at 09.08.31 (2).jpeg"
+  },
+  {
+    id: 15,
+    person: "Famille Diop",
+    category: ArchiveCategory.PHOTO,
+    title: "Photos de Groupe - Rassemblements Familiaux",
+    content: "Collection de photos de groupe capturant les moments précieux des rassemblements familiaux.",
+    date: "Archives familiales",
+    images: [
+      "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.05.36 (7).jpeg",
+      "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.05.36 (8).jpeg",
+      "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.08.31.jpeg",
+      "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.08.32 (1).jpeg",
+      "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.08.32 (5).jpeg",
+      "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.08.32 (7).jpeg",
+      "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.08.32 (12).jpeg",
+    ],
+    image: "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.05.36 (7).jpeg"
   },
 ];

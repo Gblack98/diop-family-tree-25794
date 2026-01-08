@@ -14,12 +14,18 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitAny": false,
-    "noFallthroughCasesInSwitch": false,
+    /* Linting - Progressive strict mode */
+    "strict": true,                      // Enable all strict type checking options
+    "noUnusedLocals": true,              // Report unused local variables
+    "noUnusedParameters": true,          // Report unused parameters
+    "noImplicitAny": true,               // Require explicit types
+    "noFallthroughCasesInSwitch": true,  // Report fallthrough in switch statements
+    "strictNullChecks": true,            // Enable strict null checks
+    "strictFunctionTypes": true,         // Enable strict function type checking
+    "strictBindCallApply": true,         // Enable strict bind/call/apply checks
+    "strictPropertyInitialization": true, // Ensure class properties are initialized
+    "noImplicitThis": true,              // Raise error on 'this' with implicit 'any'
+    "alwaysStrict": true,                // Parse in strict mode and emit "use strict"
 
     "baseUrl": ".",
     "paths": {

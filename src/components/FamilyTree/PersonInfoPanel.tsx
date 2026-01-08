@@ -1,6 +1,7 @@
 import { PersonNode } from "@/lib/familyTree/types";
-import { X, Users, Heart, Baby, GitCommit, LucideIcon, ChevronDown } from "lucide-react";
+import { X, Users, Heart, Baby, GitCommit, LucideIcon, ChevronDown, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface PersonInfoPanelProps {
   person: PersonNode | null;
@@ -42,6 +43,7 @@ export const PersonInfoPanel = ({
   onToggleExpand,
 }: PersonInfoPanelProps) => {
   const [isVisible, setIsVisible] = useState(false);
+  const navigate = useNavigate();
 
   // Animation d'entrée fluide
   useEffect(() => {
@@ -71,13 +73,13 @@ export const PersonInfoPanel = ({
       />
       
       {/* Container Principal : Drawer Mobile / Card Desktop */}
-      <div 
+      <div
         className={`
           fixed z-[60] bg-card border-border shadow-2xl flex flex-col
-          transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
-          
+          transition-transform duration-300 ease-out
+
           /* MOBILE: Bottom Sheet (Tiroir du bas) */
-          bottom-0 left-0 right-0 
+          bottom-0 left-0 right-0
           rounded-t-2xl border-t
           max-h-[85dvh] h-auto
           ${isVisible ? "translate-y-0" : "translate-y-[100%]"}
@@ -128,28 +130,39 @@ export const PersonInfoPanel = ({
 
         {/* Contenu Scrollable */}
         <div className="overflow-y-auto px-4 py-2 space-y-3 flex-1 safe-area-bottom">
-           {/* Bouton d'action principal (Voir enfants) */}
-           {person.enfants.length > 0 && (
-            <button
-              onClick={() => onToggleExpand(person)}
-              className={`
-                w-full py-2.5 px-4 rounded-lg text-sm font-semibold shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 mb-2
-                ${person.expanded 
-                  ? "bg-secondary text-secondary-foreground hover:bg-secondary/80" 
-                  : "bg-primary text-primary-foreground hover:bg-primary/90"}
-              `}
-            >
-              {person.expanded ? (
-                <>
-                  <ChevronDown className="w-4 h-4 rotate-180" /> Masquer les enfants
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="w-4 h-4" /> Voir les enfants ({person.enfants.length})
-                </>
-              )}
-            </button>
-          )}
+           {/* Boutons d'action */}
+           <div className="space-y-2 mb-3">
+             {/* Bouton Vue Famille Isolée */}
+             <button
+               onClick={() => navigate(`/family/${encodeURIComponent(person.name)}`)}
+               className="w-full py-2.5 px-4 rounded-lg text-sm font-semibold shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+             >
+               <Eye className="w-4 h-4" /> Voir la famille de {person.name.split(' ')[0]}
+             </button>
+
+             {/* Bouton d'action (Voir enfants dans l'arbre) */}
+             {person.enfants.length > 0 && (
+              <button
+                onClick={() => onToggleExpand(person)}
+                className={`
+                  w-full py-2.5 px-4 rounded-lg text-sm font-semibold shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2
+                  ${person.expanded
+                    ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/90"}
+                `}
+              >
+                {person.expanded ? (
+                  <>
+                    <ChevronDown className="w-4 h-4 rotate-180" /> Masquer les enfants
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" /> Voir les enfants ({person.enfants.length})
+                  </>
+                )}
+              </button>
+            )}
+          </div>
 
           <InfoSection 
             icon={Users}

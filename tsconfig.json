@@ -6,11 +6,13 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
-    "skipLibCheck": true,
-    "allowJs": true,
-    "noUnusedLocals": false,
-    "strictNullChecks": false
+    // Progressive strict mode configuration
+    "noImplicitAny": true,           // Require explicit types (no implicit any)
+    "noUnusedParameters": true,      // Report unused parameters
+    "skipLibCheck": true,            // Skip type checking of declaration files
+    "allowJs": true,                 // Allow JavaScript files
+    "noUnusedLocals": true,          // Report unused local variables
+    "strictNullChecks": true,        // Enable strict null checks
+    "noFallthroughCasesInSwitch": true  // Report fallthrough cases in switch
   }
 }

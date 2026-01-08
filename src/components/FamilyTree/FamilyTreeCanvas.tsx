@@ -60,15 +60,18 @@ export const FamilyTreeCanvas = ({
 
       const rootNode = persons.find(p => p.level === 0) || persons[0];
       
-      // Zoom : 0.8 sur mobile pour bien voir les badges
+      // Zoom initial - équilibre entre lisibilité et vue d'ensemble
       const isMobile = dimensions.width < 640;
-      const initialScale = isMobile ? 0.8 : 0.9;
-      
-      // CENTRAGE :
-      // X : On prend le centre de l'écran, on retire la position de la racine (ajustée au zoom)
-      // Y : On laisse une marge de 50px en haut
+      const isTablet = dimensions.width >= 640 && dimensions.width < 1024;
+
+      // Zoom optimal : assez grand pour lire, assez petit pour voir plusieurs générations
+      const initialScale = isMobile ? 0.7 : isTablet ? 0.75 : 0.8;
+
+      // CENTRAGE PARFAIT :
+      // X : Centre horizontal de l'écran - position de la racine ajustée au zoom
+      // Y : Centre vertical de l'écran - position de la racine ajustée au zoom
       const x = dimensions.width / 2 - (rootNode.x * initialScale);
-      const y = 50; 
+      const y = dimensions.height / 2 - (rootNode.y * initialScale); 
 
       svg.transition().duration(750).call(
         zoomRef.current.transform,

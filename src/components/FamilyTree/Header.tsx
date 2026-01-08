@@ -55,7 +55,7 @@ export const Header = ({
     <header className="fixed top-0 left-0 right-0 bg-card/80 backdrop-blur-lg border-b border-border/20 z-50 shadow-sm">
       <div className="max-w-screen-2xl mx-auto px-2 sm:px-4 md:px-6 py-2">
         {/* Mobile Layout */}
-        <div className="sm:hidden">
+        <div className="sm:hidden space-y-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
               <h1 className="text-sm font-bold text-foreground truncate">
@@ -65,16 +65,14 @@ export const Header = ({
                 {totalMembers} membres • {totalGenerations} gen.
               </p>
             </div>
-            <div className="flex gap-1.5 items-center">
-              <SearchBar persons={persons} onSelectPerson={onSelectPerson} />
-              
-              <Link to="/archives" className="p-2 rounded-lg hover:bg-accent transition-colors">
+            <div className="flex gap-1.5 items-center flex-shrink-0">
+              <Link to="/archives" className="p-2 rounded-lg hover:bg-accent transition-colors active:scale-95">
                 <Archive className="w-5 h-5" />
               </Link>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-2 rounded-lg hover:bg-accent transition-colors">
+                  <button className="p-2 rounded-lg hover:bg-accent transition-colors active:scale-95">
                     <Menu className="w-5 h-5"/>
                   </button>
                 </DropdownMenuTrigger>
@@ -99,8 +97,12 @@ export const Header = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
             </div>
+          </div>
+
+          {/* SearchBar on separate row for better UX */}
+          <div className="w-full">
+            <SearchBar persons={persons} onSelectPerson={onSelectPerson} />
           </div>
         </div>
 

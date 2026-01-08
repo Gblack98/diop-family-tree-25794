@@ -42,15 +42,15 @@ const getResponsiveDimensions = (): TreeDimensions => {
     };
   }
 
-  // Desktop Standard
+  // Desktop - Équilibre parfait : lisible mais sans débordement
   return {
     width,
     height,
-    nodeWidth: 240,
-    nodeHeight: 120,
-    levelHeight: 240,
-    coupleSpacing: 60,
-    siblingSpacing: 70,
+    nodeWidth: 180,      // Taille confortable pour lire
+    nodeHeight: 90,      // Hauteur adaptée
+    levelHeight: 160,    // Espacement vertical équilibré
+    coupleSpacing: 35,   // Espace entre conjoints
+    siblingSpacing: 45,  // Espace entre frères/sœurs
   };
 };
 

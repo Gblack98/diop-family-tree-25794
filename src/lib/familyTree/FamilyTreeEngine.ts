@@ -2,12 +2,35 @@ import { Person, PersonNode, TreeLink, ViewMode, TreeDimensions } from "./types"
 
 export type TreeOrientation = "vertical" | "horizontal";
 
+/**
+ * FamilyTreeEngine - Core business logic engine for family tree operations
+ *
+ * This class manages all family tree data and provides methods for:
+ * - Tree traversal (ancestors, descendants, pathfinding)
+ * - Layout calculation (positioning nodes in 2D space)
+ * - Visibility management (filtering nodes based on view modes)
+ * - Relationship identification (spouses, children, parents)
+ *
+ * Performance optimizations:
+ * - Uses Map data structures for O(1) lookups instead of O(n) array searches
+ * - Pre-calculates spouse relationships during initialization
+ * - Implements efficient BFS algorithm for pathfinding
+ */
 export class FamilyTreeEngine {
+  /** Map of person names to PersonNode objects for O(1) access */
   private personMap: Map<string, PersonNode>;
+  /** Original array of persons from data source */
   private allPersons: Person[];
+  /** Current tree dimensions for layout calculations */
   private dimensions: TreeDimensions;
+  /** Current orientation of the tree (vertical or horizontal) */
   private orientation: TreeOrientation = "vertical";
 
+  /**
+   * Initialize the family tree engine
+   * @param persons - Array of all family members
+   * @param dimensions - Tree layout dimensions
+   */
   constructor(persons: Person[], dimensions: TreeDimensions) {
     this.allPersons = persons;
     this.dimensions = dimensions;
@@ -38,6 +61,21 @@ export class FamilyTreeEngine {
     });
   }
 
+  /**
+   * Identify spouse relationships by analyzing children with multiple parents
+   *
+   * Algorithm:
+   * 1. For each child with multiple parents, those parents are spouses
+   * 2. Build a map of person -> set of spouses
+   * 3. Apply the spouse relationships to all person nodes
+   *
+   * Time Complexity: O(n*p) where n=persons, p=max parents per person (typically 2)
+   * Space Complexity: O(n)
+   *
+   * Example:
+   *   If "Enfant" has parents ["Père", "Mère"]
+   *   Then Père.spouses = ["Mère"] and Mère.spouses = ["Père"]
+   */
   private identifySpouses() {
     // Optimized O(n) implementation - identify spouses by children with multiple parents
     const spouseMap = new Map<string, Set<string>>();
@@ -187,6 +225,25 @@ export class FamilyTreeEngine {
     });
   }
 
+  /**
+   * Find the shortest path between two persons using Breadth-First Search (BFS)
+   *
+   * Algorithm:
+   * 1. Use BFS to explore all family relationships (parents, children, spouses)
+   * 2. Track parent pointers to reconstruct the path
+   * 3. Return the shortest path when destination is found
+   *
+   * Time Complexity: O(V + E) where V=vertices (persons), E=edges (relationships)
+   * Space Complexity: O(V) for visited set and parent map
+   *
+   * Example:
+   *   findPath("Grand-père", "Enfant") might return:
+   *   ["Grand-père", "Père", "Enfant"]
+   *
+   * @param start - Name of the starting person
+   * @param end - Name of the destination person
+   * @returns Array of person names representing the path, or [start] if no path exists
+   */
   private findPath(start: string, end: string): string[] {
     // Optimized BFS using parent pointers instead of array spreading
     const queue: string[] = [start];
@@ -207,6 +264,7 @@ export class FamilyTreeEngine {
       }
 
       const person = this.personMap.get(current)!;
+      // Explore all relationships: parents, children, and spouses
       const neighbors = [...person.parents, ...person.enfants, ...person.spouses];
       for (const neighbor of neighbors) {
         if (!visited.has(neighbor)) {
@@ -216,6 +274,7 @@ export class FamilyTreeEngine {
         }
       }
     }
+    // No path found - return just the start node
     return [start];
   }
 
