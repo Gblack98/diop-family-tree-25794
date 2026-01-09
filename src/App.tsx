@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Archives from "./pages/Archives";
 import { FamilyView } from "./pages/FamilyView";
+import { ConstellationFamilyView } from "./pages/ConstellationFamilyView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/archives" element={<Archives />} />
           <Route path="/family/:personName" element={<FamilyView />} />
+          <Route path="/constellation/:personName" element={<ConstellationFamilyView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -20,13 +20,13 @@ export const ArchiveCard = ({ archive, index, onClick }: ArchiveCardProps) => {
       style={{ animationDelay: `${index * 100}ms`, animationDuration: '600ms' }}
     >
       {hasImage && archive.image && (
-        <div className="aspect-video bg-gradient-to-br from-muted/40 to-muted/20 overflow-hidden relative">
-          <img 
-            src={archive.image} 
+        <div className="aspect-video bg-gradient-to-br from-muted/40 to-muted/20 overflow-hidden relative flex items-center justify-center">
+          <img
+            src={archive.image}
             alt={archive.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <ExternalLink className="absolute top-3 right-3 w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110" />
         </div>
       )}

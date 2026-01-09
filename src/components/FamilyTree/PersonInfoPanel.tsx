@@ -58,9 +58,10 @@ export const PersonInfoPanel = ({
   if (!person) return null;
 
   const initial = person.name.charAt(0).toUpperCase();
+  // Harmonisé avec les couleurs de l'arbre principal (voir nodeHTML.ts)
   const avatarGradient = person.genre === "Homme"
-      ? "bg-gradient-to-br from-blue-500 to-blue-700"
-      : "bg-gradient-to-br from-pink-500 to-rose-600";
+      ? "bg-gradient-to-br from-[hsl(200,80%,45%)] to-[hsl(210,100%,46%)]"
+      : "bg-gradient-to-br from-[hsl(340,70%,65%)] to-[hsl(330,76%,48%)]";
 
   return (
     <>
@@ -134,7 +135,14 @@ export const PersonInfoPanel = ({
            <div className="space-y-2 mb-3">
              {/* Bouton Vue Famille Isolée */}
              <button
-               onClick={() => navigate(`/family/${encodeURIComponent(person.name)}`)}
+               onClick={() => {
+                 // Si beaucoup de conjoints ou d'enfants, utiliser la vue constellation
+                 if (person.spouses.length > 1 || person.enfants.length > 5) {
+                   navigate(`/constellation/${encodeURIComponent(person.name)}`);
+                 } else {
+                   navigate(`/family/${encodeURIComponent(person.name)}`);
+                 }
+               }}
                className="w-full py-2.5 px-4 rounded-lg text-sm font-semibold shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
              >
                <Eye className="w-4 h-4" /> Voir la famille de {person.name.split(' ')[0]}
