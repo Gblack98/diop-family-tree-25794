@@ -42,6 +42,8 @@ export const ConstellationFamilyView = () => {
     width: typeof window !== 'undefined' ? window.innerWidth : 1200,
     height: typeof window !== 'undefined' ? window.innerHeight - 120 : 800
   });
+  const [hoveredPerson, setHoveredPerson] = useState<string | null>(null);
+  const [selectedChild, setSelectedChild] = useState<string | null>(null);
 
   // Calculer les positions en constellation
   const calculatePositions = (person: PersonNode): NodePosition[] => {
@@ -95,17 +97,40 @@ export const ConstellationFamilyView = () => {
           type: "spouse"
         });
 
-        // 4. Positionner enfants autour de leur mère
+        // 4. Positionner enfants autour de leur mère (disposition optimisée)
         children.forEach((childName, childIndex) => {
           const child = engine.getPerson(childName);
           if (child) {
             const childCount = children.length;
-            const angleSpread = Math.min(Math.PI / 2, childCount * 0.3);
-            const startAngle = angle - angleSpread / 2;
-            const childAngle = startAngle + (childIndex / Math.max(1, childCount - 1)) * angleSpread;
 
-            const childX = spouseX + Math.cos(childAngle) * childRadius;
-            const childY = spouseY + Math.sin(childAngle) * childRadius;
+            // Disposition intelligente selon le nombre d'enfants
+            let childAngle: number;
+            let effectiveRadius: number;
+
+            if (childCount === 1) {
+              // Un seul enfant: directement sous la mère
+              childAngle = angle + Math.PI / 2;
+              effectiveRadius = childRadius;
+            } else if (childCount <= 3) {
+              // 2-3 enfants: arc de 90°
+              const angleSpread = Math.PI / 2;
+              const startAngle = angle - angleSpread / 2 + Math.PI / 4;
+              childAngle = startAngle + (childIndex / (childCount - 1)) * angleSpread;
+              effectiveRadius = childRadius;
+            } else if (childCount <= 6) {
+              // 4-6 enfants: arc de 120° avec rayon légèrement augmenté
+              const angleSpread = (2 * Math.PI) / 3;
+              const startAngle = angle - angleSpread / 2 + Math.PI / 3;
+              childAngle = startAngle + (childIndex / (childCount - 1)) * angleSpread;
+              effectiveRadius = childRadius * 1.1;
+            } else {
+              // 7+ enfants: cercle complet autour de la mère
+              childAngle = (childIndex / childCount) * 2 * Math.PI;
+              effectiveRadius = childRadius * 1.2;
+            }
+
+            const childX = spouseX + Math.cos(childAngle) * effectiveRadius;
+            const childY = spouseY + Math.sin(childAngle) * effectiveRadius;
 
             newPositions.push({
               person: child,
@@ -340,13 +365,37 @@ export const ConstellationFamilyView = () => {
 
               const gradientId = getGradientId();
 
+              const isHovered = hoveredPerson === pos.person.name;
+              const isSelected = selectedChild === pos.person.name;
+
               return (
                 <g
                   key={`node-${index}`}
                   transform={`translate(${pos.x - halfSize}, ${pos.y - halfSize})`}
                   className={isHoverable ? "cursor-pointer" : ""}
-                  onClick={() => isHoverable && handleChildClick(pos.person.name)}
+                  onClick={() => {
+                    if (isHoverable) {
+                      setSelectedChild(pos.person.name);
+                      handleChildClick(pos.person.name);
+                    }
+                  }}
+                  onMouseEnter={() => setHoveredPerson(pos.person.name)}
+                  onMouseLeave={() => setHoveredPerson(null)}
                 >
+                  {/* Halo de hover */}
+                  {isHovered && (
+                    <circle
+                      cx={halfSize}
+                      cy={halfSize * 0.6}
+                      r={size * 0.5}
+                      fill="none"
+                      stroke={gradientId}
+                      strokeWidth="2"
+                      opacity="0.3"
+                      className="animate-pulse"
+                    />
+                  )}
+
                   {/* Carte rectangulaire avec coins arrondis */}
                   <rect
                     width={size}
@@ -354,8 +403,9 @@ export const ConstellationFamilyView = () => {
                     rx="8"
                     fill="hsl(var(--card))"
                     stroke={gradientId}
-                    strokeWidth={pos.type === "central" ? "3" : "2"}
-                    filter="drop-shadow(0 4px 8px rgba(0,0,0,0.15))"
+                    strokeWidth={pos.type === "central" ? "3" : isHovered || isSelected ? "3" : "2"}
+                    filter={isHovered ? "drop-shadow(0 6px 12px rgba(0,0,0,0.25))" : "drop-shadow(0 4px 8px rgba(0,0,0,0.15))"}
+                    style={{ transition: "all 0.2s ease" }}
                   />
 
                   {/* Avatar circulaire */}
@@ -412,6 +462,7 @@ export const ConstellationFamilyView = () => {
                         cy={12}
                         r="10"
                         fill="hsl(var(--primary))"
+                        className={isHovered ? "animate-pulse" : ""}
                       />
                       <text
                         x={size - 12}
@@ -425,6 +476,60 @@ export const ConstellationFamilyView = () => {
                         →
                       </text>
                     </>
+                  )}
+
+                  {/* Tooltip au hover - Responsive */}
+                  {isHovered && (
+                    <g>
+                      {/* Fond du tooltip */}
+                      <rect
+                        x={size / 2 - 60}
+                        y={-35}
+                        width="120"
+                        height={pos.person.isExternalSpouse ? "60" : "50"}
+                        rx="6"
+                        fill="hsl(var(--popover))"
+                        stroke="hsl(var(--border))"
+                        strokeWidth="1"
+                        filter="drop-shadow(0 2px 8px rgba(0,0,0,0.15))"
+                      />
+                      {/* Nom complet */}
+                      <text
+                        x={size / 2}
+                        y={-22}
+                        textAnchor="middle"
+                        fill="hsl(var(--foreground))"
+                        fontSize="9"
+                        fontWeight="700"
+                      >
+                        {pos.person.name.length > 20 ? pos.person.name.substring(0, 18) + '...' : pos.person.name}
+                      </text>
+                      {/* Stats */}
+                      <text
+                        x={size / 2}
+                        y={-10}
+                        textAnchor="middle"
+                        fill="hsl(var(--muted-foreground))"
+                        fontSize="7"
+                      >
+                        {pos.person.spouses.length > 0 && `${pos.person.spouses.length} conjoint(s)`}
+                        {pos.person.spouses.length > 0 && pos.person.enfants.length > 0 && ' • '}
+                        {pos.person.enfants.length > 0 && `${pos.person.enfants.length} enfant(s)`}
+                      </text>
+                      {/* Indicateur conjoint externe */}
+                      {pos.person.isExternalSpouse && (
+                        <text
+                          x={size / 2}
+                          y={2}
+                          textAnchor="middle"
+                          fill={pos.person.genre === "Homme" ? "hsl(var(--external-male))" : "hsl(var(--external-female))"}
+                          fontSize="7"
+                          fontWeight="600"
+                        >
+                          🔗 Conjoint externe
+                        </text>
+                      )}
+                    </g>
                   )}
                 </g>
               );

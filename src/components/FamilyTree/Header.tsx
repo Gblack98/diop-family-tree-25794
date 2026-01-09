@@ -1,16 +1,17 @@
 import { PersonNode, ViewMode } from "@/lib/familyTree/types";
 import { SearchBar } from "./SearchBar";
 import { Link } from "react-router-dom";
-import { 
-  TreeDeciduous, 
-  Users, 
-  GitMerge, 
-  Workflow, 
-  Maximize, 
+import {
+  TreeDeciduous,
+  Users,
+  GitMerge,
+  Workflow,
+  Maximize,
   Minimize,
   Download,
   Menu,
-  Archive
+  Archive,
+  HelpCircle
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -66,8 +67,12 @@ export const Header = ({
               </p>
             </div>
             <div className="flex gap-1.5 items-center flex-shrink-0">
-              <Link to="/archives" className="p-2 rounded-lg hover:bg-accent transition-colors active:scale-95">
+              <Link to="/archives" className="p-2 rounded-lg hover:bg-accent transition-colors active:scale-95" title="Archives familiales">
                 <Archive className="w-5 h-5" />
+              </Link>
+
+              <Link to="/help" className="p-2 rounded-lg hover:bg-accent transition-colors active:scale-95" title="Guide d'utilisation">
+                <HelpCircle className="w-5 h-5" />
               </Link>
 
               <DropdownMenu>
@@ -122,13 +127,22 @@ export const Header = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <Link 
+            <Link
               to="/archives"
               className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors text-xs md:text-sm font-medium flex items-center gap-2"
               title="Archives familiales"
             >
               <Archive className="w-4 h-4"/>
               <span className="hidden lg:inline">Archives</span>
+            </Link>
+
+            <Link
+              to="/help"
+              className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs md:text-sm font-medium flex items-center gap-2"
+              title="Guide d'utilisation"
+            >
+              <HelpCircle className="w-4 h-4"/>
+              <span className="hidden lg:inline">Aide</span>
             </Link>
 
             <div className="flex bg-muted/50 rounded-lg p-1">

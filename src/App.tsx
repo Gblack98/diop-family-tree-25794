@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Archives from "./pages/Archives";
 import { FamilyView } from "./pages/FamilyView";
 import { ConstellationFamilyView } from "./pages/ConstellationFamilyView";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/archives" element={<Archives />} />
+          <Route path="/help" element={<Help />} />
           <Route path="/family/:personName" element={<FamilyView />} />
           <Route path="/constellation/:personName" element={<ConstellationFamilyView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
