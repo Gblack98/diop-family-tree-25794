@@ -13,6 +13,7 @@ export interface PersonNode extends Person {
   spouses: string[];
   expanded: boolean;
   visible: boolean;
+  isExternalSpouse?: boolean; // Conjoint sans ascendants dans l'arbre (sauf génération 0)
 }
 
 export interface TreeLink {

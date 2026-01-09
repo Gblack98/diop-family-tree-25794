@@ -245,15 +245,24 @@ export const ConstellationFamilyView = () => {
           className="w-full h-full cursor-grab active:cursor-grabbing"
         >
           <defs>
-            {/* Gradient pour homme - harmonisé avec nodeHTML.ts */}
+            {/* Gradients pour personnes de l'arbre */}
             <linearGradient id="maleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="hsl(200, 80%, 45%)" />
               <stop offset="100%" stopColor="hsl(210, 100%, 46%)" />
             </linearGradient>
-            {/* Gradient pour femme - harmonisé avec nodeHTML.ts */}
             <linearGradient id="femaleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="hsl(340, 70%, 65%)" />
               <stop offset="100%" stopColor="hsl(330, 76%, 48%)" />
+            </linearGradient>
+
+            {/* Gradients pour conjoints externes (sans ascendants) */}
+            <linearGradient id="externalMaleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(280, 60%, 55%)" />
+              <stop offset="100%" stopColor="hsl(270, 65%, 48%)" />
+            </linearGradient>
+            <linearGradient id="externalFemaleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(35, 85%, 60%)" />
+              <stop offset="100%" stopColor="hsl(25, 90%, 55%)" />
             </linearGradient>
           </defs>
 
@@ -321,6 +330,16 @@ export const ConstellationFamilyView = () => {
               const halfSize = size / 2;
               const isHoverable = pos.type === "child" && pos.person.enfants.length > 0;
 
+              // Déterminer le gradient à utiliser (externe ou normal)
+              const getGradientId = () => {
+                if (pos.person.isExternalSpouse) {
+                  return pos.person.genre === "Homme" ? "url(#externalMaleGradient)" : "url(#externalFemaleGradient)";
+                }
+                return pos.person.genre === "Homme" ? "url(#maleGradient)" : "url(#femaleGradient)";
+              };
+
+              const gradientId = getGradientId();
+
               return (
                 <g
                   key={`node-${index}`}
@@ -334,7 +353,7 @@ export const ConstellationFamilyView = () => {
                     height={size * 0.6}
                     rx="8"
                     fill="hsl(var(--card))"
-                    stroke={pos.person.genre === "Homme" ? "url(#maleGradient)" : "url(#femaleGradient)"}
+                    stroke={gradientId}
                     strokeWidth={pos.type === "central" ? "3" : "2"}
                     filter="drop-shadow(0 4px 8px rgba(0,0,0,0.15))"
                   />
@@ -344,7 +363,7 @@ export const ConstellationFamilyView = () => {
                     cx={size * 0.25}
                     cy={size * 0.3}
                     r={size * 0.15}
-                    fill={pos.person.genre === "Homme" ? "url(#maleGradient)" : "url(#femaleGradient)"}
+                    fill={gradientId}
                   />
 
                   {/* Initiale */}
@@ -414,22 +433,28 @@ export const ConstellationFamilyView = () => {
         </svg>
       </div>
 
-      {/* Legend - Harmonisé avec l'arbre principal */}
-      <div className="border-t bg-card/80 backdrop-blur-sm px-3 py-2 flex flex-wrap items-center justify-center gap-x-6 gap-y-1.5 text-[10px] sm:text-xs">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[hsl(200,80%,45%)] to-[hsl(210,100%,46%)]" />
+      {/* Legend - Avec couleurs pour conjoints externes */}
+      <div className="border-t bg-card/80 backdrop-blur-sm px-3 py-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[10px] sm:text-xs">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gradient-to-br from-[hsl(200,80%,45%)] to-[hsl(210,100%,46%)]" />
           <span>Homme</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[hsl(340,70%,65%)] to-[hsl(330,76%,48%)]" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gradient-to-br from-[hsl(340,70%,65%)] to-[hsl(330,76%,48%)]" />
           <span>Femme</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Heart className="w-4 h-4 text-primary" />
-          <span>Conjoints</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gradient-to-br from-[hsl(280,60%,55%)] to-[hsl(270,65%,48%)]" />
+          <span className="hidden sm:inline">Conjoint externe</span>
+          <span className="sm:hidden">H. ext.</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Baby className="w-4 h-4 text-muted-foreground" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gradient-to-br from-[hsl(35,85%,60%)] to-[hsl(25,90%,55%)]" />
+          <span className="hidden sm:inline">Conjointe externe</span>
+          <span className="sm:hidden">F. ext.</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Baby className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
           <span>Enfants (→ cliquable)</span>
         </div>
       </div>

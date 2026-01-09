@@ -40,7 +40,11 @@
     /* Couleurs spécifiques Arbre */
     --male: 200 80% 45%;   /* Bleu acier plus mature */
     --female: 340 70% 65%; /* Rose vieux rose plus élégant */
-    
+
+    /* Couleurs pour conjoints externes (sans ascendants) */
+    --external-male: 280 60% 55%;   /* Violet pour homme externe */
+    --external-female: 35 85% 60%;  /* Orange doré pour femme externe */
+
     --tree-link: 30 10% 70%; /* Liens couleur pierre */
     --spouse-link: 340 60% 65%;
   }
@@ -77,6 +81,8 @@
     
     --male: 200 70% 55%;
     --female: 340 60% 65%;
+    --external-male: 280 55% 60%;
+    --external-female: 35 80% 65%;
     --tree-link: 215 20% 40%;
   }
 }

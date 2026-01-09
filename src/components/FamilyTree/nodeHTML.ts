@@ -14,13 +14,20 @@ export function createNodeHTML(
   const isBadge = dimensions.nodeWidth < 150;
   const isCompact = !isBadge && dimensions.nodeWidth < 200;
 
-  const avatarColor =
-    person.genre === "Homme"
-      ? "background: linear-gradient(135deg, hsl(var(--male)), hsl(210 100% 46%));"
-      : "background: linear-gradient(135deg, hsl(var(--female)), hsl(330 76% 48%));";
+  // Couleurs différentes pour les conjoints externes (sans ascendants)
+  const isExternal = person.isExternalSpouse;
 
-  const borderColor =
-    person.genre === "Homme" ? "hsl(var(--male))" : "hsl(var(--female))";
+  const avatarColor = isExternal
+    ? (person.genre === "Homme"
+        ? "background: linear-gradient(135deg, hsl(var(--external-male)), hsl(270 65% 48%));"
+        : "background: linear-gradient(135deg, hsl(var(--external-female)), hsl(25 90% 55%));")
+    : (person.genre === "Homme"
+        ? "background: linear-gradient(135deg, hsl(var(--male)), hsl(210 100% 46%));"
+        : "background: linear-gradient(135deg, hsl(var(--female)), hsl(330 76% 48%));");
+
+  const borderColor = isExternal
+    ? (person.genre === "Homme" ? "hsl(var(--external-male))" : "hsl(var(--external-female))")
+    : (person.genre === "Homme" ? "hsl(var(--male))" : "hsl(var(--female))");
 
   // --- RENDU BADGE (Le style que vous voulez) ---
   if (isBadge) {

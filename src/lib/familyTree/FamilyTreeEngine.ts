@@ -49,6 +49,11 @@ export class FamilyTreeEngine {
 
   private buildPersonMap() {
     this.allPersons.forEach((p) => {
+      // Identifier si c'est un conjoint externe (sans ascendants, sauf génération 0)
+      const hasAncestors = p.parents && p.parents.length > 0;
+      const isRootGeneration = p.generation === 0;
+      const isExternalSpouse = !hasAncestors && !isRootGeneration;
+
       this.personMap.set(p.name, {
         ...p,
         level: p.generation,
@@ -57,6 +62,7 @@ export class FamilyTreeEngine {
         spouses: [],
         expanded: false,
         visible: false,
+        isExternalSpouse,
       });
     });
   }
@@ -156,11 +162,20 @@ export class FamilyTreeEngine {
       visited.add(person.name);
       person.visible = true;
 
+      // NOUVEAU: Exclure les conjoints sans ascendants de l'arbre principal
+      // Ils seront affichés uniquement dans les pages dédiées
       person.spouses.forEach((spouseName) => {
         const spouse = this.personMap.get(spouseName);
         if (spouse && !visited.has(spouseName)) {
-          spouse.visible = true;
-          visited.add(spouseName);
+          // Afficher le conjoint UNIQUEMENT s'il a des parents dans l'arbre
+          // OU s'il est de génération 0 (racines de l'arbre)
+          const hasAncestors = spouse.parents && spouse.parents.length > 0;
+          const isRootGeneration = spouse.level === 0;
+
+          if (hasAncestors || isRootGeneration) {
+            spouse.visible = true;
+            visited.add(spouseName);
+          }
         }
       });
 
