@@ -52,11 +52,11 @@ export const ConstellationFamilyView = () => {
     const centerX = width / 2;
     const centerY = height / 2;
 
-    // Responsive radii
+    // Responsive radii - AUGMENTÉS pour meilleur espacement
     const isMobile = width < 640;
     const isTablet = width >= 640 && width < 1024;
-    const spouseRadius = isMobile ? 150 : isTablet ? 200 : 250;
-    const childRadius = isMobile ? 100 : isTablet ? 130 : 160;
+    const spouseRadius = isMobile ? 220 : isTablet ? 300 : 380;
+    const childRadius = isMobile ? 150 : isTablet ? 200 : 260;
 
     // 1. Position centrale
     newPositions.push({
@@ -166,15 +166,15 @@ export const ConstellationFamilyView = () => {
     const g = d3.select(gRef.current);
 
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.3, 2])
+      .scaleExtent([0.4, 3])
       .on("zoom", (event) => {
         g.attr("transform", event.transform.toString());
       });
 
     svg.call(zoom);
 
-    // Reset zoom to fit
-    const initialTransform = d3.zoomIdentity.translate(0, 0).scale(0.8);
+    // Reset zoom to fit - 1.0 pour taille normale
+    const initialTransform = d3.zoomIdentity.translate(0, 0).scale(1.0);
     svg.call(zoom.transform, initialTransform);
 
   }, []);
@@ -219,14 +219,14 @@ export const ConstellationFamilyView = () => {
     );
   }
 
-  // Tailles responsive des cartes
+  // Tailles responsive des cartes - AUGMENTÉES pour lisibilité
   const isMobile = dimensions.width < 640;
   const isTablet = dimensions.width >= 640 && dimensions.width < 1024;
 
   const cardSizes = {
-    central: isMobile ? 100 : isTablet ? 120 : 140,
-    spouse: isMobile ? 80 : isTablet ? 96 : 110,
-    child: isMobile ? 70 : isTablet ? 80 : 90
+    central: isMobile ? 140 : isTablet ? 180 : 200,
+    spouse: isMobile ? 120 : isTablet ? 150 : 170,
+    child: isMobile ? 100 : isTablet ? 120 : 140
   };
 
   return (
