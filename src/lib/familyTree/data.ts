@@ -44,8 +44,13 @@ export const familyData: Person[] = [
     {"name": "Mar Seck", "genre": "Homme", "generation": 4, "parents": [], "enfants": ["Pathe Seck"]},
     {"name": "Marieme Ndiaye", "genre": "Femme", "generation": 4, "parents": [], "enfants": ["Pathe Seck"]},
     
+    // Épouses d'Alioune Badara Gabar Diop (Génération 4)
+    {"name": "Seynabou Ndoye", "genre": "Femme", "generation": 4, "parents": [], "enfants": ["Mame Diarra Diop", "Ndeye Betty Diop"]},
+    {"name": "Fatou Cissé", "genre": "Femme", "generation": 4, "parents": [], "enfants": ["Amadou Diop (Doudou)", "Amadou Bamba Diop (Badara)", "Ndeye Salimata Diop (Badara)", "Seynabou Diop (Badara)"]},
+    {"name": "Fatou Gaye", "genre": "Femme", "generation": 4, "parents": [], "enfants": ["Lissong Diop (Badara)", "Gabar Birame Medor Diop", "Ibrahima Gabar Diop (Badara)", "Saliou Sady Faza Diop", "El Hadji Malick Diop", "Yacine Diop", "Mouhamadou Lamine Diop"]},
+
     // Génération 5
-    {"name": "Mame Diarra Diop", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Djiby Kane", "Pape Kane Modiallo", "Ndeye Maguette Kane", "Ndeye Ndiebou Sow", "Nguissaly Fall", "Badara Gabar Sow"]},
+    {"name": "Mame Diarra Diop", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Seynabou Ndoye"], "enfants": ["Djiby Kane", "Pape Kane Modiallo", "Ndeye Maguette Kane", "Ndeye Ndiebou Sow", "Nguissaly Fall", "Badara Gabar Sow"]},
 
 
 
@@ -53,7 +58,7 @@ export const familyData: Person[] = [
 
 
     {"name": "Pape Diop", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Abdoulaye Diop (Betty)", "Aminata Diop (Betty)", "El Hadj Malick Diop (Ndeye Betty)"]},
-    {"name": "Ndeye Betty Diop", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Astou Diagne", "Mbaye Diagne", "Seynabou Diagne", "Pape Assane Diagne", "Fatou Diagne", "Badara Gabar Diagne", "Serigne MBacke Diagne", "Abdoulaye Diop (Betty)", "Aminata Diop (Betty)", "El Hadj Malick Diop (Ndeye Betty)"]},
+    {"name": "Ndeye Betty Diop", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Seynabou Ndoye"], "enfants": ["Astou Diagne", "Mbaye Diagne", "Seynabou Diagne", "Pape Assane Diagne", "Fatou Diagne", "Badara Gabar Diagne", "Serigne MBacke Diagne", "Abdoulaye Diop (Betty)", "Aminata Diop (Betty)", "El Hadj Malick Diop (Ndeye Betty)"]},
     {"name": "Mbacké Diagne", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Astou Diagne", "Mbaye Diagne", "Seynabou Diagne", "Pape Assane Diagne", "Fatou Diagne", "Badara Gabar Diagne", "Serigne MBacke Diagne"]},
 
 
@@ -61,7 +66,7 @@ export const familyData: Person[] = [
 
 
     {"name": "Amy Colé Diallo", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Lissong Diop (Doudou)"]},
-    {"name": "Amadou Diop (Doudou)", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Lamine Diop", "Marie Diagne Diop", "Marie Madeleine Diop", "Lissong Diop (Doudou)", "Ndeye Khar Diop", "Astou Diop (Doudou)", "Badara Gabar Diop (Doudou)", "Ndeye Fatou Diop (Doudou)", "Ahmadou Bamba Diop"]}, 
+    {"name": "Amadou Diop (Doudou)", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Cissé"], "enfants": ["Lamine Diop", "Marie Diagne Diop", "Marie Madeleine Diop", "Lissong Diop (Doudou)", "Ndeye Khar Diop", "Astou Diop (Doudou)", "Badara Gabar Diop (Doudou)", "Ndeye Fatou Diop (Doudou)", "Ahmadou Bamba Diop"]}, 
     {"name": "Fatou Goudiaby", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Lamine Diop", "Marie Diagne Diop", "Marie Madeleine Diop"]},
     {"name": "Mariéme Wade", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Ndeye Khar Diop"]},
     {"name": "Aita Diagne", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Astou Diop (Doudou)", "Badara Gabar Diop (Doudou)"]},
@@ -73,7 +78,7 @@ export const familyData: Person[] = [
 
     {"name": "Nafissatou Seck", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Magatte Diop"]},
     {"name": "Khady Ba", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Betty Bamba Diop", "Bassirou Bamba Diop", "Badara Gabar Diop (Khady)", "Abdoulaye Diop (Khady)"]},
-    {"name": "Amadou Bamba Diop (Badara)", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Magatte Diop", "Betty Bamba Diop", "Bassirou Bamba Diop", "Badara Gabar Diop (Khady)", "Abdoulaye Diop (Khady)", "Aminata Diop (Bamba)", "Mame Assane Diop", "Seynabou Diop (Bamba)", "Ndeye Sokhna Diop", "Soukeyna Diop (Bamba)", "Ndeye Maguette Diop", "Ousmane Diop", "Pape Gabar Diop", "Cheikh Diop", "Fatou Cissé Diop (Bamba)", "Soda Diop", "Astou Diop (Bamba)", "Saliou Faza Diop", "Ahmadou Diop (Bamba)", "Moustapha Diop (Bamba)", "Abdou Salam Diop (Bamba)"]},
+    {"name": "Amadou Bamba Diop (Badara)", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Cissé"], "enfants": ["Magatte Diop", "Betty Bamba Diop", "Bassirou Bamba Diop", "Badara Gabar Diop (Khady)", "Abdoulaye Diop (Khady)", "Aminata Diop (Bamba)", "Mame Assane Diop", "Seynabou Diop (Bamba)", "Ndeye Sokhna Diop", "Soukeyna Diop (Bamba)", "Ndeye Maguette Diop", "Ousmane Diop", "Pape Gabar Diop", "Cheikh Diop", "Fatou Cissé Diop (Bamba)", "Soda Diop", "Astou Diop (Bamba)", "Saliou Faza Diop", "Ahmadou Diop (Bamba)", "Moustapha Diop (Bamba)", "Abdou Salam Diop (Bamba)"]},
     {"name": "Mame Ngoné Dieng", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Aminata Diop (Bamba)", "Mame Assane Diop", "Seynabou Diop (Bamba)", "Ndeye Sokhna Diop", "Soukeyna Diop (Bamba)","Ndeye Maguette Diop"]},
     {"name": "Ndeye Ndiaye", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Cheikh Diop", "Soda Diop","Astou Diop (Bamba)", "Moustapha Diop (Bamba)", "Pape Gabar Diop","Fatou Cissé Diop (Bamba)","Saliou Faza Diop","Ahmadou Diop (Bamba)","Abdou Salam Diop (Bamba)", "Ousmane Diop"]},
 
@@ -81,18 +86,18 @@ export const familyData: Person[] = [
 
 
     {"name": "Mansour Diop", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Cheikh Tidiane Diop", "Nafissatou Diop", "Ndeye Fatou Diop (Salimata)", "Pape Ousmane Diop", "Mame Makhtar Diop", "Amadou Diop (Diobé)", "Seynabou Diop (Salimata)"]},
-    {"name": "Ndeye Salimata Diop (Badara)", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Amadou Lamine Thiam", "Cheikh Tidiane Diop", "Nafissatou Diop", "Ndeye Fatou Diop (Salimata)", "Pape Ousmane Diop", "Mame Makhtar Diop", "Amadou Diop (Diobé)", "Seynabou Diop (Salimata)"]},
+    {"name": "Ndeye Salimata Diop (Badara)", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Cissé"], "enfants": ["Amadou Lamine Thiam", "Cheikh Tidiane Diop", "Nafissatou Diop", "Ndeye Fatou Diop (Salimata)", "Pape Ousmane Diop", "Mame Makhtar Diop", "Amadou Diop (Diobé)", "Seynabou Diop (Salimata)"]},
     {"name": "Samba Thiam", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Amadou Lamine Thiam"]},
 
 
 
 
-    {"name": "Seynabou Diop (Badara)", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": []},
+    {"name": "Seynabou Diop (Badara)", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Cissé"], "enfants": []},
 
 
 
     {"name": "Abdoulaye Douta Seck", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Marie Louise Fatimata Douta Seck"]},
-    {"name": "Lissong Diop (Badara)", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Al Housseynou Seck", "Assietou Seck", "Ndeye Maguette Seck", "Sokhna Seck", "Mame Fatou Seck", "Marie Louise Fatimata Douta Seck", "Thiane Kharaachi Diagne"]},
+    {"name": "Lissong Diop (Badara)", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Gaye"], "enfants": ["Al Housseynou Seck", "Assietou Seck", "Ndeye Maguette Seck", "Sokhna Seck", "Mame Fatou Seck", "Marie Louise Fatimata Douta Seck", "Thiane Kharaachi Diagne"]},
     {"name": "Amadou Lamine Seck", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Al Housseynou Seck", "Assietou Seck", "Ndeye Maguette Seck", "Sokhna Seck", "Mame Fatou Seck"]},
     {"name": "Sidy Kharaachi Diagne", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Thiane Kharaachi Diagne"]},
 
@@ -100,7 +105,7 @@ export const familyData: Person[] = [
 
 
     {"name": "Aida Gaye", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Mame Betty Gabar Diop", "El Hadj Malick Diop (Gabar Birame)", "Badara Gabar Diop (Aida)"]},
-    {"name": "Gabar Birame Medor Diop", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Amadou Diop (Fatou)", "Ahmadou Diop (Fatou)", "Mame Betty Gabar Diop", "El Hadj Malick Diop (Gabar Birame)", "Badara Gabar Diop (Aida)"]},
+    {"name": "Gabar Birame Medor Diop", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Gaye"], "enfants": ["Amadou Diop (Fatou)", "Ahmadou Diop (Fatou)", "Mame Betty Gabar Diop", "El Hadj Malick Diop (Gabar Birame)", "Badara Gabar Diop (Aida)"]},
     {"name": "Fatou Gueye", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Amadou Diop (Fatou)", "Ahmadou Diop (Fatou)"]},
 
 
@@ -108,30 +113,30 @@ export const familyData: Person[] = [
 
 
     {"name": "Katy Wade", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Moustapha Gabar Diop", "Marieme Fatou Diop (Katy)", "Aissatou Gabar Diop"]},
-    {"name": "Ibrahima Gabar Diop (Badara)", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Aida Gabar Diop (Faboye)", "Faboye Ndoumbé Diop", "Moustapha Gabar Diop", "Marieme Fatou Diop (Katy)", "Aissatou Gabar Diop"]},
+    {"name": "Ibrahima Gabar Diop (Badara)", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Gaye"], "enfants": ["Aida Gabar Diop (Faboye)", "Faboye Ndoumbé Diop", "Moustapha Gabar Diop", "Marieme Fatou Diop (Katy)", "Aissatou Gabar Diop"]},
     {"name": "Faboye Ndoumbé Cissé", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Aida Gabar Diop (Faboye)", "Faboye Ndoumbé Diop"]},
  
 
 
 
-    {"name": "Saliou Sady Faza Diop", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Mouhamed Hady Diop", "Mame Ndiobasse Diop", "El Hadj Malick Diop (Saliou Sady)", "Papa Oumar Thiam Diop"]},
+    {"name": "Saliou Sady Faza Diop", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Gaye"], "enfants": ["Mouhamed Hady Diop", "Mame Ndiobasse Diop", "El Hadj Malick Diop (Saliou Sady)", "Papa Oumar Thiam Diop"]},
     {"name": "Mame Penda Ndiaye", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Mouhamed Hady Diop", "Mame Ndiobasse Diop", "El Hadj Malick Diop (Saliou Sady)", "Papa Oumar Thiam Diop"]},
   
 
 
 
-    {"name": "El Hadji Malick Diop", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": []},
+    {"name": "El Hadji Malick Diop", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Gaye"], "enfants": []},
 
 
 
     {"name": "Moctar Sall", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Sophie Sall", "Badara Gabar Sall", "Lamine Sall"]},
-    {"name": "Yacine Diop", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Makha Seck", "Penda Seck", "Sophie Sall", "Badara Gabar Sall", "Lamine Sall"]},
+    {"name": "Yacine Diop", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Gaye"], "enfants": ["Makha Seck", "Penda Seck", "Sophie Sall", "Badara Gabar Sall", "Lamine Sall"]},
     {"name": "Pathe Seck", "genre": "Homme", "generation": 5, "parents": ["Mar Seck","Marieme Ndiaye"], "enfants": ["Makha Seck", "Penda Seck"]},
 
 
 
     {"name": "Madeleine Tamba", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Seynabou Diop (Lamine)", "Aida Gaye Diop", "Fabaye Diop", "Lissong Diop (Lamine)"]},
-    {"name": "Mouhamadou Lamine Diop", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop"], "enfants": ["Abibatou Diop", "Marieme Fatou Diop (Bineta)", "Diogomaye Diop", "Seynabou Diop (Lamine)", "Aida Gaye Diop", "Fabaye Diop", "Lissong Diop (Lamine)"]},
+    {"name": "Mouhamadou Lamine Diop", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Gaye"], "enfants": ["Abibatou Diop", "Marieme Fatou Diop (Bineta)", "Diogomaye Diop", "Seynabou Diop (Lamine)", "Aida Gaye Diop", "Fabaye Diop", "Lissong Diop (Lamine)"]},
     {"name": "Mame Bineta Lo", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Abibatou Diop", "Marieme Fatou Diop (Bineta)", "Diogomaye Diop"]},
 
 
