@@ -71,8 +71,8 @@ export const Header = ({
                 <Archive className="w-5 h-5" />
               </Link>
 
-              <Link to="/help" className="p-2 rounded-lg hover:bg-accent transition-colors active:scale-95" title="Guide d'utilisation">
-                <HelpCircle className="w-5 h-5" />
+              <Link to="/help" className="p-1.5 rounded-md opacity-50 hover:opacity-100 hover:bg-accent/50 transition-all active:scale-95" title="Aide">
+                <HelpCircle className="w-4 h-4" />
               </Link>
 
               <DropdownMenu>
@@ -138,11 +138,10 @@ export const Header = ({
 
             <Link
               to="/help"
-              className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs md:text-sm font-medium flex items-center gap-2"
-              title="Guide d'utilisation"
+              className="p-2 rounded-md opacity-40 hover:opacity-100 hover:bg-accent/50 transition-all"
+              title="Aide"
             >
-              <HelpCircle className="w-4 h-4"/>
-              <span className="hidden lg:inline">Aide</span>
+              <HelpCircle className="w-3.5 h-3.5"/>
             </Link>
 
             <div className="flex bg-muted/50 rounded-lg p-1">
