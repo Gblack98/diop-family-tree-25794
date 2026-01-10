@@ -136,12 +136,7 @@ export const PersonInfoPanel = ({
              {/* Bouton Vue Famille Isolée */}
              <button
                onClick={() => {
-                 // Si beaucoup de conjoints ou d'enfants, utiliser la vue constellation
-                 if (person.spouses.length > 1 || person.enfants.length > 5) {
-                   navigate(`/constellation/${encodeURIComponent(person.name)}`);
-                 } else {
-                   navigate(`/family/${encodeURIComponent(person.name)}`);
-                 }
+                 navigate(`/family/${encodeURIComponent(person.name)}`);
                }}
                className="w-full py-2.5 px-4 rounded-lg text-sm font-semibold shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
              >

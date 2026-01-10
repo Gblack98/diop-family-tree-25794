@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, TreeDeciduous, Users, Network, Eye, Palette, ZoomIn, Hand, Info } from "lucide-react";
+import { ArrowLeft, TreeDeciduous, Users, Eye, Palette, ZoomIn, Hand, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Help = () => {
@@ -88,40 +88,6 @@ export const Help = () => {
             </div>
           </div>
 
-          {/* Vue Constellation */}
-          <div className="bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 p-4 sm:p-6 rounded-xl border-2 border-primary/20 space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-                <Network className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div className="flex-1 space-y-2">
-                <h3 className="font-bold text-base sm:text-lg">Vue Constellation ⭐</h3>
-                <p className="text-sm text-muted-foreground">
-                  Pour les familles complexes (5+ enfants ou 2+ conjoints). Layout dynamique en cercle avec tous les conjoints et enfants organisés autour de la personne centrale.
-                </p>
-                <div className="pt-2 space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold text-primary mb-2">🎯 Organisation intelligente:</p>
-                    <ul className="text-xs sm:text-sm space-y-1 text-muted-foreground">
-                      <li>• Personne au centre</li>
-                      <li>• Conjoints en cercle autour</li>
-                      <li>• Enfants groupés près de leur mère</li>
-                      <li>• Disposition adaptée au nombre d'enfants (1-3: arc, 4-6: arc large, 7+: cercle complet)</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-primary mb-2">🎮 Interactivité:</p>
-                    <ul className="text-xs sm:text-sm space-y-1 text-muted-foreground">
-                      <li>• Zoom/pan avec D3.js</li>
-                      <li>• Hover pour voir les détails</li>
-                      <li>• Clic sur enfant pour voir sa famille</li>
-                      <li>• Animations et effets visuels</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </section>
 
         {/* Code couleur */}
@@ -164,7 +130,7 @@ export const Help = () => {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground pt-2">
-                Conjoints sans ancêtres dans l'arbre. Visibles uniquement dans les vues famille/constellation.
+                Conjoints sans ancêtres dans l'arbre. Visibles uniquement dans les vues famille dédiées.
               </p>
             </div>
           </div>
@@ -208,14 +174,15 @@ export const Help = () => {
 
         {/* Navigation */}
         <section className="bg-primary/5 p-6 rounded-xl border border-primary/20">
-          <h2 className="text-xl sm:text-2xl font-bold mb-4">Navigation automatique</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Navigation</h2>
           <div className="space-y-3 text-sm sm:text-base text-muted-foreground">
             <p>
-              Lorsque vous cliquez sur "Voir la famille de X", l'application choisit automatiquement la meilleure vue:
+              Lorsque vous cliquez sur "Voir la famille de X", vous accédez à une vue dédiée montrant la personne avec tous ses conjoints et enfants directs.
             </p>
             <ul className="space-y-2 ml-4">
-              <li>• <strong>5+ enfants ou 2+ conjoints</strong> → Vue Constellation (dynamique)</li>
-              <li>• <strong>Famille simple</strong> → Vue Famille (hiérarchique)</li>
+              <li>• <strong>Vue claire et organisée</strong> de la famille immédiate</li>
+              <li>• <strong>Tous les conjoints visibles</strong> (même ceux sans ancêtres dans l'arbre)</li>
+              <li>• <strong>Navigation fluide</strong> entre les générations</li>
             </ul>
           </div>
         </section>
