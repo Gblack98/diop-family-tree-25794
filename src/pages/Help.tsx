@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, TreeDeciduous, Users, Eye, Palette, ZoomIn, Hand, Info, Sparkles, MousePointer2, Move, Search, ChevronRight } from "lucide-react";
+import { ArrowLeft, TreeDeciduous, Users, Eye, Palette, ZoomIn, Hand, Info, Sparkles, MousePointer2, Move, Search, ChevronRight, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 
 export const Help = () => {
-  const [scrollY, setScrollY] = useState(0);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      setShowBackToTop(window.scrollY > 300);
 
       // Détection de la section active
       const sections = ["intro", "views", "colors", "controls", "navigation"];
@@ -25,7 +25,7 @@ export const Help = () => {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -37,20 +37,17 @@ export const Help = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 relative overflow-x-hidden">
       {/* Background decorative elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div
           className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl"
-          style={{ transform: `translate(${scrollY * 0.1}px, ${scrollY * 0.05}px)` }}
         />
         <div
           className="absolute top-1/3 -left-40 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl"
-          style={{ transform: `translate(${-scrollY * 0.08}px, ${scrollY * 0.06}px)` }}
         />
         <div
           className="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"
-          style={{ transform: `translate(${scrollY * 0.05}px, ${-scrollY * 0.04}px)` }}
         />
       </div>
 
@@ -80,6 +77,17 @@ export const Help = () => {
           </button>
         ))}
       </div>
+
+      {/* Back to Top Button */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className={`fixed right-6 bottom-6 z-50 p-3 rounded-full bg-primary text-white shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-primary/25 ${
+          showBackToTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
+        }`}
+        title="Retour en haut"
+      >
+        <ArrowUp className="w-6 h-6" />
+      </button>
 
       {/* Header avec effet glassmorphism */}
       <header className="sticky top-0 z-40 border-b bg-card/60 backdrop-blur-xl px-4 py-4 shadow-sm">

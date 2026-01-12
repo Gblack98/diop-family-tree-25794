@@ -36,6 +36,11 @@ export const archiveCategories: CategoryConfig[] = [
   { value: ArchiveCategory.ARTICLE, label: "Articles", icon: FileText },
 ];
 
+// Récupération automatique des images du dossier "regroupement famille"
+const regroupementFamilleImages = Object.keys(
+  import.meta.glob("/public/images/famille/regroupement famille/*.{jpg,jpeg,png,webp}")
+).map((path) => path.replace("/public", ""));
+
 export const archivesData: Archive[] = [
   {
     id: 1,
@@ -66,7 +71,7 @@ Le Général Diop est reconnu pour son leadership éclairé, son intégrité et 
 Au-delà de sa carrière militaire, le Général Ibrahima Gabar Diop reste profondément attaché aux valeurs familiales. Il perpétue l'héritage de ses ancêtres et transmet les traditions de la famille Diop aux nouvelles générations.
 
 Son parcours exemplaire inspire respect et admiration, incarnant les valeurs de service, d'honneur et de dévouement à la patrie.`,
-    date: "1963 - présent",
+    date: "XXXX",
     images: [
       "/images/archives/ibrahima-gabar-diop.jpg",
     ],
@@ -165,7 +170,7 @@ Son parcours exemplaire inspire respect et admiration, incarnant les valeurs de 
     person: "Badara Gabar Diop",
     category: ArchiveCategory.PHOTO,
     title: "Galerie Photos - Badara Gabar Diop",
-    content: "Collection de photos familiales de Badara Gabar Diop, fondateur de la lignée.",
+    content: "Collection de photos familiales de Badara Gabar Diop",
     date: "Archives familiales",
     images: [
       "/images/archive-whatsapp/badara-gabar-diop/WhatsApp Image 2025-10-19 at 09.05.36 (1).jpeg",
@@ -231,5 +236,37 @@ Son parcours exemplaire inspire respect et admiration, incarnant les valeurs de 
       "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.08.32 (12).jpeg",
     ],
     image: "/images/archive-whatsapp/photo-de-groupe/WhatsApp Image 2025-10-19 at 09.05.36 (7).jpeg"
+  },
+  {
+    id: 16,
+    person: "Ibrahima Gabar Diop",
+    category: ArchiveCategory.PHOTO,
+    title: "Photo de Ibrahima Gabar Diop",
+    content: "Ibrahima Gabar Diop était un conseiller colonial élu du Sénégal dans les années 30. Il était membre de commissions administratives clés (agriculture, éducation, finances) et un défenseur actif des droits sociaux et professionnels des populations indigènes face à l'administration coloniale.",
+    date: "XXXX",
+    image: "/images/archive-whatsapp/ibrahima-gabar-diop-gabar/IMG-20211129-IbrahimaGabarDiop-Biram.jpg"
+  },
+  {
+    id: 17,
+    person: "Gabar Biram Médor Diop",
+    category: ArchiveCategory.BIOGRAPHY,
+    title: "Photo de Gabar Biram Médor Diop",
+    content: "Photo portait de Gabar Biram Médor Diop",
+    date: "XXXX",
+    images: [
+      "/public/images/famille/Gabar-biram-medor-diop/IMG_20260111_GabarBiramMedorDiop.jpg",
+      
+    ],
+    image: "/public/images/famille/Gabar-biram-medor-diop/IMG_20260111_GabarBiramMedorDiop.jpg" // Image de couverture (vignette)
+  },
+  {
+    id: 18,
+    person: "Famille Diop",
+    category: ArchiveCategory.PHOTO,
+    title: "Regroupement de la famille Diop",
+    content: "Rassemblement lors du mariage de Mame Njoboss, fille de Saliou Diop et petite fille de Badara Gabar Diop.",
+    date: "07/01/2023",
+    images: regroupementFamilleImages,
+    image: regroupementFamilleImages[0] || "" // Image de couverture (la première trouvée)
   },
 ];
