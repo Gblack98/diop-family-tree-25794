@@ -1,15 +1,18 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, TreeDeciduous, Users, Eye, Palette, ZoomIn, Hand, Info, Sparkles, MousePointer2, Move, Search, ChevronRight, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export const Help = () => {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [activeSection, setActiveSection] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 300);
+      if (containerRef.current) {
+        setShowBackToTop(containerRef.current.scrollTop > 300);
+      }
 
       // Détection de la section active
       const sections = ["intro", "views", "colors", "controls", "navigation"];
@@ -25,8 +28,16 @@ export const Help = () => {
       }
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll, { passive: true });
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener("scroll", handleScroll);
+      }
+    };
   }, []);
 
   const scrollToSection = (id: string) => {
@@ -37,7 +48,7 @@ export const Help = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 relative overflow-x-hidden">
+    <div ref={containerRef} className="h-dvh w-full overflow-y-auto overflow-x-hidden bg-gradient-to-b from-background via-background to-primary/5 relative">
       {/* Background decorative elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div
@@ -80,7 +91,7 @@ export const Help = () => {
 
       {/* Back to Top Button */}
       <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onClick={() => containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
         className={`fixed right-6 bottom-6 z-50 p-3 rounded-full bg-primary text-white shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-primary/25 ${
           showBackToTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
         }`}
@@ -211,7 +222,7 @@ export const Help = () => {
             <p className="text-muted-foreground">Choisissez la meilleure vue pour votre exploration</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Arbre Principal */}
             <div className="group relative bg-gradient-to-br from-card to-card/50 p-6 rounded-2xl border-2 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -250,6 +261,27 @@ export const Help = () => {
                 <div className="flex flex-wrap gap-2">
                   <span className="px-3 py-1 bg-pink-500/10 text-pink-600 text-xs rounded-full font-medium">Conjoints externes</span>
                   <span className="px-3 py-1 bg-pink-500/10 text-pink-600 text-xs rounded-full font-medium">Navigation enfants</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Vue Constellation */}
+            <div className="group relative bg-gradient-to-br from-card to-card/50 p-6 rounded-2xl border-2 border-border hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="w-14 h-14 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-7 h-7 text-purple-500" />
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                </div>
+                <h3 className="text-xl font-bold">Vue Constellation</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Affichage organique pour les familles nombreuses (ex: Amadou Bamba Diop). Les enfants sont regroupés par mère autour du père.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-purple-500/10 text-purple-600 text-xs rounded-full font-medium">Layout dynamique</span>
+                  <span className="px-3 py-1 bg-purple-500/10 text-purple-600 text-xs rounded-full font-medium">Groupement mères</span>
                 </div>
               </div>
             </div>
@@ -457,7 +489,7 @@ export const Help = () => {
             Arbre généalogique de la famille Diop
           </p>
           <p className="text-xs text-muted-foreground/60">
-            Conçu avec ❤️ pour préserver et célébrer notre histoire familiale
+            Conçu par Ibrahima Gabar Diop (Magatte Diop) pour préserver et célébrer notre histoire familiale
           </p>
         </div>
       </main>
