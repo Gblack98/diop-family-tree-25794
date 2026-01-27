@@ -74,14 +74,15 @@ export const FamilyTreeCanvas = ({
       const isMobile = dimensions.width < 640;
       const isTablet = dimensions.width >= 640 && dimensions.width < 1024;
 
-      // Zoom optimal : assez grand pour lire, assez petit pour voir plusieurs générations
-      const initialScale = isMobile ? 0.7 : isTablet ? 0.75 : 0.8;
+      // Zoom optimal : mobile plus petit pour voir plus de l'arbre
+      const initialScale = isMobile ? 0.5 : isTablet ? 0.65 : 0.75;
 
       // CENTRAGE PARFAIT :
       // X : Centre horizontal de l'écran - position de la racine ajustée au zoom
-      // Y : Centre vertical de l'écran - position de la racine ajustée au zoom
+      // Y : Centre vertical (légèrement haut sur mobile pour compenser header)
+      const headerOffset = isMobile ? 40 : isTablet ? 30 : 0;
       const x = dimensions.width / 2 - (rootNode.x * initialScale);
-      const y = dimensions.height / 2 - (rootNode.y * initialScale); 
+      const y = (dimensions.height / 2) - (rootNode.y * initialScale) - headerOffset; 
 
       svg.transition().duration(750).call(
         zoomRef.current.transform,

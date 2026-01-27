@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        'xs': '475px',  // Breakpoint pour très petits écrans
+      },
       spacing: {
         '36': '12rem',
       },

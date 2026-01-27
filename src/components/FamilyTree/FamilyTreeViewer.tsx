@@ -18,15 +18,15 @@ const getResponsiveDimensions = (): TreeDimensions => {
   const isTablet = width >= 640 && width < 1024;
 
   if (isMobile) {
-    // --- MODE MOBILE (Format Badge) ---
+    // --- MODE MOBILE (Format Badge Ultra-Compact) ---
     return {
       width,
       height,
-      nodeWidth: 110,  // Assez large pour le nom, assez petit pour l'écran
-      nodeHeight: 50,  // Hauteur minimale
-      levelHeight: 100, // Distance entre générations
-      coupleSpacing: 15,
-      siblingSpacing: 20, 
+      nodeWidth: 105,   // Optimisé pour mobile
+      nodeHeight: 48,   // Plus compact
+      levelHeight: 90,  // Moins d'espace entre générations
+      coupleSpacing: 12,
+      siblingSpacing: 18,
     };
   }
 
@@ -34,11 +34,11 @@ const getResponsiveDimensions = (): TreeDimensions => {
     return {
       width,
       height,
-      nodeWidth: 160,
-      nodeHeight: 80,
-      levelHeight: 180,
-      coupleSpacing: 30,
-      siblingSpacing: 40,
+      nodeWidth: 150,   // Légèrement plus petit
+      nodeHeight: 75,   // Optimisé tablette
+      levelHeight: 160, // Réduit pour voir plus
+      coupleSpacing: 25,
+      siblingSpacing: 35,
     };
   }
 
@@ -46,11 +46,11 @@ const getResponsiveDimensions = (): TreeDimensions => {
   return {
     width,
     height,
-    nodeWidth: 180,      // Taille confortable pour lire
-    nodeHeight: 90,      // Hauteur adaptée
-    levelHeight: 160,    // Espacement vertical équilibré
-    coupleSpacing: 35,   // Espace entre conjoints
-    siblingSpacing: 45,  // Espace entre frères/sœurs
+    nodeWidth: 175,      // Légèrement réduit
+    nodeHeight: 88,      // Ajusté
+    levelHeight: 150,    // Réduit pour compacité
+    coupleSpacing: 32,   // Espace entre conjoints
+    siblingSpacing: 42,  // Espace entre frères/sœurs
   };
 };
 
