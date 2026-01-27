@@ -7,16 +7,20 @@ import { archiveCategories } from "@/data/archivesData";
 interface ArchiveHeaderProps {
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
+  totalArchives: number;
+  filteredCount: number;
 }
 
-export const ArchiveHeader = ({ selectedCategory, onCategoryChange }: ArchiveHeaderProps) => {
+export const ArchiveHeader = ({ selectedCategory, onCategoryChange, totalArchives, filteredCount }: ArchiveHeaderProps) => {
+  const showingFiltered = filteredCount !== totalArchives;
+
   return (
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border shadow-sm">
       <div className="max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between px-4 sm:px-6 py-4">
           {/* Logo et titre */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="flex items-center gap-3 group"
           >
             <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
@@ -27,7 +31,13 @@ export const ArchiveHeader = ({ selectedCategory, onCategoryChange }: ArchiveHea
                 Archives Familiales
               </h1>
               <p className="text-xs text-muted-foreground">
-                Famille Diop
+                {showingFiltered ? (
+                  <>
+                    <span className="font-semibold text-primary">{filteredCount}</span> sur {totalArchives} archives
+                  </>
+                ) : (
+                  <>{totalArchives} archives • Famille Diop</>
+                )}
               </p>
             </div>
           </Link>

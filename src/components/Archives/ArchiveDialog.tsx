@@ -63,9 +63,11 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
         <div className="mt-2 mb-4 w-full">
           {displayImages.length === 1 ? (
             <div className="aspect-video overflow-hidden rounded-lg border bg-muted shadow-sm">
-              <img 
-                src={displayImages[0]} 
+              <img
+                src={displayImages[0]}
                 alt={archive.title}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-contain"
               />
             </div>
@@ -75,9 +77,11 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
                 {displayImages.map((img, index) => (
                   <CarouselItem key={index}>
                     <div className="aspect-video overflow-hidden rounded-lg border bg-muted shadow-sm flex items-center justify-center relative">
-                      <img 
-                        src={img} 
+                      <img
+                        src={img}
                         alt={`${archive.title} - ${index + 1}`}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-contain"
                       />
                       <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">

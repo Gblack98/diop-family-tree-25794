@@ -57,9 +57,11 @@ const Archives = () => {
   return (
     // CORRECTION ICI : h-dvh (hauteur écran) + overflow-y-auto (scroll autorisé)
     <div className="h-dvh w-full overflow-y-auto bg-background">
-      <ArchiveHeader 
+      <ArchiveHeader
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
+        totalArchives={archivesData.length}
+        filteredCount={filteredArchives.length}
       />
 
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
