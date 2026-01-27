@@ -1,7 +1,7 @@
 import { PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
 export function createNodeHTML(
-  person: PersonNode, 
+  person: PersonNode,
   selectedPerson: PersonNode | null,
   dimensions: TreeDimensions
 ): string {
@@ -17,6 +17,30 @@ export function createNodeHTML(
   // Couleurs différentes pour les conjoints externes (sans ascendants)
   const isExternal = person.isExternalSpouse;
 
+  // Highlighting pour les vues spéciales
+  const isInDirectLine = person.isInDirectLine || false;
+  const hasHighlight = person.highlightLevel !== undefined;
+
+  // Calculer la couleur de surbrillance pour la vue Path (gradient du bleu au violet)
+  let highlightColor = "";
+  let highlightBadge = "";
+  if (hasHighlight && person.highlightLevel !== undefined) {
+    // Gradient de 200 (bleu clair) à 280 (violet) en passant par le bleu
+    const hue = 200 + (person.highlightLevel * 15); // Incrément de 15° de teinte
+    highlightColor = `hsl(${hue}, 70%, 50%)`;
+    highlightBadge = `
+      <div style="
+        position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+        background: ${highlightColor}; color: white;
+        width: 20px; height: 20px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; font-size: 10px;
+        box-shadow: 0 2px 8px ${highlightColor}80;
+        z-index: 10;
+      ">${person.highlightLevel + 1}</div>
+    `;
+  }
+
   const avatarColor = isExternal
     ? (person.genre === "Homme"
         ? "background: linear-gradient(135deg, hsl(var(--external-male)), hsl(270 65% 48%));"
@@ -25,9 +49,26 @@ export function createNodeHTML(
         ? "background: linear-gradient(135deg, hsl(var(--male)), hsl(210 100% 46%));"
         : "background: linear-gradient(135deg, hsl(var(--female)), hsl(330 76% 48%));");
 
-  const borderColor = isExternal
+  // Border color avec surbrillance pour les vues spéciales
+  let borderColor = isExternal
     ? (person.genre === "Homme" ? "hsl(var(--external-male))" : "hsl(var(--external-female))")
     : (person.genre === "Homme" ? "hsl(var(--male))" : "hsl(var(--female))");
+
+  // Override pour la ligne directe (gold/orange)
+  if (isInDirectLine) {
+    borderColor = "hsl(45, 100%, 50%)"; // Couleur dorée
+  }
+  // Override pour le chemin avec gradient
+  if (hasHighlight) {
+    borderColor = highlightColor;
+  }
+
+  // Box shadow pour le highlight
+  const boxShadow = hasHighlight
+    ? `0 4px 20px ${highlightColor}50, 0 0 20px ${highlightColor}30`
+    : isInDirectLine
+    ? `0 4px 20px rgba(255, 193, 7, 0.4), 0 0 20px rgba(255, 193, 7, 0.2)`
+    : "0 4px 12px rgba(0,0,0,0.15)";
 
   // --- RENDU BADGE (Le style que vous voulez) ---
   if (isBadge) {
@@ -37,9 +78,9 @@ export function createNodeHTML(
         height: ${dimensions.nodeHeight - 4}px;
         margin: 2px;
         background: hsl(var(--card));
-        border: ${isSelected ? "2px" : "1px"} solid ${borderColor};
+        border: ${isSelected ? "2px" : isInDirectLine || hasHighlight ? "2px" : "1px"} solid ${borderColor};
         border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: ${boxShadow};
         display: flex;
         flex-direction: row; /* Alignement Horizontal */
         align-items: center;
@@ -62,7 +103,7 @@ export function createNodeHTML(
           color: white;
           flex-shrink: 0;
         ">${initial}</div>
-        
+
         <div style="
           font-weight: 600;
           font-size: 10px;
@@ -75,7 +116,7 @@ export function createNodeHTML(
           flex: 1;
         ">${person.name}</div>
 
-        ${hasHiddenChildren ? `
+        ${hasHighlight ? highlightBadge : hasHiddenChildren ? `
           <div style="
             position: absolute; top: -2px; right: -2px;
             background: hsl(var(--primary)); color: white;
@@ -94,15 +135,30 @@ export function createNodeHTML(
   const fontSizeName = isCompact ? "12px" : "13px";
   const padding = isCompact ? "6px" : "10px";
 
+  // Badge pour la ligne directe (Vue Ancestors)
+  const directLineBadge = isInDirectLine && !hasHighlight ? `
+    <div style="
+      position: absolute; top: 6px; left: 6px;
+      background: linear-gradient(135deg, hsl(45, 100%, 50%), hsl(35, 100%, 45%));
+      color: white;
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4);
+      z-index: 10;
+    ">★</div>
+  ` : '';
+
   return `
     <div style="
       width: ${dimensions.nodeWidth - 4}px;
       height: ${dimensions.nodeHeight - 4}px;
       margin: 2px;
       background: hsl(var(--card));
-      border: ${isSelected ? "3px" : "2px"} solid ${borderColor};
+      border: ${isSelected ? "3px" : isInDirectLine || hasHighlight ? "3px" : "2px"} solid ${borderColor};
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: ${boxShadow};
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -147,13 +203,13 @@ export function createNodeHTML(
           ">Génération ${person.level}</div>
         </div>
       </div>
-      
+
       <div style="
-        padding: 4px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: space-around; 
-        font-size: 10px; 
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        font-size: 10px;
         color: hsl(var(--muted-foreground));
         background: hsl(var(--muted)/0.3);
       ">
@@ -162,18 +218,17 @@ export function createNodeHTML(
         <span style="display:flex; gap:2px">👶 ${childCount}</span>
       </div>
 
-      ${
-        hasHiddenChildren
-          ? `<div style="
+      ${directLineBadge}
+      ${hasHighlight ? highlightBadge : hasHiddenChildren ? `
+        <div style="
           position: absolute; top: 6px; right: 6px;
           background: hsl(var(--primary)); color: white;
           width: 20px; height: 20px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
           font-weight: bold; font-size: 10px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
-        ">+${childCount}</div>`
-          : ""
-      }
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        ">+${childCount}</div>
+      ` : ''}
     </div>
   `;
 }

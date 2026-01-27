@@ -132,7 +132,12 @@ export class FamilyTreeEngine {
     selectedPerson?: PersonNode,
     selectedPerson2?: PersonNode
   ) {
-    this.personMap.forEach((p) => (p.visible = false));
+    // Réinitialiser toutes les propriétés de visibilité et de surbrillance
+    this.personMap.forEach((p) => {
+      p.visible = false;
+      p.isInDirectLine = false;
+      p.highlightLevel = undefined;
+    });
 
     switch (mode) {
       case "ancestors":
@@ -192,17 +197,44 @@ export class FamilyTreeEngine {
 
   private showAncestors(person: PersonNode) {
     person.visible = true;
-    // Make all parents visible first (single pass)
+    person.isInDirectLine = true; // Marquer comme faisant partie de la ligne directe
+
+    // Afficher tous les conjoints de la personne sélectionnée
+    person.spouses.forEach((spouseName) => {
+      const spouse = this.personMap.get(spouseName);
+      if (spouse) {
+        spouse.visible = true;
+        // Les conjoints ne sont pas dans la ligne directe
+      }
+    });
+
+    // Pour chaque parent
     person.parents.forEach((parentName) => {
       const parent = this.personMap.get(parentName);
       if (parent) {
         parent.visible = true;
-      }
-    });
-    // Then recurse on each parent
-    person.parents.forEach((parentName) => {
-      const parent = this.personMap.get(parentName);
-      if (parent) {
+        parent.isInDirectLine = true; // Les parents sont dans la ligne directe
+
+        // Afficher tous les conjoints du parent (tous les mariages)
+        parent.spouses.forEach((spouseName) => {
+          const spouse = this.personMap.get(spouseName);
+          if (spouse) {
+            spouse.visible = true;
+          }
+        });
+
+        // Afficher tous les frères et sœurs (enfants du parent)
+        parent.enfants.forEach((siblingName) => {
+          if (siblingName !== person.name) {
+            const sibling = this.personMap.get(siblingName);
+            if (sibling) {
+              sibling.visible = true;
+              // Les frères et sœurs ne sont pas dans la ligne directe
+            }
+          }
+        });
+
+        // Récursion pour continuer la remontée
         this.showAncestors(parent);
       }
     });
@@ -210,14 +242,35 @@ export class FamilyTreeEngine {
 
   private showDescendants(person: PersonNode) {
     person.visible = true;
+
+    // Afficher tous les conjoints de la personne
+    person.spouses.forEach((spouseName) => {
+      const spouse = this.personMap.get(spouseName);
+      if (spouse) {
+        spouse.visible = true;
+      }
+    });
+
+    // Afficher tous les enfants et continuer la descente
     person.enfants.forEach((childName) => {
       const child = this.personMap.get(childName);
       if (child) {
         child.visible = true;
+
+        // Afficher tous les parents de l'enfant (pour montrer tous les mariages)
         child.parents.forEach((parentName) => {
           const parent = this.personMap.get(parentName);
-          if (parent) parent.visible = true;
+          if (parent) {
+            parent.visible = true;
+            // Afficher aussi les conjoints de ce parent (autres mariages)
+            parent.spouses.forEach((spouseName) => {
+              const spouse = this.personMap.get(spouseName);
+              if (spouse) spouse.visible = true;
+            });
+          }
         });
+
+        // Récursion pour continuer la descente
         this.showDescendants(child);
       }
     });
@@ -226,14 +279,31 @@ export class FamilyTreeEngine {
   private showPath(person1: PersonNode, person2: PersonNode) {
     const path = this.findPath(person1.name, person2.name);
     const pathSet = new Set(path);
-    path.forEach((name) => {
+
+    // Afficher chaque personne dans le chemin avec un niveau de surbrillance
+    path.forEach((name, index) => {
       const person = this.personMap.get(name);
       if (person) {
         person.visible = true;
+        person.highlightLevel = index; // 0 = début, maxLevel = fin
+        person.isInDirectLine = true; // Marquer comme faisant partie du chemin principal
+
+        // Afficher les conjoints qui sont aussi dans le chemin
         person.spouses.forEach((spouseName) => {
-          if (pathSet.has(spouseName)) {
-            const spouse = this.personMap.get(spouseName);
-            if (spouse) spouse.visible = true;
+          const spouse = this.personMap.get(spouseName);
+          if (spouse) {
+            if (pathSet.has(spouseName)) {
+              // Le conjoint est dans le chemin principal
+              spouse.visible = true;
+              const spouseIndex = path.indexOf(spouseName);
+              spouse.highlightLevel = spouseIndex;
+              spouse.isInDirectLine = true;
+            } else {
+              // Le conjoint n'est pas dans le chemin, mais on l'affiche quand même pour le contexte
+              spouse.visible = true;
+              spouse.highlightLevel = index; // Même niveau que son partenaire
+              // Ne pas marquer isInDirectLine pour les conjoints hors chemin
+            }
           }
         });
       }

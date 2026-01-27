@@ -14,6 +14,8 @@ export interface PersonNode extends Person {
   expanded: boolean;
   visible: boolean;
   isExternalSpouse?: boolean; // Conjoint sans ascendants dans l'arbre (sauf génération 0)
+  isInDirectLine?: boolean; // Marqueur pour les ancêtres directs dans la vue Ancestors
+  highlightLevel?: number; // Niveau de surbrillance dans la vue Path (0 = début, max = fin)
 }
 
 export interface TreeLink {

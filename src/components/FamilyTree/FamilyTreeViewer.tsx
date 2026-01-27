@@ -249,6 +249,9 @@ export const FamilyTreeViewer = () => {
         onExport={handleExport}
         persons={allPersons}
         onSelectPerson={handleSearchSelect}
+        visibleCount={visiblePersons.length}
+        selectedPerson={selectedPerson}
+        selectedPerson2={selectedPerson2}
       />
 
       <Dedication />

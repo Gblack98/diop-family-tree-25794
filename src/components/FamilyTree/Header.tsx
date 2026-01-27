@@ -30,6 +30,9 @@ interface HeaderProps {
   onExport: (format: 'png' | 'pdf') => void;
   persons: PersonNode[];
   onSelectPerson: (person: PersonNode) => void;
+  visibleCount?: number;
+  selectedPerson?: PersonNode | null;
+  selectedPerson2?: PersonNode | null;
 }
 
 export const Header = ({
@@ -42,6 +45,9 @@ export const Header = ({
   onExport,
   persons,
   onSelectPerson,
+  visibleCount = totalMembers,
+  selectedPerson,
+  selectedPerson2,
 }: HeaderProps) => {
   const modes: { value: ViewMode; label: string, icon: React.ElementType }[] = [
     { value: "tree", label: "Arbre Complet", icon: TreeDeciduous },
@@ -50,7 +56,38 @@ export const Header = ({
     { value: "path", label: "Relation", icon: GitMerge },
   ];
 
-  const currentModeData = modes.find(m => m.value === currentMode);
+  // Calculer les statistiques contextuelles
+  const getContextualStats = () => {
+    switch (currentMode) {
+      case "ancestors":
+        return selectedPerson
+          ? `${visibleCount} ancêtres de ${selectedPerson.name}`
+          : `${totalMembers} membres • ${totalGenerations} générations`;
+      case "descendants":
+        return selectedPerson
+          ? `${visibleCount} descendants de ${selectedPerson.name}`
+          : `${totalMembers} membres • ${totalGenerations} générations`;
+      case "path":
+        return selectedPerson && selectedPerson2
+          ? `Relation entre ${selectedPerson.name} et ${selectedPerson2.name} • ${visibleCount} personnes dans le chemin`
+          : `${totalMembers} membres • ${totalGenerations} générations`;
+      default:
+        return `${totalMembers} membres • ${totalGenerations} générations`;
+    }
+  };
+
+  const getMobileStats = () => {
+    switch (currentMode) {
+      case "ancestors":
+        return selectedPerson ? `${visibleCount} ancêtres` : `${totalMembers} membres • ${totalGenerations} gen.`;
+      case "descendants":
+        return selectedPerson ? `${visibleCount} descendants` : `${totalMembers} membres • ${totalGenerations} gen.`;
+      case "path":
+        return selectedPerson && selectedPerson2 ? `${visibleCount} dans le chemin` : `${totalMembers} membres • ${totalGenerations} gen.`;
+      default:
+        return `${totalMembers} membres • ${totalGenerations} gen.`;
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-card/80 backdrop-blur-lg border-b border-border/20 z-50 shadow-sm">
@@ -63,7 +100,7 @@ export const Header = ({
                 Famille Diop
               </h1>
               <p className="text-[10px] text-muted-foreground">
-                {totalMembers} membres • {totalGenerations} gen.
+                {getMobileStats()}
               </p>
             </div>
             <div className="flex gap-1.5 items-center flex-shrink-0">
@@ -118,7 +155,7 @@ export const Header = ({
               Arbre Généalogique - Famille Diop
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-              {totalMembers} membres • {totalGenerations} générations
+              {getContextualStats()}
             </p>
           </div>
 
