@@ -224,8 +224,12 @@ export const Help = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Arbre Principal */}
-            <div className="group relative bg-gradient-to-br from-card to-card/50 p-6 rounded-2xl border-2 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+            <Link to="/" className="group relative bg-gradient-to-br from-card to-card/50 p-6 rounded-2xl border-2 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 overflow-hidden block">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute -right-8 -top-8 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
+                <TreeDeciduous className="w-40 h-40 text-primary" />
+              </div>
+
               <div className="relative space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -241,12 +245,19 @@ export const Help = () => {
                   <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium">Zoom fluide</span>
                   <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium">Navigation pan</span>
                 </div>
+                <div className="pt-2 flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  Explorer l'arbre <ChevronRight className="w-4 h-4 ml-1" />
+                </div>
               </div>
-            </div>
+            </Link>
 
             {/* Vue Famille */}
-            <div className="group relative bg-gradient-to-br from-card to-card/50 p-6 rounded-2xl border-2 border-border hover:border-pink-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-pink-500/10 hover:-translate-y-1">
+            <Link to="/family/Badara%20Gabar%20Diop" className="group relative bg-gradient-to-br from-card to-card/50 p-6 rounded-2xl border-2 border-border hover:border-pink-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-pink-500/10 hover:-translate-y-1 overflow-hidden block">
               <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute -right-8 -top-8 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
+                <Users className="w-40 h-40 text-pink-500" />
+              </div>
+
               <div className="relative space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="w-14 h-14 rounded-xl bg-pink-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -262,12 +273,28 @@ export const Help = () => {
                   <span className="px-3 py-1 bg-pink-500/10 text-pink-600 text-xs rounded-full font-medium">Conjoints externes</span>
                   <span className="px-3 py-1 bg-pink-500/10 text-pink-600 text-xs rounded-full font-medium">Navigation enfants</span>
                 </div>
+                <div className="pt-2 flex items-center text-pink-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  Voir un exemple <ChevronRight className="w-4 h-4 ml-1" />
+                </div>
               </div>
-            </div>
+            </Link>
 
             {/* Vue Constellation */}
-            <div className="group relative bg-gradient-to-br from-card to-card/50 p-6 rounded-2xl border-2 border-border hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
+            <Link to="/constellation/Amadou%20Bamba%20Diop%20(Badara)" className="group relative bg-gradient-to-br from-card to-card/50 p-6 rounded-2xl border-2 border-border hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1 overflow-hidden block">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="absolute -right-12 -top-12 opacity-[0.05] group-hover:opacity-15 transition-opacity duration-700 pointer-events-none">
+                 <svg viewBox="0 0 200 200" className="w-48 h-48 animate-spin" style={{ animationDuration: '60s' }}>
+                    <circle cx="100" cy="100" r="20" fill="currentColor" className="text-purple-500" />
+                    {[0, 60, 120, 180, 240, 300].map((deg, i) => (
+                      <g key={i} transform={`rotate(${deg} 100 100)`}>
+                        <line x1="100" y1="80" x2="100" y2="40" stroke="currentColor" strokeWidth="2" className="text-purple-500" />
+                        <circle cx="100" cy="30" r="10" fill="currentColor" className="text-purple-500" />
+                      </g>
+                    ))}
+                 </svg>
+              </div>
+
               <div className="relative space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="w-14 h-14 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -283,8 +310,11 @@ export const Help = () => {
                   <span className="px-3 py-1 bg-purple-500/10 text-purple-600 text-xs rounded-full font-medium">Layout dynamique</span>
                   <span className="px-3 py-1 bg-purple-500/10 text-purple-600 text-xs rounded-full font-medium">Groupement mères</span>
                 </div>
+                <div className="pt-2 flex items-center text-purple-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  Voir Amadou Bamba Diop <ChevronRight className="w-4 h-4 ml-1" />
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
         </section>
 

@@ -74,9 +74,7 @@ export const FamilyTreeViewer = () => {
        engine.updateDimensions(dimensions);
     }
     // Sécurité : On s'assure que le moteur est en mode vertical
-    if ((engine as any).setOrientation) {
-        (engine as any).setOrientation("vertical");
-    }
+    engine.setOrientation("vertical");
 
     engine.updateVisibility(currentMode, selectedPerson || undefined, selectedPerson2 || undefined);
     engine.calculatePositions();
@@ -100,7 +98,7 @@ export const FamilyTreeViewer = () => {
     // Centrage initial au chargement
     setTimeout(() => {
         setDimensions(getResponsiveDimensions());
-        if ((window as any).__treeReset) (window as any).__treeReset();
+        if (window.__treeReset) window.__treeReset();
     }, 300);
 
     return () => {
@@ -128,8 +126,8 @@ export const FamilyTreeViewer = () => {
             updateTree();
             setSelectedPerson(targetPerson);
             setIsPersonInfoVisible(true);
-            if ((window as any).__treeCenterOnNode) {
-              (window as any).__treeCenterOnNode(targetPerson);
+            if (window.__treeCenterOnNode) {
+              window.__treeCenterOnNode(targetPerson);
             }
             setSearchParams({}, { replace: true });
         }, 500);
@@ -156,7 +154,7 @@ export const FamilyTreeViewer = () => {
 
     // Petit recentrage doux
     setTimeout(() => {
-       if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
+       if (window.__treeCenterOnNode) window.__treeCenterOnNode(person);
     }, 300);
   }, [selectedPerson, engine, updateTree]);
 
@@ -167,7 +165,7 @@ export const FamilyTreeViewer = () => {
     setSelectedPerson(person);
     setIsPersonInfoVisible(true);
     setTimeout(() => {
-      if ((window as any).__treeCenterOnNode) (window as any).__treeCenterOnNode(person);
+      if (window.__treeCenterOnNode) window.__treeCenterOnNode(person);
     }, 100);
   }, [engine, updateTree]);
 
@@ -178,7 +176,7 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson2(null);
       setIsModePanelOpen(false);
        setTimeout(() => {
-         if ((window as any).__treeReset) (window as any).__treeReset();
+         if (window.__treeReset) window.__treeReset();
        }, 100);
     } else {
       setIsModePanelOpen(true);
@@ -198,7 +196,7 @@ export const FamilyTreeViewer = () => {
       setSelectedPerson2(person2 || null);
       setIsModePanelOpen(false);
       setTimeout(() => {
-        if ((window as any).__treeFit) (window as any).__treeFit();
+        if (window.__treeFit) window.__treeFit();
       }, 100);
     }
   }, []);
@@ -218,15 +216,15 @@ export const FamilyTreeViewer = () => {
   }, [currentMode, selectedPerson]);
 
   const handleReset = useCallback(() => {
-    if ((window as any).__treeReset) (window as any).__treeReset();
+    if (window.__treeReset) window.__treeReset();
   }, []);
 
   const handleFit = useCallback(() => {
-    if ((window as any).__treeFit) (window as any).__treeFit();
+    if (window.__treeFit) window.__treeFit();
   }, []);
 
   const handleExport = useCallback((format: 'png' | 'pdf') => {
-    if ((window as any).__treeExport) (window as any).__treeExport(format);
+    if (window.__treeExport) window.__treeExport(format);
   }, []);
 
   const generations = useMemo(

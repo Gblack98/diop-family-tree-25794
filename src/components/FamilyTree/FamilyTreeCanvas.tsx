@@ -5,6 +5,16 @@ import { jsPDF } from "jspdf";
 import { PersonNode, TreeLink, TreeDimensions } from "@/lib/familyTree/types";
 import { createNodeHTML } from "./nodeHTML";
 
+// Extension de Window pour les fonctions globales de l'arbre
+declare global {
+  interface Window {
+    __treeCenterOnNode?: (node: PersonNode) => void;
+    __treeReset?: () => void;
+    __treeFit?: () => void;
+    __treeExport?: (format: 'png' | 'pdf') => Promise<void>;
+  }
+}
+
 // Interface standard
 interface FamilyTreeCanvasProps {
   persons: PersonNode[];
@@ -41,7 +51,7 @@ export const FamilyTreeCanvas = ({
   }, []);
 
   useEffect(() => {
-    (window as any).__treeCenterOnNode = (node: PersonNode) => {
+    window.__treeCenterOnNode = (node: PersonNode) => {
       if (!svgRef.current || !zoomRef.current) return;
       const svg = d3.select(svgRef.current);
       const scale = 1.1; 
@@ -54,7 +64,7 @@ export const FamilyTreeCanvas = ({
     };
 
     // RESET (CENTRAGE PARFAIT)
-    (window as any).__treeReset = () => {
+    window.__treeReset = () => {
       if (!svgRef.current || !zoomRef.current || persons.length === 0) return;
       const svg = d3.select(svgRef.current);
 
@@ -79,11 +89,11 @@ export const FamilyTreeCanvas = ({
       );
     };
 
-    (window as any).__treeFit = () => {
-       if((window as any).__treeReset) (window as any).__treeReset();
+    window.__treeFit = () => {
+       if(window.__treeReset) window.__treeReset();
     };
 
-    (window as any).__treeExport = async (format: 'png' | 'pdf') => {
+    window.__treeExport = async (format: 'png' | 'pdf') => {
        if (!svgRef.current || !gRef.current) return;
       try {
         const svg = svgRef.current;
@@ -142,7 +152,7 @@ export const FamilyTreeCanvas = ({
     };
 
     return () => {
-      delete (window as any).__treeReset; delete (window as any).__treeFit; delete (window as any).__treeCenterOnNode; delete (window as any).__treeExport;
+      delete window.__treeReset; delete window.__treeFit; delete window.__treeCenterOnNode; delete window.__treeExport;
     };
   }, [dimensions.width, dimensions.height, persons]); 
 

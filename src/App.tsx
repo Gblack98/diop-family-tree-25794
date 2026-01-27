@@ -22,6 +22,7 @@ const App = () => (
           <Route path="/archives" element={<Archives />} />
           <Route path="/help" element={<Help />} />
           <Route path="/family/:personName" element={<FamilyView />} />
+          <Route path="/constellation/:personName" element={<FamilyView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
