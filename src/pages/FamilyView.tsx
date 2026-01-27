@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import * as d3 from "d3";
-import { ArrowLeft, Users, Sparkles, Move, RotateCcw } from "lucide-react";
+import { ArrowLeft, Home, Users, Sparkles, ZoomIn, ZoomOut, RotateCcw, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { familyData } from "@/lib/familyTree/data";
 
@@ -12,7 +12,7 @@ interface PersonData {
   generation: number;
   parents: string[];
   enfants: string[];
-  spouses?: string[]; // Calculé dynamiquement si absent
+  spouses?: string[];
 }
 
 interface Node extends d3.SimulationNodeDatum {
@@ -21,7 +21,9 @@ interface Node extends d3.SimulationNodeDatum {
   data: PersonData;
   x?: number;
   y?: number;
-  parent?: string; // Pour les enfants, lien vers le conjoint (mère/père)
+  fx?: number | null;
+  fy?: number | null;
+  parent?: string;
 }
 
 interface Link extends d3.SimulationLinkDatum<Node> {
@@ -30,22 +32,84 @@ interface Link extends d3.SimulationLinkDatum<Node> {
   type: "marriage" | "parent-child";
 }
 
-// Types pour D3 après simulation (source/target deviennent des objets)
 type SimulatedNode = Node & Required<Pick<d3.SimulationNodeDatum, 'x' | 'y'>>;
+
+// Stocker l'historique de navigation dans sessionStorage
+const HISTORY_KEY = 'familyview_history';
+
+const getNavigationHistory = (): string[] => {
+  try {
+    const stored = sessionStorage.getItem(HISTORY_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const addToHistory = (personName: string) => {
+  const history = getNavigationHistory();
+  // Éviter les doublons consécutifs
+  if (history[history.length - 1] !== personName) {
+    history.push(personName);
+    // Limiter à 10 dernières personnes
+    if (history.length > 10) history.shift();
+    sessionStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }
+};
+
+const goBackInHistory = (): string | null => {
+  const history = getNavigationHistory();
+  if (history.length > 1) {
+    history.pop(); // Retirer la personne actuelle
+    const previous = history[history.length - 1];
+    sessionStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    return previous;
+  }
+  return null;
+};
 
 export const FamilyView = () => {
   const { personName } = useParams<{ personName: string }>();
   const navigate = useNavigate();
   const svgRef = useRef<SVGSVGElement>(null);
+  const gRef = useRef<SVGGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const simulationRef = useRef<d3.Simulation<Node, Link> | null>(null);
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown>>();
 
   // Récupération de la personne centrale
   const centralPerson = useMemo(() => {
     const decodedName = decodeURIComponent(personName || "");
     return familyData.find((p) => p.name === decodedName) as PersonData | undefined;
   }, [personName]);
+
+  // Ajouter à l'historique quand on arrive sur une personne
+  useEffect(() => {
+    if (centralPerson) {
+      addToHistory(centralPerson.name);
+    }
+  }, [centralPerson]);
+
+  // Calcul des conjoints réels
+  const spousesOfCentral = useMemo(() => {
+    if (!centralPerson) return [];
+
+    const spousesSet = new Set<string>();
+
+    // Trouver les conjoints via les enfants
+    centralPerson.enfants.forEach(childName => {
+      const child = familyData.find(p => p.name === childName);
+      if (child) {
+        const otherParent = child.parents.find(p => p !== centralPerson.name);
+        if (otherParent) {
+          spousesSet.add(otherParent);
+        }
+      }
+    });
+
+    return Array.from(spousesSet);
+  }, [centralPerson]);
 
   // Calcul des données de la constellation
   const { nodes, links } = useMemo(() => {
@@ -54,87 +118,72 @@ export const FamilyView = () => {
     const nodeList: Node[] = [];
     const linkList: Link[] = [];
 
-    // 1. Nœud Central
+    // 1. Nœud Central (fixé au centre)
     nodeList.push({
       id: centralPerson.name,
       type: "central",
-      data: centralPerson,
-      fx: 0, // Fixé au centre initialement
+      data: { ...centralPerson, spouses: spousesOfCentral },
+      fx: 0,
       fy: 0,
     });
 
-    // Identification des conjoints (basé sur les parents des enfants)
-    const spousesSet = new Set<string>();
+    // Identification des conjoints et leurs enfants
     const childrenBySpouse = new Map<string, string[]>();
 
-    // Récupérer les enfants objets
-    const childrenObjs = centralPerson.enfants
-      .map((name) => familyData.find((p) => p.name === name))
-      .filter((p): p is PersonData => !!p);
+    centralPerson.enfants.forEach(childName => {
+      const child = familyData.find(p => p.name === childName);
+      if (child) {
+        const otherParentName = child.parents.find(p => p !== centralPerson.name);
+        const spouseKey = otherParentName || "Inconnu";
 
-    childrenObjs.forEach((child) => {
-      // Trouver l'autre parent
-      const otherParentName = child.parents.find((p) => p !== centralPerson.name);
-      if (otherParentName) {
-        spousesSet.add(otherParentName);
-        if (!childrenBySpouse.has(otherParentName)) {
-          childrenBySpouse.set(otherParentName, []);
+        if (!childrenBySpouse.has(spouseKey)) {
+          childrenBySpouse.set(spouseKey, []);
         }
-        childrenBySpouse.get(otherParentName)?.push(child.name);
-      } else {
-        // Enfant sans autre parent connu (ou parent unique)
-        const unknownKey = "Inconnu";
-        if (!childrenBySpouse.has(unknownKey)) {
-          childrenBySpouse.set(unknownKey, []);
-        }
-        childrenBySpouse.get(unknownKey)?.push(child.name);
+        childrenBySpouse.get(spouseKey)?.push(childName);
       }
     });
 
     // 2. Nœuds Conjoints
-    const spouses = Array.from(spousesSet);
-    spouses.forEach((spouseName) => {
-      const spouseData = familyData.find((p) => p.name === spouseName) || {
-        name: spouseName,
-        genre: centralPerson.genre === "Homme" ? "Femme" : "Homme",
-        generation: centralPerson.generation,
-        parents: [],
-        enfants: [],
-      };
+    spousesOfCentral.forEach((spouseName) => {
+      const spouseData = familyData.find((p) => p.name === spouseName);
 
-      nodeList.push({
-        id: spouseName,
-        type: "spouse",
-        data: spouseData,
-      });
+      if (spouseData) {
+        nodeList.push({
+          id: spouseName,
+          type: "spouse",
+          data: spouseData,
+        });
 
-      linkList.push({
-        source: centralPerson.name,
-        target: spouseName,
-        type: "marriage",
-      });
+        linkList.push({
+          source: centralPerson.name,
+          target: spouseName,
+          type: "marriage",
+        });
 
-      // 3. Nœuds Enfants (liés à leur parent conjoint)
-      const kids = childrenBySpouse.get(spouseName) || [];
-      kids.forEach((kidName) => {
-        const kidData = familyData.find((p) => p.name === kidName);
-        if (kidData) {
-          nodeList.push({
-            id: kidName,
-            type: "child",
-            data: kidData,
-            parent: spouseName,
-          });
-          linkList.push({
-            source: spouseName,
-            target: kidName,
-            type: "parent-child",
-          });
-        }
-      });
+        // 3. Enfants de ce conjoint
+        const kids = childrenBySpouse.get(spouseName) || [];
+        kids.forEach((kidName) => {
+          const kidData = familyData.find((p) => p.name === kidName);
+          if (kidData) {
+            nodeList.push({
+              id: kidName,
+              type: "child",
+              data: kidData,
+              parent: spouseName,
+            });
+
+            // Lien du conjoint vers l'enfant
+            linkList.push({
+              source: spouseName,
+              target: kidName,
+              type: "parent-child",
+            });
+          }
+        });
+      }
     });
 
-    // Enfants sans conjoint identifié (liés directement au central)
+    // Enfants sans conjoint identifié
     const orphans = childrenBySpouse.get("Inconnu") || [];
     orphans.forEach((kidName) => {
       const kidData = familyData.find((p) => p.name === kidName);
@@ -154,7 +203,7 @@ export const FamilyView = () => {
     });
 
     return { nodes: nodeList, links: linkList };
-  }, [centralPerson]);
+  }, [centralPerson, spousesOfCentral]);
 
   // Gestion du redimensionnement
   useEffect(() => {
@@ -171,98 +220,182 @@ export const FamilyView = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Fonction pour recentrer la vue
-  const resetView = () => {
-    if (!svgRef.current || !dimensions.width || !dimensions.height) return;
+  // Fonctions de contrôle du zoom
+  const handleZoomIn = () => {
+    if (!svgRef.current || !zoomRef.current) return;
+    const svg = d3.select(svgRef.current);
+    svg.transition().duration(300).call(zoomRef.current.scaleBy, 1.3);
+  };
+
+  const handleZoomOut = () => {
+    if (!svgRef.current || !zoomRef.current) return;
+    const svg = d3.select(svgRef.current);
+    svg.transition().duration(300).call(zoomRef.current.scaleBy, 0.7);
+  };
+
+  const handleReset = () => {
+    if (!svgRef.current || !zoomRef.current || !dimensions.width || !dimensions.height) return;
     const svg = d3.select(svgRef.current);
     const isMobile = dimensions.width < 640;
     const scale = isMobile ? 0.6 : 0.8;
+
     svg.transition().duration(750).call(
-      d3.zoom<SVGSVGElement, unknown>().transform,
+      zoomRef.current.transform,
       d3.zoomIdentity.translate(dimensions.width / 2, dimensions.height / 2).scale(scale)
     );
   };
 
-  // Moteur de rendu D3
+  const handleBack = () => {
+    const previous = goBackInHistory();
+    if (previous) {
+      navigate(`/family/${encodeURIComponent(previous)}`);
+    } else {
+      navigate('/');
+    }
+  };
+
+  // Moteur de rendu D3 avec simulation DYNAMIQUE
   useEffect(() => {
-    if (!svgRef.current || !dimensions.width || !dimensions.height || nodes.length === 0) return;
+    if (!svgRef.current || !gRef.current || !dimensions.width || !dimensions.height || nodes.length === 0) return;
 
     const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove(); // Nettoyage
+    const g = d3.select(gRef.current);
+
+    // Nettoyage
+    g.selectAll("*").remove();
 
     const { width, height } = dimensions;
-    const g = svg.append("g");
-
-    // Détection mobile/tablette
     const isMobile = width < 640;
     const isTablet = width >= 640 && width < 1024;
 
-    // Zoom avec limites adaptées
+    // Configuration du zoom
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 4])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
       });
-    svg.call(zoom);
 
-    // Centrage initial optimisé pour chaque device
+    svg.call(zoom);
+    zoomRef.current = zoom;
+
+    // Centrage initial
     const initialScale = isMobile ? 0.6 : isTablet ? 0.7 : 0.8;
     svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(initialScale));
 
-    // Simulation de force avec paramètres adaptatifs
-    const linkDistance = isMobile ? 120 : isTablet ? 150 : 200;
-    const chargeStrength = isMobile ? -600 : isTablet ? -800 : -1000;
+    // Paramètres adaptatifs pour la simulation
+    const linkDistance = isMobile ? 120 : isTablet ? 150 : 180;
+    const chargeStrength = isMobile ? -800 : isTablet ? -1000 : -1200;
+    const collisionRadius = isMobile ? 45 : isTablet ? 55 : 65;
 
+    // Simulation de force DYNAMIQUE (ne pas arrêter)
     const simulation = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink<Node, Link>(links).id((d) => d.id).distance((d) => d.type === "marriage" ? linkDistance : linkDistance / 2))
+      .force("link", d3.forceLink<Node, Link>(links)
+        .id((d) => d.id)
+        .distance((d) => d.type === "marriage" ? linkDistance : linkDistance * 0.6))
       .force("charge", d3.forceManyBody().strength(chargeStrength))
-      .force("collide", d3.forceCollide().radius(isMobile ? 40 : isTablet ? 50 : 60))
-      .force("center", d3.forceCenter(0, 0));
+      .force("collide", d3.forceCollide().radius(collisionRadius))
+      .force("center", d3.forceCenter(0, 0))
+      .alphaDecay(0.02); // Simulation plus lente pour garder le mouvement
 
     simulationRef.current = simulation;
 
-    // Dessin des liens
-    const link = g.append("g")
-      .selectAll("line")
+    // Dessin des liens avec labels
+    const linkGroup = g.append("g").attr("class", "links");
+
+    const link = linkGroup.selectAll("line")
       .data(links)
       .join("line")
-      .attr("stroke", (d) => d.type === "marriage" ? "hsl(var(--primary))" : "#94a3b8")
-      .attr("stroke-width", (d) => d.type === "marriage" ? (isMobile ? 1.5 : 2) : (isMobile ? 1 : 1.5))
-      .attr("stroke-dasharray", (d) => d.type === "marriage" ? "5,5" : "none")
-      .attr("opacity", 0.6);
+      .attr("stroke", (d) => d.type === "marriage" ? "hsl(340, 70%, 55%)" : "#94a3b8")
+      .attr("stroke-width", (d) => d.type === "marriage" ? (isMobile ? 2.5 : 3) : (isMobile ? 1.5 : 2))
+      .attr("stroke-dasharray", (d) => d.type === "marriage" ? "8,4" : "none")
+      .attr("opacity", 0.7);
 
-    // Dessin des nœuds (Groupes)
-    const node = g.append("g")
-      .selectAll("g")
+    // Labels sur les liens de mariage
+    const linkLabels = linkGroup.selectAll("text")
+      .data(links.filter(d => d.type === "marriage"))
+      .join("text")
+      .attr("font-size", isMobile ? 9 : 11)
+      .attr("fill", "hsl(340, 70%, 45%)")
+      .attr("font-weight", "600")
+      .attr("text-anchor", "middle")
+      .attr("dy", -5)
+      .text("💑 Mariage")
+      .style("pointer-events", "none")
+      .style("text-shadow", "0 0 3px white, 0 0 3px white");
+
+    // Dessin des nœuds
+    const nodeGroup = g.append("g").attr("class", "nodes");
+
+    // Comportement de drag
+    const dragBehavior = d3.drag<SVGGElement, Node>()
+      .on("start", (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on("drag", (event, d) => {
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on("end", (event, d) => {
+        if (!event.active) simulation.alphaTarget(0);
+        if (d.type !== "central") {
+          d.fx = null;
+          d.fy = null;
+        }
+      });
+
+    const node = nodeGroup.selectAll<SVGGElement, Node>("g")
       .data(nodes)
       .join("g")
       .attr("cursor", "pointer")
       .on("click", (event, d) => {
         event.stopPropagation();
         if (d.type === "child" || d.type === "spouse") {
-          // Navigation vers la personne cliquée
           navigate(`/family/${encodeURIComponent(d.id)}`);
         }
-      });
+      })
+      .call(dragBehavior);
 
-    // Cercles des nœuds avec tailles adaptatives
-    const centralRadius = isMobile ? 35 : isTablet ? 45 : 50;
-    const spouseRadius = isMobile ? 28 : isTablet ? 35 : 40;
-    const childRadius = isMobile ? 22 : isTablet ? 26 : 30;
+    // Tailles adaptatives
+    const centralRadius = isMobile ? 40 : isTablet ? 50 : 55;
+    const spouseRadius = isMobile ? 32 : isTablet ? 40 : 45;
+    const childRadius = isMobile ? 25 : isTablet ? 30 : 35;
 
+    // Cercles
     node.append("circle")
       .attr("r", (d) => d.type === "central" ? centralRadius : d.type === "spouse" ? spouseRadius : childRadius)
       .attr("fill", (d) => {
         if (d.type === "central") return "hsl(var(--background))";
-        return d.data.genre === "Homme" ? "hsl(200, 80%, 95%)" : "hsl(340, 70%, 95%)";
+        if (d.type === "spouse") {
+          // Épouses en rose/violet distinct
+          return d.data.genre === "Homme" ? "hsl(260, 60%, 92%)" : "hsl(320, 75%, 92%)";
+        }
+        return d.data.genre === "Homme" ? "hsl(200, 80%, 92%)" : "hsl(340, 70%, 92%)";
       })
-      .attr("stroke", (d) => d.data.genre === "Homme" ? "hsl(200, 80%, 45%)" : "hsl(340, 70%, 65%)")
-      .attr("stroke-width", (d) => d.type === "central" ? (isMobile ? 3 : 4) : (isMobile ? 1.5 : 2))
-      .style("filter", "drop-shadow(0px 2px 4px rgba(0,0,0,0.15))");
+      .attr("stroke", (d) => {
+        if (d.type === "spouse") {
+          return d.data.genre === "Homme" ? "hsl(260, 60%, 50%)" : "hsl(320, 75%, 50%)";
+        }
+        return d.data.genre === "Homme" ? "hsl(200, 80%, 45%)" : "hsl(340, 70%, 55%)";
+      })
+      .attr("stroke-width", (d) => d.type === "central" ? (isMobile ? 4 : 5) : (isMobile ? 2.5 : 3))
+      .style("filter", "drop-shadow(0px 3px 6px rgba(0,0,0,0.2))");
 
-    // Icônes ou Initiales
-    const centralFontSize = isMobile ? 16 : isTablet ? 20 : 24;
-    const fontSize = isMobile ? 14 : 18;
+    // Badge "Épouse" / "Époux" pour les conjoints
+    node.filter(d => d.type === "spouse")
+      .append("text")
+      .attr("dy", (d) => -(d.type === "spouse" ? spouseRadius : childRadius) - 8)
+      .attr("text-anchor", "middle")
+      .attr("font-size", isMobile ? 9 : 11)
+      .attr("font-weight", "bold")
+      .attr("fill", (d) => d.data.genre === "Homme" ? "hsl(260, 60%, 40%)" : "hsl(320, 75%, 40%)")
+      .text((d) => d.data.genre === "Homme" ? "👔 Époux" : "👰 Épouse")
+      .style("text-shadow", "0 0 3px white, 0 0 3px white");
+
+    // Initiales
+    const centralFontSize = isMobile ? 18 : isTablet ? 22 : 26;
+    const fontSize = isMobile ? 14 : isTablet ? 16 : 18;
 
     node.append("text")
       .text((d) => {
@@ -273,52 +406,56 @@ export const FamilyView = () => {
       .attr("text-anchor", "middle")
       .attr("font-size", (d) => d.type === "central" ? centralFontSize : fontSize)
       .attr("font-weight", "bold")
-      .attr("fill", (d) => d.data.genre === "Homme" ? "hsl(200, 80%, 45%)" : "hsl(340, 70%, 65%)")
+      .attr("fill", (d) => {
+        if (d.type === "spouse") {
+          return d.data.genre === "Homme" ? "hsl(260, 60%, 40%)" : "hsl(320, 75%, 40%)";
+        }
+        return d.data.genre === "Homme" ? "hsl(200, 80%, 35%)" : "hsl(340, 70%, 45%)";
+      })
       .style("pointer-events", "none");
 
-    // Labels (Noms) - Plus courts sur mobile
+    // Noms
     node.append("text")
       .text((d) => {
         const name = d.data.name.split("(")[0].trim();
-        // Sur mobile, tronquer les noms longs
         if (isMobile && name.length > 15) {
           return name.substring(0, 12) + "...";
         }
         return name;
       })
       .attr("dy", (d) => {
-        const offset = d.type === "central" ? centralRadius : d.type === "spouse" ? spouseRadius : childRadius;
-        return offset + (isMobile ? 16 : 20);
+        const radius = d.type === "central" ? centralRadius : d.type === "spouse" ? spouseRadius : childRadius;
+        return radius + (isMobile ? 16 : 20);
       })
       .attr("text-anchor", "middle")
-      .attr("font-size", (d) => d.type === "central" ? (isMobile ? 11 : 16) : (isMobile ? 9 : 12))
-      .attr("font-weight", (d) => d.type === "central" ? "bold" : "normal")
+      .attr("font-size", (d) => d.type === "central" ? (isMobile ? 12 : 16) : (isMobile ? 10 : 12))
+      .attr("font-weight", (d) => d.type === "central" ? "bold" : "600")
       .attr("fill", "currentColor")
-      .style("text-shadow", "0 1px 4px rgba(255,255,255,0.8)");
+      .style("text-shadow", "0 1px 4px rgba(255,255,255,0.9)")
+      .style("pointer-events", "none");
 
-    // Badges pour enfants (si le nœud a des enfants) - Plus petits sur mobile
+    // Badge enfants
     node.each(function(d) {
       if (d.data.enfants && d.data.enfants.length > 0 && d.type !== "central") {
         const radius = d.type === "spouse" ? spouseRadius : childRadius;
-        const badgeOffset = isMobile ? radius - 5 : radius - 3;
         const badgeGroup = d3.select(this).append("g")
-          .attr("transform", `translate(${badgeOffset}, -${badgeOffset})`);
+          .attr("transform", `translate(${radius - 8}, -${radius - 8})`);
 
         badgeGroup.append("circle")
-          .attr("r", isMobile ? 8 : 10)
+          .attr("r", isMobile ? 10 : 12)
           .attr("fill", "hsl(var(--primary))");
 
         badgeGroup.append("text")
           .text(d.data.enfants.length)
-          .attr("dy", 3.5)
+          .attr("dy", 4)
           .attr("text-anchor", "middle")
-          .attr("font-size", isMobile ? 8 : 10)
+          .attr("font-size", isMobile ? 9 : 11)
           .attr("fill", "white")
           .attr("font-weight", "bold");
       }
     });
 
-    // Animation Tick
+    // Animation tick
     simulation.on("tick", () => {
       link
         .attr("x1", (d) => (d.source as SimulatedNode).x)
@@ -326,13 +463,19 @@ export const FamilyView = () => {
         .attr("x2", (d) => (d.target as SimulatedNode).x)
         .attr("y2", (d) => (d.target as SimulatedNode).y);
 
+      linkLabels
+        .attr("x", (d) => ((d.source as SimulatedNode).x + (d.target as SimulatedNode).x) / 2)
+        .attr("y", (d) => ((d.source as SimulatedNode).y + (d.target as SimulatedNode).y) / 2);
+
       node.attr("transform", (d) => `translate(${(d as SimulatedNode).x},${(d as SimulatedNode).y})`);
     });
 
-    // Cleanup
+    // NE PAS ARRÊTER la simulation pour garder l'aspect dynamique
     return () => {
-      simulation.stop();
-      simulationRef.current = null;
+      // Ralentir mais ne pas arrêter complètement
+      if (simulationRef.current) {
+        simulationRef.current.alphaTarget(0.01);
+      }
     };
   }, [nodes, links, dimensions, navigate]);
 
@@ -347,82 +490,140 @@ export const FamilyView = () => {
     );
   }
 
+  const history = getNavigationHistory();
+
   return (
     <div className="h-screen w-full bg-gradient-to-br from-background via-muted/20 to-background overflow-hidden relative flex flex-col">
-      {/* Header Mobile-Optimized */}
-      <header className="absolute top-0 left-0 right-0 z-10 p-2 sm:p-4 flex justify-between items-start pointer-events-none">
-        <div className="pointer-events-auto">
-          <Link to="/">
-            <Button variant="outline" size="sm" className="gap-1 sm:gap-2 bg-background/90 backdrop-blur h-8 sm:h-10 px-2 sm:px-4">
-              <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline text-xs sm:text-sm">Retour</span>
+      {/* Header avec Breadcrumb */}
+      <header className="absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur border-b pointer-events-none">
+        <div className="p-2 sm:p-4 pointer-events-auto">
+          {/* Navigation Breadcrumb */}
+          <div className="flex items-center gap-2 mb-2 overflow-x-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="gap-1 h-7 px-2 flex-shrink-0"
+            >
+              <Home className="w-3 h-3" />
+              <span className="hidden xs:inline text-xs">Accueil</span>
             </Button>
-          </Link>
-        </div>
 
-        <div className="text-center max-w-[60%] sm:max-w-none bg-background/90 backdrop-blur p-2 sm:p-3 rounded-lg sm:rounded-xl border shadow-sm pointer-events-auto">
-          <h1 className="text-sm sm:text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent truncate">
-            {centralPerson.name.split("(")[0].trim()}
-          </h1>
-          <div className="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground mt-1">
-            <span className="flex items-center gap-0.5 sm:gap-1">
-              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">{centralPerson.spouses?.length || 0}</span>
-            </span>
-            <span className="flex items-center gap-0.5 sm:gap-1">
-              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">{centralPerson.enfants.length}</span>
+            {history.length > 1 && (
+              <>
+                <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBack}
+                  className="gap-1 h-7 px-2 flex-shrink-0"
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  <span className="text-xs truncate max-w-[100px]">
+                    {history[history.length - 2]?.split(' ')[0]}
+                  </span>
+                </Button>
+              </>
+            )}
+
+            <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs font-semibold text-primary truncate">
+              {centralPerson.name.split(' ')[0]}
             </span>
           </div>
-        </div>
 
-        <div className="pointer-events-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={resetView}
-            className="rounded-full bg-background/90 backdrop-blur h-8 w-8 sm:h-10 sm:w-10 p-0"
-          >
-            <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
-          </Button>
+          {/* Info centrale */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm sm:text-lg font-bold truncate">
+                {centralPerson.name}
+              </h1>
+              <div className="flex items-center gap-3 text-xs sm:text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                  {spousesOfCentral.length} {spousesOfCentral.length > 1 ? 'Conjoints' : 'Conjoint'}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                  {centralPerson.enfants.length} {centralPerson.enfants.length > 1 ? 'Enfants' : 'Enfant'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
       {/* Canvas */}
-      <div ref={containerRef} className="flex-1 w-full h-full">
-        <svg ref={svgRef} className="w-full h-full touch-none" />
+      <div ref={containerRef} className="flex-1 w-full h-full pt-20 sm:pt-24">
+        <svg ref={svgRef} className="w-full h-full">
+          <g ref={gRef} />
+        </svg>
       </div>
 
-      {/* Floating Controls - Mobile Optimized */}
+      {/* Contrôles Zoom - Fonctionnels */}
       <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 flex flex-col gap-2 pointer-events-auto">
         <Button
           variant="secondary"
           size="sm"
           className="rounded-full shadow-lg h-10 w-10 sm:h-12 sm:w-12 p-0"
-          onClick={resetView}
+          onClick={handleZoomIn}
+          title="Zoom avant"
         >
-          <Move className="w-4 h-4 sm:w-5 sm:h-5" />
+          <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="rounded-full shadow-lg h-10 w-10 sm:h-12 sm:w-12 p-0"
+          onClick={handleZoomOut}
+          title="Zoom arrière"
+        >
+          <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="rounded-full shadow-lg h-10 w-10 sm:h-12 sm:w-12 p-0"
+          onClick={handleReset}
+          title="Recentrer"
+        >
+          <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
         </Button>
       </div>
 
-      {/* Legend - Mobile Optimized */}
-      <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 bg-background/95 backdrop-blur p-2 sm:p-3 rounded-lg border shadow-sm text-[10px] sm:text-xs space-y-1.5 sm:space-y-2 pointer-events-none">
+      {/* Légende améliorée */}
+      <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 bg-background/95 backdrop-blur p-2 sm:p-3 rounded-lg border shadow-sm text-[10px] sm:text-xs space-y-1.5 sm:space-y-2 pointer-events-none max-w-[200px]">
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-background border-2 border-[hsl(200,80%,45%)]" />
-          <span className="hidden xs:inline">Homme</span>
-          <span className="xs:hidden">H</span>
+          <div className="w-3 h-3 rounded-full bg-background border-2 border-[hsl(200,80%,45%)]" />
+          <span>Homme</span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-background border-2 border-[hsl(340,70%,65%)]" />
-          <span className="hidden xs:inline">Femme</span>
-          <span className="xs:hidden">F</span>
+          <div className="w-3 h-3 rounded-full bg-background border-2 border-[hsl(340,70%,55%)]" />
+          <span>Femme</span>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-3 h-3 rounded-full bg-[hsl(320,75%,92%)] border-2 border-[hsl(320,75%,50%)]" />
+          <span>Épouse</span>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-6 h-0.5 bg-[hsl(340,70%,55%)]" style={{borderTop: "2px dashed"}} />
+          <span>Mariage</span>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-6 h-0.5 bg-slate-400" />
+          <span>Filiation</span>
         </div>
       </div>
 
-      {/* Touch hint for mobile */}
+      {/* Instructions dynamiques */}
       {dimensions.width < 640 && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-primary/10 backdrop-blur px-3 py-1.5 rounded-full text-xs text-primary pointer-events-none animate-pulse">
-          Pincez pour zoomer
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-primary/90 backdrop-blur px-3 py-1.5 rounded-full text-xs text-white pointer-events-none animate-pulse">
+          Glissez pour déplacer • Pincez pour zoomer
+        </div>
+      )}
+      {dimensions.width >= 640 && (
+        <div className="absolute top-28 left-1/2 -translate-x-1/2 bg-primary/90 backdrop-blur px-4 py-2 rounded-full text-sm text-white pointer-events-none animate-pulse">
+          Glissez les nœuds pour réorganiser • Cliquez pour naviguer
         </div>
       )}
     </div>
