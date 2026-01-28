@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Archive } from "@/data/archivesData";
-import { Network, ExternalLink } from "lucide-react";
+import { Network, ExternalLink, Download, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { downloadFile, generateFilename } from "@/lib/utils/downloadFile";
 import {
   Carousel,
   CarouselContent,
@@ -18,6 +20,7 @@ interface ArchiveDialogProps {
 
 export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
   const navigate = useNavigate();
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Fonction pour naviguer vers l'arbre avec le paramètre focus
   const handleViewInTree = () => {
@@ -26,6 +29,26 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
 
   // Gestion unifiée des images (si 'images' existe, on l'utilise, sinon on fallback sur 'image')
   const displayImages = archive.images || (archive.image ? [archive.image] : []);
+
+  const isDownloadable = archive.category === "document" || archive.category === "article";
+
+  const handleDownload = async () => {
+    if (!archive.image) {
+      console.warn('Aucune image/document disponible pour le téléchargement');
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const extension = archive.image.split('.').pop() || 'pdf';
+      const filename = generateFilename(archive.title, archive.date, extension);
+      await downloadFile(archive.image, filename);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
@@ -45,16 +68,34 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
             </div>
           </div>
           
-          {/* Bouton Desktop pour voir dans l'arbre */}
-          <Button 
-            onClick={handleViewInTree} 
-            variant="outline" 
-            size="sm" 
-            className="hidden sm:flex items-center gap-2 shrink-0 hover:bg-primary hover:text-white transition-colors"
-          >
-            <Network className="w-4 h-4" />
-            Voir dans l'arbre
-          </Button>
+          {/* Boutons Desktop */}
+          <div className="hidden sm:flex items-center gap-2 shrink-0">
+            {isDownloadable && (
+              <Button
+                onClick={handleDownload}
+                disabled={isDownloading}
+                variant="outline"
+                size="sm"
+                className="items-center gap-2"
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                Télécharger
+              </Button>
+            )}
+            <Button
+              onClick={handleViewInTree}
+              variant="outline"
+              size="sm"
+              className="items-center gap-2 hover:bg-primary hover:text-white transition-colors"
+            >
+              <Network className="w-4 h-4" />
+              Voir dans l'arbre
+            </Button>
+          </div>
         </div>
       </DialogHeader>
       
@@ -122,15 +163,33 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
           </div>
         )}
 
-        {/* Bouton Mobile pour voir dans l'arbre (en bas) */}
-        <Button 
-            onClick={handleViewInTree} 
-            className="w-full sm:hidden flex items-center justify-center gap-2 mt-4"
+        {/* Boutons Mobile (en bas) */}
+        <div className="sm:hidden flex flex-col gap-2 mt-4">
+          {isDownloadable && (
+            <Button
+              onClick={handleDownload}
+              disabled={isDownloading}
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              size="lg"
+            >
+              {isDownloading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              Télécharger le document
+            </Button>
+          )}
+          <Button
+            onClick={handleViewInTree}
+            className="w-full flex items-center justify-center gap-2"
             size="lg"
-        >
+          >
             <Network className="w-4 h-4" />
             Voir dans l'arbre généalogique
-        </Button>
+          </Button>
+        </div>
       </div>
     </DialogContent>
   );

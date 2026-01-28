@@ -1,17 +1,42 @@
-import { Download, Quote, ExternalLink, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Download, Quote, ExternalLink, Calendar, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Archive } from "@/data/archivesData";
+import { downloadFile, generateFilename } from "@/lib/utils/downloadFile";
+import { HighlightedText } from "./HighlightedText";
 
 interface ArchiveCardProps {
   archive: Archive;
   index: number;
   onClick: () => void;
+  searchQuery?: string;
 }
 
-export const ArchiveCard = ({ archive, index, onClick }: ArchiveCardProps) => {
+export const ArchiveCard = ({ archive, index, onClick, searchQuery = "" }: ArchiveCardProps) => {
+  const [isDownloading, setIsDownloading] = useState(false);
   const hasImage = archive.category === "photo" || archive.category === "document" || archive.category === "article";
   const isDownloadable = archive.category === "document" || archive.category === "article";
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!archive.image) {
+      console.warn('Aucune image/document disponible pour le téléchargement');
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const extension = archive.image.split('.').pop() || 'pdf';
+      const filename = generateFilename(archive.title, archive.date, extension);
+      await downloadFile(archive.image, filename);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <Card 
@@ -43,7 +68,7 @@ export const ArchiveCard = ({ archive, index, onClick }: ArchiveCardProps) => {
               {archive.person}
             </Badge>
             <h3 className="font-bold text-base sm:text-lg leading-tight group-hover:text-primary transition-colors duration-300">
-              {archive.title}
+              <HighlightedText text={archive.title} searchQuery={searchQuery} />
             </h3>
           </div>
           {archive.category === "quote" && (
@@ -54,7 +79,7 @@ export const ArchiveCard = ({ archive, index, onClick }: ArchiveCardProps) => {
         <p className={`text-sm text-muted-foreground leading-relaxed ${
           archive.category === "quote" ? "italic" : "line-clamp-3"
         }`}>
-          {archive.content}
+          <HighlightedText text={archive.content} searchQuery={searchQuery} />
         </p>
         
         <div className="flex items-center justify-between pt-3 border-t border-border/30">
@@ -63,11 +88,17 @@ export const ArchiveCard = ({ archive, index, onClick }: ArchiveCardProps) => {
             <span>{archive.date}</span>
           </div>
           {isDownloadable && (
-            <button 
-              onClick={(e) => e.stopPropagation()}
-              className="p-1.5 hover:bg-accent rounded-lg transition-all hover:scale-110 active:scale-95"
+            <button
+              onClick={handleDownload}
+              disabled={isDownloading}
+              className="p-1.5 hover:bg-accent rounded-lg transition-all hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Télécharger"
             >
-              <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              {isDownloading ? (
+                <Loader2 className="w-4 h-4 text-primary animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              )}
             </button>
           )}
         </div>

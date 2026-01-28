@@ -95,10 +95,11 @@ const Archives = () => {
             <Dialog key={archive.id}>
               <DialogTrigger asChild>
                 <div className="h-full">
-                  <ArchiveCard 
-                    archive={archive} 
-                    index={index} 
-                    onClick={() => setSelectedArchive(archive)} 
+                  <ArchiveCard
+                    archive={archive}
+                    index={index}
+                    onClick={() => setSelectedArchive(archive)}
+                    searchQuery={debouncedSearch}
                   />
                 </div>
               </DialogTrigger>
