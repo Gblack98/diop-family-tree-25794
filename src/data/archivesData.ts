@@ -52,7 +52,7 @@ export const archivesData: Archive[] = [
 
 Après le bac, il traverse l'Atlantique pour préparer le concours de Saint-Cyr. Il rejoint d'abord la corniche Bournazel au Lycée Dumont d'Urville de Toulon, puis le Lycée Militaire d'Aix-en-Provence. En 1969, il intègre l'École Spéciale Militaire de Saint-Cyr.
 
-Il appartient à la 156e promotion, celle du Général Gilles. Parmi ses camarades de promotion, on compte Birago Diouf, Makha Keita, Joseph Gomis, Papa Khalilou Fall — qui deviendra plus tard Chef d'État-Major Général des Armées —, Chérif Ba, et Pathé Seck, futur ambassadeur au Portugal. Des amitiés qui dureront toute une vie.
+Il appartient à la 156e promotion, celle du Général Gilles. Parmi ses camarades de promotion, on compte Birago Diouf, Makha Keita, Joseph Gomis, Papa Khalilou Fall — qui deviendra plus tard Chef d'État-Major Général des Armées —, Chérif Ba, et Pathé Seck, futur Haut Commandant de la Gendarmerie Nationale, Ministre de l'Intérieur et ambassadeur au Portugal. Des amitiés qui dureront toute une vie.
 
 Sorti de Saint-Cyr en 1971, il part à Saumur pour l'École d'Application de l'Arme Blindée Cavalerie. Il y reviendra en 1978 pour le cours de perfectionnement des officiers. Cette même année, il passe par l'École d'État-Major de Compiègne. Plus tard, entre 1992 et 1993, il traverse à nouveau l'Atlantique pour suivre les cours du US Army War College à Carlisle, en Pennsylvanie.
 
