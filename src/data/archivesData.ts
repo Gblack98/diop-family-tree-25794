@@ -47,40 +47,36 @@ export const archivesData: Archive[] = [
     person: "Ibrahima Gabar Diop (Badara)",
     category: ArchiveCategory.BIOGRAPHY,
     title: "Général de Division Ibrahima Gabar Diop",
-    content: "Général de division de l'armée sénégalaise, né en 1963. Une carrière militaire exemplaire au service de la nation.",
-    fullContent: `Le Général de Division Ibrahima Gabar Diop, dit "Badara", est une figure emblématique de l'armée sénégalaise. Né en 1963, il a consacré sa vie au service de la nation avec honneur et distinction.
+    content: "Officier général sénégalais né le 25 janvier 1947 à Dakar. Saint-Cyrien de la promotion Général Gilles, Général de division depuis 2003.",
+    fullContent: `Ibrahima Gabar Diop est né le 25 janvier 1947 à Dakar. Il passe son enfance dans la capitale sénégalaise où il fréquente l'École du Champ de Courses, puis le Collège d'Orientation et le Lycée Blaise Diagne. C'est au Lycée Van Vollenhoven qu'il obtient son baccalauréat en 1966.
 
-**Carrière Militaire**
+Après le bac, il traverse l'Atlantique pour préparer le concours de Saint-Cyr. Il rejoint d'abord la corniche Bournazel au Lycée Dumont d'Urville de Toulon, puis le Lycée Militaire d'Aix-en-Provence. En 1969, il intègre l'École Spéciale Militaire de Saint-Cyr.
 
-Sa carrière militaire s'étend sur plus de quatre décennies, marquée par des postes de haute responsabilité et une expertise reconnue dans la sécurité et la défense nationale.
+Il appartient à la 156e promotion, celle du Général Gilles. Parmi ses camarades de promotion, on compte Birago Diouf, Makha Keita, Joseph Gomis, Papa Khalilou Fall — qui deviendra plus tard Chef d'État-Major Général des Armées —, Chérif Ba, et Pathé Seck, futur ambassadeur au Portugal. Des amitiés qui dureront toute une vie.
 
-**Postes Stratégiques**
+Sorti de Saint-Cyr en 1971, il part à Saumur pour l'École d'Application de l'Arme Blindée Cavalerie. Il y reviendra en 1978 pour le cours de perfectionnement des officiers. Cette même année, il passe par l'École d'État-Major de Compiègne. Plus tard, entre 1992 et 1993, il traverse à nouveau l'Atlantique pour suivre les cours du US Army War College à Carlisle, en Pennsylvanie.
 
-- **Directeur Général de l'Agence Nationale de la Prévention et de la Surveillance (ANNPS)** : À ce poste crucial, il a dirigé les stratégies de prévention et de surveillance au niveau national, contribuant significativement à la sécurité du Sénégal.
+Sa carrière le mène d'abord à Paris, où il sert comme attaché militaire adjoint de 1982 à 1986. De retour au pays, il commande le Bataillon des Blindés pendant deux ans. Les années suivantes le voient occuper différents postes à l'État-Major Général des Armées : chef de division, adjoint aux opérations en zone Centre puis en zone Sud, et chef de la division Renseignements.
 
-- **Commandant Militaire du Président (CEMP)** : En tant que Commandant d'État-Major Particulier du Président de la République, il a assuré la sécurité rapprochée du Chef de l'État, démontrant la confiance placée en lui par les plus hautes autorités.
+De 1993 à 1996, il devient chef de cabinet du Chef d'État-Major Général des Armées, le Général Mohamadou Keita. Puis il repart à l'étranger, cette fois comme attaché militaire à Riyad, en Arabie Saoudite, où il reste cinq ans.
 
-- **Commandant du Groupement National des Sapeurs-Pompiers (GNSP)** : À la tête du GNSP, il a modernisé et professionnalisé ce corps essentiel, améliorant considérablement la capacité de réponse aux urgences au Sénégal.
+À son retour en 2001, il prend le commandement du Groupement National des Sapeurs-Pompiers. Le 22 septembre 2003, il est promu Général de division. En 2006, le président Abdoulaye Wade le nomme chef d'état-major particulier du président de la République. Il dirige également le Centre d'Orientation Stratégique, chargé de coordonner les services de renseignements du pays.
 
-**Leadership et Vision**
+En 2011, il prend la tête de l'Agence Nationale des Nouveaux Ports du Sénégal.
 
-Le Général Diop est reconnu pour son leadership éclairé, son intégrité et sa vision stratégique. Il a formé de nombreux officiers qui servent aujourd'hui dans les forces armées sénégalaises et a contribué au rayonnement de l'armée sénégalaise sur la scène internationale.
-
-**Engagement Familial**
-
-Au-delà de sa carrière militaire, le Général Ibrahima Gabar Diop reste profondément attaché aux valeurs familiales. Il perpétue l'héritage de ses ancêtres et transmet les traditions de la famille Diop aux nouvelles générations.
-
-Son parcours exemplaire inspire respect et admiration, incarnant les valeurs de service, d'honneur et de dévouement à la patrie.`,
-    date: "XXXX",
+Il reste proche de ses anciens camarades. En décembre 2017, il préside à Dakar la célébration du "2S 212" de la Saint-Cyrienne Sénégal, qui réunit plus d'une centaine d'anciens venus du Sénégal, de France et du Burkina Faso.`,
+    date: "Né le 25 janvier 1947",
     images: [
       "/images/archives/ibrahima-gabar-diop.jpg",
     ],
     image: "/images/archives/ibrahima-gabar-diop.jpg",
     achievements: [
-      "Général de Division de l'Armée Sénégalaise",
+      "Général de Division (2003)",
+      "Saint-Cyrien — Promotion Général Gilles (1969-1971)",
+      "Chef d'État-Major Particulier du Président",
+      "Commandant du Groupement National des Sapeurs-Pompiers",
       "Directeur Général de l'ANNPS",
-      "Commandant d'État-Major Particulier (CEMP) du Président",
-      "Commandant du Groupement National des Sapeurs-Pompiers"
+      "Diplômé du US Army War College"
     ]
   },
   {
@@ -98,7 +94,7 @@ Son parcours exemplaire inspire respect et admiration, incarnant les valeurs de 
     category: ArchiveCategory.DOCUMENT,
     title: "Diplôme de Médecine",
     content: "Université de Dakar - Faculté de Médecine. Premier médecin de la famille Diop.",
-    fullContent: "Diplôme de Docteur en Médecine obtenu avec mention Très Bien. Mamadou Diop s'est spécialisé en pédiatrie et a ouvert le premier cabinet pédiatrique dans sa région natale.",
+    fullContent: "Diplôme de Docteur en Médecine obtenu avec mention Très Bien. Gabar Biram Médor Diop s'est spécialisé en pédiatrie et a ouvert le premier cabinet pédiatrique dans sa région natale.",
     date: "1972",
     image: "/images/archives/diplome-medecine.jpg"
   },
@@ -134,10 +130,10 @@ Son parcours exemplaire inspire respect et admiration, incarnant les valeurs de 
     person: "El Hadj Malick Ndiaye",
     category: ArchiveCategory.BIOGRAPHY,
     title: "Parcours d'El Hadj Malick Ndiaye",
-    content: "Ingénieur brillant, El Hadj Malick Ndiaye a contribué au développement des infrastructures modernes au Sénégal.",
-    fullContent: "Diplômé de l'École Polytechnique de Dakar en 1990, El Hadj Malick Ndiaye s'est illustré dans la conception et la réalisation de nombreux projets d'infrastructure. Son expertise a été sollicitée pour des projets majeurs à travers toute l'Afrique de l'Ouest.",
-    date: "1965-présent",
-    achievements: ["Diplômé Polytechnique", "15+ projets d'infrastructure", "Expert consultant international"]
+    content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    fullContent: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+    date: "XXXX",
+    achievements: ["Lorem ipsum", "Dolor sit amet", "Consectetur adipiscing"]
   },
   {
     id: 8,
@@ -159,11 +155,24 @@ Son parcours exemplaire inspire respect et admiration, incarnant les valeurs de 
   {
     id: 10,
     person: "Magatte Diop",
-    category: ArchiveCategory.PHOTO,
-    title: "Photo de Magatte Diop",
-    content: "Portrait conservé précieusement.",
-    date: "XXXX",
-    image: "/images/archives/magatte-diop.jpg"
+    category: ArchiveCategory.BIOGRAPHY,
+    title: "Magatte Diop, polytechnicien et enseignant",
+    content: "Ingénieur diplômé de l'École Polytechnique (X 78) et de l'École Nationale des Ponts et Chaussées. Enseignant à l'École Polytechnique de Thiès pendant plus de trois décennies.",
+    fullContent: `Magatte Diop obtient son baccalauréat en 1976 au Lycée Van Vollenhoven à Dakar. Il part ensuite en France pour les classes préparatoires — math sup, math spé — avant d'intégrer l'École Polytechnique, promotion 1978.
+
+Après l'X, il poursuit à l'École Nationale des Ponts et Chaussées, où il se spécialise dans les sciences de l'ingénieur (Ouvrage d'art).
+
+De retour au Sénégal, il rejoint l'École Polytechnique de Thiès comme enseignant. Il y passera l'essentiel de sa carrière. Ses cours couvrent la résistance des matériaux, l'analyse numérique, la recherche opérationnelle et la mécanique des solides.
+
+Au fil des années, il forme plus de 34 promotions d'ingénieurs. Des générations d'étudiants passent par ses amphithéâtres et ses travaux dirigés. Beaucoup d'entre eux occupent aujourd'hui des postes importants dans l'administration, les entreprises et les bureaux d'études du Sénégal et d'ailleurs.`,
+    date: "X 78",
+    image: "/images/archives/magatte-diop.jpg",
+    achievements: [
+      "Polytechnicien (X 78)",
+      "Diplômé de l'École Nationale des Ponts et Chaussées",
+      "Enseignant à l'École Polytechnique de Thiès",
+      "34+ promotions d'ingénieurs formées"
+    ]
   },
   {
     id: 11,
@@ -249,15 +258,14 @@ Son parcours exemplaire inspire respect et admiration, incarnant les valeurs de 
   {
     id: 17,
     person: "Gabar Biram Médor Diop",
-    category: ArchiveCategory.BIOGRAPHY,
-    title: "Photo de Gabar Biram Médor Diop",
-    content: "Photo portait de Gabar Biram Médor Diop",
-    date: "XXXX",
+    category: ArchiveCategory.PHOTO,
+    title: "Portrait de Gabar Biram Médor Diop",
+    content: "Portrait de Gabar Biram Médor Diop conservé dans les archives familiales.",
+    date: "Archives familiales",
     images: [
-      "/public/images/famille/Gabar-biram-medor-diop/IMG_20260111_GabarBiramMedorDiop.jpg",
-      
+      "/images/famille/Gabar-biram-medor-diop/IMG_20260111_GabarBiramMedorDiop.jpg",
     ],
-    image: "/public/images/famille/Gabar-biram-medor-diop/IMG_20260111_GabarBiramMedorDiop.jpg" // Image de couverture (vignette)
+    image: "/images/famille/Gabar-biram-medor-diop/IMG_20260111_GabarBiramMedorDiop.jpg"
   },
   {
     id: 18,
