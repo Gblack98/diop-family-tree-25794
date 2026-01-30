@@ -6,13 +6,13 @@ export const Dedication = () => {
 
   return (
     <>
-      {/* Bouton discret en bas à droite */}
+      {/* Bouton discret - Mobile: bas droite (legend à gauche), Desktop: bas gauche (legend à droite) */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-36 sm:bottom-40 right-4 sm:right-6 z-40 p-2.5 bg-card/80 backdrop-blur-sm border border-border/50 rounded-full shadow-lg hover:bg-card hover:scale-110 transition-all duration-300 group"
+        className="fixed bottom-20 right-4 sm:bottom-6 sm:right-auto sm:left-6 z-50 p-3 bg-rose-500/90 backdrop-blur-sm border border-rose-400 rounded-full shadow-lg hover:bg-rose-500 hover:scale-110 transition-all duration-300 group"
         title="En mémoire de Binta Yama Seck"
       >
-        <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500 group-hover:fill-rose-500 transition-all" />
+        <Heart className="w-5 h-5 text-white fill-white group-hover:scale-110 transition-all" />
       </button>
 
       {/* Modal de dédicace */}
