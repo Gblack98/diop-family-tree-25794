@@ -50,14 +50,15 @@ export const Dedication = () => {
             <div className="space-y-4 text-muted-foreground leading-relaxed text-sm sm:text-base">
               <p>
                 Ce projet est dédié à ma grand-mère, <span className="text-foreground font-medium">Binta Yama Seck</span>,
-                qui m'a profondément inspiré. Elle était l'arrière-petite-fille de Fatou Diallo,
-                fille d'Iba Diallo, frère de Gabar Biram Médor Diop.
+                qui m'a profondément inspiré. Elle aimait me parler de ses parents, de mon histoire,
+                et m'incitait à nouer des liens avec mes proches. C'est d'elle que me vient cet
+                intérêt pour la généalogie.
               </p>
               <p>
-                Elle aimait me parler de ses parents, de mon histoire, et m'incitait à nouer des
-                liens avec mes proches. Elle évoquait souvent sa parenté avec mon grand-père
-                Amadou Bamba Diop, et me parlait de Yacine Diop, la sœur de ce dernier, qu'elle
-                aimait beaucoup. C'est d'elle que me vient cet intérêt pour la généalogie.
+                Elle évoquait souvent sa parenté avec mon grand-père Amadou Bamba Diop, et me
+                parlait de Yacine Diop, la sœur de ce dernier, qu'elle aimait beaucoup. Elle était
+                elle-même l'arrière-petite-fille de Fatou Diallo, fille d'Iba Diallo, frère de
+                Gabar Biram Médor Diop.
               </p>
               <p>
                 À travers cet arbre généalogique et toutes les recherches que j'ai menées sur
