@@ -3,7 +3,7 @@ import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/c
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Archive } from "@/data/archivesData";
-import { Network, ExternalLink, Download, Loader2 } from "lucide-react";
+import { Network, ExternalLink, Download, Loader2, ImageOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { downloadFile, generateFilename } from "@/lib/utils/downloadFile";
 import {
@@ -21,6 +21,11 @@ interface ArchiveDialogProps {
 export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
   const navigate = useNavigate();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
+
+  const handleImageError = (index: number) => {
+    setFailedImages(prev => new Set(prev).add(index));
+  };
 
   // Fonction pour naviguer vers l'arbre avec le paramètre focus
   const handleViewInTree = () => {
@@ -103,14 +108,22 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
       {displayImages.length > 0 && (
         <div className="mt-2 mb-4 w-full">
           {displayImages.length === 1 ? (
-            <div className="aspect-video overflow-hidden rounded-lg border bg-muted shadow-sm">
-              <img
-                src={displayImages[0]}
-                alt={archive.title}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-contain"
-              />
+            <div className="aspect-video overflow-hidden rounded-lg border bg-muted shadow-sm flex items-center justify-center">
+              {failedImages.has(0) ? (
+                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                  <ImageOff className="w-12 h-12 mb-2 opacity-50" />
+                  <span className="text-sm">Image non disponible</span>
+                </div>
+              ) : (
+                <img
+                  src={displayImages[0]}
+                  alt={archive.title}
+                  loading="lazy"
+                  decoding="async"
+                  onError={() => handleImageError(0)}
+                  className="w-full h-full object-contain"
+                />
+              )}
             </div>
           ) : (
             <Carousel className="w-full relative group">
@@ -118,13 +131,21 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
                 {displayImages.map((img, index) => (
                   <CarouselItem key={index}>
                     <div className="aspect-video overflow-hidden rounded-lg border bg-muted shadow-sm flex items-center justify-center relative">
-                      <img
-                        src={img}
-                        alt={`${archive.title} - ${index + 1}`}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-contain"
-                      />
+                      {failedImages.has(index) ? (
+                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                          <ImageOff className="w-12 h-12 mb-2 opacity-50" />
+                          <span className="text-sm">Image non disponible</span>
+                        </div>
+                      ) : (
+                        <img
+                          src={img}
+                          alt={`${archive.title} - ${index + 1}`}
+                          loading="lazy"
+                          decoding="async"
+                          onError={() => handleImageError(index)}
+                          className="w-full h-full object-contain"
+                        />
+                      )}
                       <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
                         {index + 1} / {displayImages.length}
                       </div>

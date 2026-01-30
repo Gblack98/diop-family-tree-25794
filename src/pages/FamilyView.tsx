@@ -68,6 +68,28 @@ const goBackInHistory = (): string | null => {
   return null;
 };
 
+// Composant Instructions qui disparaît après 5 secondes
+const Instructions = ({ isMobile }: { isMobile: boolean }) => {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!visible) return null;
+
+  return isMobile ? (
+    <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-primary/90 backdrop-blur px-3 py-1.5 rounded-full text-xs text-white pointer-events-none animate-in fade-in duration-500">
+      Glissez pour déplacer • Pincez pour zoomer
+    </div>
+  ) : (
+    <div className="absolute top-28 left-1/2 -translate-x-1/2 bg-primary/90 backdrop-blur px-4 py-2 rounded-full text-sm text-white pointer-events-none animate-in fade-in duration-500">
+      Glissez les nœuds pour réorganiser • Cliquez pour naviguer
+    </div>
+  );
+};
+
 export const FamilyView = () => {
   const { personName } = useParams<{ personName: string }>();
   const navigate = useNavigate();
@@ -615,17 +637,8 @@ export const FamilyView = () => {
         </div>
       </div>
 
-      {/* Instructions dynamiques */}
-      {dimensions.width < 640 && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-primary/90 backdrop-blur px-3 py-1.5 rounded-full text-xs text-white pointer-events-none animate-pulse">
-          Glissez pour déplacer • Pincez pour zoomer
-        </div>
-      )}
-      {dimensions.width >= 640 && (
-        <div className="absolute top-28 left-1/2 -translate-x-1/2 bg-primary/90 backdrop-blur px-4 py-2 rounded-full text-sm text-white pointer-events-none animate-pulse">
-          Glissez les nœuds pour réorganiser • Cliquez pour naviguer
-        </div>
-      )}
+      {/* Instructions dynamiques - disparaissent après 5s */}
+      <Instructions isMobile={dimensions.width < 640} />
     </div>
   );
 };

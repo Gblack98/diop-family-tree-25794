@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Quote, ExternalLink, Calendar, Loader2 } from "lucide-react";
+import { Download, Quote, ExternalLink, Calendar, Loader2, ImageOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Archive } from "@/data/archivesData";
@@ -15,6 +15,7 @@ interface ArchiveCardProps {
 
 export const ArchiveCard = ({ archive, index, onClick, searchQuery = "" }: ArchiveCardProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const hasImage = archive.category === "photo" || archive.category === "document" || archive.category === "article";
   const isDownloadable = archive.category === "document" || archive.category === "article";
 
@@ -46,13 +47,21 @@ export const ArchiveCard = ({ archive, index, onClick, searchQuery = "" }: Archi
     >
       {hasImage && archive.image && (
         <div className="aspect-video bg-gradient-to-br from-muted/40 to-muted/20 overflow-hidden relative flex items-center justify-center">
-          <img
-            src={archive.image}
-            alt={archive.title}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
-          />
+          {imageError ? (
+            <div className="flex flex-col items-center justify-center text-muted-foreground">
+              <ImageOff className="w-10 h-10 mb-2 opacity-50" />
+              <span className="text-xs">Image non disponible</span>
+            </div>
+          ) : (
+            <img
+              src={archive.image}
+              alt={archive.title}
+              loading="lazy"
+              decoding="async"
+              onError={() => setImageError(true)}
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <ExternalLink className="absolute top-3 right-3 w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110" />
         </div>
