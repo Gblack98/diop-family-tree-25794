@@ -15,9 +15,18 @@ export const familyData: Person[] = [
     {"name": "Birame Medor Diop", "genre": "Homme", "generation": 2, "parents": ["Fasseck Birame Lo", "Gabriel Birame Medor"], "enfants": ["Gabar Diop", "Fatou Diop Diarra", "Katy", "Magne", "Dieme Medor Dagana", "Amadou Diop Bercy"]},
     {"name": "Diarra Ba", "genre": "Femme", "generation": 2, "parents": [], "enfants": ["Gabar Diop", "Fatou Diop Diarra", "Diarra Diallo", "Iba Diallo"]},
     {"name": "Bilal Diallo", "genre": "Homme", "generation": 2, "parents": [], "enfants": ["Diarra Diallo", "Iba Diallo"]},
+
+    // Ancêtres de Binta Yama Seck (Génération 2)
+    {"name": "Ndiogou Seck", "genre": "Homme", "generation": 2, "parents": [], "enfants": ["Yatma Seck"]},
+    {"name": "Mota Sarr", "genre": "Femme", "generation": 2, "parents": [], "enfants": ["Yatma Seck"]},
+    {"name": "William Diouf", "genre": "Homme", "generation": 2, "parents": [], "enfants": ["Oulimata Diouf"]},
     
     // Génération 3
     {"name": "Gabar Diop", "genre": "Homme", "generation": 3, "parents": ["Birame Medor Diop", "Diarra Ba"], "enfants": ["Alioune Badara Gabar Diop", "Amadou Bamba Diop", "Ibrahima Gabar Diop", "Doudou Yaye Katy Diop", "Faty Dia Mbacke Diop"]},
+
+    // Ancêtres de Mar Seck (lignée Seck)
+    {"name": "Yatma Seck", "genre": "Homme", "generation": 3, "parents": ["Ndiogou Seck", "Mota Sarr"], "enfants": ["Mar Seck"]},
+    {"name": "Oulimata Diouf", "genre": "Femme", "generation": 3, "parents": ["William Diouf"], "enfants": ["Mar Seck", "Iba Diagne"]},
     {"name": "Betty Ba", "genre": "Femme", "generation": 3, "parents": [], "enfants": ["Alioune Badara Gabar Diop"]},
     {"name": "Fatou Diop Diarra", "genre": "Femme", "generation": 3, "parents": ["Birame Medor Diop", "Diarra Ba"], "enfants": ["Mame Coumba Ndiaye", "Djiby Ndiaye", "Soce Ndiaye", "Ndeye Sylvie Sene", "El Hadji Malick Ndiaye"]},
     {"name": "Katy", "genre": "Femme", "generation": 3, "parents": ["Birame Medor Diop"], "enfants": []},
@@ -41,8 +50,9 @@ export const familyData: Person[] = [
     {"name": "Fatou Mbaye", "genre": "Femme", "generation": 4, "parents": [], "enfants": ["Feu Papa Gabar Ndiaye", "Feu Pape Charles", "Djibril", "Fatou Iba"]},
     {"name": "Iba Diallo", "genre": "Homme", "generation": 4, "parents": ["Diarra Ba", "Bilal Diallo"], "enfants": ["Fatou Diallo", "Moustapha Diallo", "Mame Diarra Diallo (Bineta Sarr)", "Souleymane Diallo"]},
     {"name": "Binta Sarr", "genre": "Femme", "generation": 4, "parents": [], "enfants": ["Mame Diarra Diallo (Bineta Sarr)", "Fatou Diallo", "Moustapha Diallo", "Souleymane Diallo"]},
-    {"name": "Mar Seck", "genre": "Homme", "generation": 4, "parents": [], "enfants": ["Pathe Seck"]},
-    {"name": "Marieme Ndiaye", "genre": "Femme", "generation": 4, "parents": [], "enfants": ["Pathe Seck"]},
+    {"name": "Mar Seck", "genre": "Homme", "generation": 4, "parents": ["Yatma Seck", "Oulimata Diouf"], "enfants": ["Binta Yama Seck", "Nafissatou Seck", "Aminta Seck", "Mouhamadou Moustapha Seck", "Pathe Seck", "Penda Ndiaye Seck", "Mame Aida Seck"]},
+    {"name": "Marieme Ndiaye", "genre": "Femme", "generation": 4, "parents": ["Fatou Diallo"], "enfants": ["Binta Yama Seck", "Nafissatou Seck", "Aminta Seck", "Mouhamadou Moustapha Seck", "Pathe Seck", "Penda Ndiaye Seck", "Mame Aida Seck"]},
+    {"name": "Iba Diagne", "genre": "Homme", "generation": 4, "parents": ["Oulimata Diouf"], "enfants": ["Mamadou Diagne"]},
     
     // Épouses d'Alioune Badara Gabar Diop (Génération 4)
     {"name": "Seynabou Ndoye", "genre": "Femme", "generation": 4, "parents": [], "enfants": ["Mame Diarra Diop", "Ndeye Betty Diop"]},
@@ -76,7 +86,16 @@ export const familyData: Person[] = [
 
 
 
-    {"name": "Nafissatou Seck", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Magatte Diop"]},
+    // Enfants de Mar Seck et Marieme Ndiaye
+    {"name": "Binta Yama Seck", "genre": "Femme", "generation": 5, "parents": ["Mar Seck", "Marieme Ndiaye"], "enfants": ["Ndeye Wouly Diagne", "Pape Mar Diagne", "Idrissa Diagne", "Mouhamadou Tidjane Diagne", "Madjiguene Diagne", "Makhtar Diagne (Binta)", "Moussa Diagne", "Diarra Diagne", "Yatma Diagne", "Nafissatou Diagne (Binta)", "Mame Aida Diagne"]},
+    {"name": "Nafissatou Seck", "genre": "Femme", "generation": 5, "parents": ["Mar Seck", "Marieme Ndiaye"], "enfants": ["Magatte Diop", "Mame Aissatou Diedhiou", "Magatte Fall Diedhiou", "Fatou Nene Diedhiou", "Alphousseynou Diedhiou", "Assane Diedhiou", "Ismaila Diedhiou", "Mouhameth Diedhiou"]},
+    {"name": "Aminta Seck", "genre": "Femme", "generation": 5, "parents": ["Mar Seck", "Marieme Ndiaye"], "enfants": []},
+    {"name": "Mouhamadou Moustapha Seck", "genre": "Homme", "generation": 5, "parents": ["Mar Seck", "Marieme Ndiaye"], "enfants": []},
+    {"name": "Penda Ndiaye Seck", "genre": "Femme", "generation": 5, "parents": ["Mar Seck", "Marieme Ndiaye"], "enfants": []},
+    {"name": "Mame Aida Seck", "genre": "Femme", "generation": 5, "parents": ["Mar Seck", "Marieme Ndiaye"], "enfants": []},
+
+    // Époux de Binta Yama Seck
+    {"name": "Mamadou Diagne", "genre": "Homme", "generation": 5, "parents": ["Iba Diagne"], "enfants": ["Ndeye Wouly Diagne", "Pape Mar Diagne", "Moussa Diagne", "Diarra Diagne", "Yatma Diagne", "Nafissatou Diagne (Binta)", "Mame Aida Diagne"]},
     {"name": "Khady Ba", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Betty Bamba Diop", "Bassirou Bamba Diop", "Badara Gabar Diop (Khady)", "Abdoulaye Diop (Khady)"]},
     {"name": "Amadou Bamba Diop (Badara)", "genre": "Homme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Cissé"], "enfants": ["Magatte Diop", "Betty Bamba Diop", "Bassirou Bamba Diop", "Badara Gabar Diop (Khady)", "Abdoulaye Diop (Khady)", "Aminata Diop (Bamba)", "Mame Assane Diop", "Seynabou Diop (Bamba)", "Ndeye Sokhna Diop", "Soukeyna Diop (Bamba)", "Ndeye Maguette Diop", "Ousmane Diop", "Pape Gabar Diop", "Cheikh Diop", "Fatou Cissé Diop (Bamba)", "Soda Diop", "Astou Diop (Bamba)", "Saliou Faza Diop", "Ahmadou Diop (Bamba)", "Moustapha Diop (Bamba)", "Abdou Salam Diop (Bamba)"]},
     {"name": "Mame Ngoné Dieng", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Aminata Diop (Bamba)", "Mame Assane Diop", "Seynabou Diop (Bamba)", "Ndeye Sokhna Diop", "Soukeyna Diop (Bamba)","Ndeye Maguette Diop"]},
@@ -131,7 +150,7 @@ export const familyData: Person[] = [
 
     {"name": "Moctar Sall", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Sophie Sall", "Badara Gabar Sall", "Lamine Sall"]},
     {"name": "Yacine Diop", "genre": "Femme", "generation": 5, "parents": ["Alioune Badara Gabar Diop", "Fatou Gaye"], "enfants": ["Makha Seck", "Penda Seck", "Sophie Sall", "Badara Gabar Sall", "Lamine Sall"]},
-    {"name": "Pathe Seck", "genre": "Homme", "generation": 5, "parents": ["Mar Seck","Marieme Ndiaye"], "enfants": ["Makha Seck", "Penda Seck"]},
+    {"name": "Pathe Seck", "genre": "Homme", "generation": 5, "parents": ["Mar Seck","Marieme Ndiaye"], "enfants": ["Makha Seck", "Penda Seck", "Sokhna Oumou Kalsoume Seck", "Pauline Seck", "Aby Seck", "Marieme Aicha Seck", "Marieme Nora Seck"]},
 
 
 
@@ -160,7 +179,7 @@ export const familyData: Person[] = [
     
     
     
-    {"name": "Fatou Diallo", "genre": "Femme", "generation": 5, "parents": ["Iba Diallo", "Binta Sarr"], "enfants": []},
+    {"name": "Fatou Diallo", "genre": "Femme", "generation": 5, "parents": ["Iba Diallo", "Binta Sarr"], "enfants": ["Marieme Ndiaye"]},
     {"name": "Moustapha Diallo", "genre": "Homme", "generation": 5, "parents": ["Iba Diallo", "Binta Sarr"], "enfants": []},
     {"name": "Mame Diarra Diallo (Bineta Sarr)", "genre": "Femme", "generation": 5, "parents": ["Iba Diallo", "Binta Sarr"], "enfants": []},
     {"name": "Souleymane Diallo", "genre": "Homme", "generation": 5, "parents": ["Iba Diallo", "Binta Sarr"], "enfants": []},
@@ -272,7 +291,7 @@ export const familyData: Person[] = [
 
 // Amadou Bamba Diop et ses enfants
 
-  {"name": "Magatte Diop", "genre": "Femme", "generation": 6, "parents": ["Amadou Bamba Diop (Badara)", "Nafissatou Seck"], "enfants": []},
+  {"name": "Magatte Diop", "genre": "Femme", "generation": 6, "parents": ["Amadou Bamba Diop (Badara)", "Nafissatou Seck"], "enfants": ["Ibrahima Gabar Diop (Magatte)", "Fatou Cisse Diop (Magatte)", "Assane Gabar Diop", "Amadou Bamba Diop (Magatte)", "Lamine Gabar Diop"]},
 
 
   {"name": "Betty Bamba Diop", "genre": "Homme", "generation": 6, "parents": ["Amadou Bamba Diop (Badara)", "Khady Ba"], "enfants": []},
@@ -302,6 +321,52 @@ export const familyData: Person[] = [
   {"name": "Ahmadou Diop (Bamba)", "genre": "Homme", "generation": 6, "parents": ["Amadou Bamba Diop (Badara)", "Ndeye Ndiaye"], "enfants": []},
   {"name": "Moustapha Diop (Bamba)", "genre": "Homme", "generation": 6, "parents": ["Amadou Bamba Diop (Badara)", "Ndeye Ndiaye"], "enfants": []},
   {"name": "Abdou Salam Diop (Bamba)", "genre": "Homme", "generation": 6, "parents": ["Amadou Bamba Diop (Badara)", "Ndeye Ndiaye"], "enfants": []},
+
+
+// ========================================
+// LIGNÉE DE BINTA YAMA SECK (1938-2020)
+// ========================================
+
+// Enfants de Binta Yama Seck et Mamadou Diagne (Génération 6)
+  {"name": "Ndeye Wouly Diagne", "genre": "Femme", "generation": 6, "parents": ["Binta Yama Seck", "Mamadou Diagne"], "enfants": []},
+  {"name": "Pape Mar Diagne", "genre": "Homme", "generation": 6, "parents": ["Binta Yama Seck", "Mamadou Diagne"], "enfants": []},
+  {"name": "Moussa Diagne", "genre": "Homme", "generation": 6, "parents": ["Binta Yama Seck", "Mamadou Diagne"], "enfants": []},
+  {"name": "Diarra Diagne", "genre": "Femme", "generation": 6, "parents": ["Binta Yama Seck", "Mamadou Diagne"], "enfants": ["Ibrahima Gabar Diop (Magatte)", "Fatou Cisse Diop (Magatte)", "Assane Gabar Diop"]},
+  {"name": "Yatma Diagne", "genre": "Homme", "generation": 6, "parents": ["Binta Yama Seck", "Mamadou Diagne"], "enfants": []},
+  {"name": "Nafissatou Diagne (Binta)", "genre": "Femme", "generation": 6, "parents": ["Binta Yama Seck", "Mamadou Diagne"], "enfants": []},
+  {"name": "Mame Aida Diagne", "genre": "Femme", "generation": 6, "parents": ["Binta Yama Seck", "Mamadou Diagne"], "enfants": []},
+
+// Enfants de Binta Yama Seck avec autre époux (Génération 6)
+  {"name": "Idrissa Diagne", "genre": "Homme", "generation": 6, "parents": ["Binta Yama Seck"], "enfants": []},
+  {"name": "Mouhamadou Tidjane Diagne", "genre": "Homme", "generation": 6, "parents": ["Binta Yama Seck"], "enfants": []},
+  {"name": "Madjiguene Diagne", "genre": "Femme", "generation": 6, "parents": ["Binta Yama Seck"], "enfants": []},
+  {"name": "Makhtar Diagne (Binta)", "genre": "Homme", "generation": 6, "parents": ["Binta Yama Seck"], "enfants": []},
+
+// Petits-enfants de Binta Yama Seck (via Diarra Diagne et Magatte Diop) - Génération 7
+  {"name": "Ibrahima Gabar Diop (Magatte)", "genre": "Homme", "generation": 7, "parents": ["Diarra Diagne", "Magatte Diop"], "enfants": []},
+  {"name": "Fatou Cisse Diop (Magatte)", "genre": "Femme", "generation": 7, "parents": ["Diarra Diagne", "Magatte Diop"], "enfants": []},
+  {"name": "Assane Gabar Diop", "genre": "Homme", "generation": 7, "parents": ["Diarra Diagne", "Magatte Diop"], "enfants": []},
+  {"name": "Amadou Bamba Diop (Magatte)", "genre": "Homme", "generation": 7, "parents": ["Magatte Diop"], "enfants": []},
+  {"name": "Lamine Gabar Diop", "genre": "Homme", "generation": 7, "parents": ["Magatte Diop"], "enfants": []},
+
+// Enfants de Nafissatou Seck (sœur de Binta Yama) - Génération 6
+  {"name": "Diedhiou", "genre": "Homme", "generation": 5, "parents": [], "enfants": ["Mame Aissatou Diedhiou", "Magatte Fall Diedhiou", "Fatou Nene Diedhiou", "Alphousseynou Diedhiou", "Assane Diedhiou", "Ismaila Diedhiou", "Mouhameth Diedhiou"]},
+  {"name": "Mame Aissatou Diedhiou", "genre": "Femme", "generation": 6, "parents": ["Nafissatou Seck", "Diedhiou"], "enfants": []},
+  {"name": "Magatte Fall Diedhiou", "genre": "Homme", "generation": 6, "parents": ["Nafissatou Seck", "Diedhiou"], "enfants": []},
+  {"name": "Fatou Nene Diedhiou", "genre": "Femme", "generation": 6, "parents": ["Nafissatou Seck", "Diedhiou"], "enfants": []},
+  {"name": "Alphousseynou Diedhiou", "genre": "Homme", "generation": 6, "parents": ["Nafissatou Seck", "Diedhiou"], "enfants": []},
+  {"name": "Assane Diedhiou", "genre": "Homme", "generation": 6, "parents": ["Nafissatou Seck", "Diedhiou"], "enfants": []},
+  {"name": "Ismaila Diedhiou", "genre": "Homme", "generation": 6, "parents": ["Nafissatou Seck", "Diedhiou"], "enfants": []},
+  {"name": "Mouhameth Diedhiou", "genre": "Homme", "generation": 6, "parents": ["Nafissatou Seck", "Diedhiou"], "enfants": []},
+
+// Enfants supplémentaires de Pathé Seck (Génération 6)
+  {"name": "Ndeye Coumba Seck", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Sokhna Oumou Kalsoume Seck", "Pauline Seck", "Aby Seck", "Marieme Aicha Seck"]},
+  {"name": "Laurence Ba", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Marieme Nora Seck"]},
+  {"name": "Sokhna Oumou Kalsoume Seck", "genre": "Femme", "generation": 6, "parents": ["Pathe Seck", "Ndeye Coumba Seck"], "enfants": []},
+  {"name": "Pauline Seck", "genre": "Femme", "generation": 6, "parents": ["Pathe Seck", "Ndeye Coumba Seck"], "enfants": []},
+  {"name": "Aby Seck", "genre": "Femme", "generation": 6, "parents": ["Pathe Seck", "Ndeye Coumba Seck"], "enfants": []},
+  {"name": "Marieme Aicha Seck", "genre": "Femme", "generation": 6, "parents": ["Pathe Seck", "Ndeye Coumba Seck"], "enfants": []},
+  {"name": "Marieme Nora Seck", "genre": "Femme", "generation": 6, "parents": ["Pathe Seck", "Laurence Ba"], "enfants": []},
 
 ];
 
