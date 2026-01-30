@@ -70,7 +70,7 @@ export const familyData: Person[] = [
     {"name": "Fatou Goudiaby", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Lamine Diop", "Marie Diagne Diop", "Marie Madeleine Diop"]},
     {"name": "Mariéme Wade", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Ndeye Khar Diop"]},
     {"name": "Aita Diagne", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Astou Diop (Doudou)", "Badara Gabar Diop (Doudou)"]},
-    {"name": "Rama", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Ndeye Fatou Diop", "Ahmadou Bamba Diop"]},
+    {"name": "Rama", "genre": "Femme", "generation": 5, "parents": [], "enfants": ["Ndeye Fatou Diop (Doudou)", "Ahmadou Bamba Diop"]},
 
 
 
@@ -161,9 +161,9 @@ export const familyData: Person[] = [
     
     
     {"name": "Fatou Diallo", "genre": "Femme", "generation": 5, "parents": ["Iba Diallo", "Binta Sarr"], "enfants": []},
-    {"name": "Moustapha Diallo", "genre": "Homme", "generation": 5, "parents": ["Iba Diallo"], "enfants": []},
+    {"name": "Moustapha Diallo", "genre": "Homme", "generation": 5, "parents": ["Iba Diallo", "Binta Sarr"], "enfants": []},
     {"name": "Mame Diarra Diallo (Bineta Sarr)", "genre": "Femme", "generation": 5, "parents": ["Iba Diallo", "Binta Sarr"], "enfants": []},
-    {"name": "Souleymane Diallo", "genre": "Homme", "generation": 5, "parents": ["Iba Diallo"], "enfants": []},
+    {"name": "Souleymane Diallo", "genre": "Homme", "generation": 5, "parents": ["Iba Diallo", "Binta Sarr"], "enfants": []},
 
 
 
@@ -174,7 +174,7 @@ export const familyData: Person[] = [
 // Yacine Diop et ses enfants
 
   {"name": "Makha Seck", "genre": "Homme", "generation": 6, "parents": ["Yacine Diop", "Pathe Seck"], "enfants": []},
-  {"name": "Penda Seck", "genre": "Femme", "generation": 6, "parents": ["Yacine Diop"], "enfants": []},
+  {"name": "Penda Seck", "genre": "Femme", "generation": 6, "parents": ["Yacine Diop", "Pathe Seck"], "enfants": []},
   {"name": "Sophie Sall", "genre": "Femme", "generation": 6, "parents": ["Yacine Diop", "Moctar Sall"], "enfants": []},
   {"name": "Badara Gabar Sall", "genre": "Homme", "generation": 6, "parents": ["Yacine Diop", "Moctar Sall"], "enfants": []},
   {"name": "Lamine Sall", "genre": "Homme", "generation": 6, "parents": ["Yacine Diop", "Moctar Sall"], "enfants": []},
