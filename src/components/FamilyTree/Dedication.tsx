@@ -58,9 +58,6 @@ export const Dedication = () => {
                 notre histoire familiale, j'ai cherché à me rapprocher d'elle encore davantage,
                 à redécouvrir son histoire et celle de nos ancêtres.
               </p>
-              <p className="text-foreground italic">
-                Maman, je te témoigne tout mon amour et ma tendresse. Tu me manques.
-              </p>
             </div>
 
             <div className="mt-6 pt-4 border-t border-border/50 text-center">
