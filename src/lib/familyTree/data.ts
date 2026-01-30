@@ -291,7 +291,7 @@ export const familyData: Person[] = [
 
 // Amadou Bamba Diop et ses enfants
 
-  {"name": "Magatte Diop", "genre": "Femme", "generation": 6, "parents": ["Amadou Bamba Diop (Badara)", "Nafissatou Seck"], "enfants": ["Ibrahima Gabar Diop (Magatte)", "Fatou Cisse Diop (Magatte)", "Assane Gabar Diop", "Amadou Bamba Diop (Magatte)", "Lamine Gabar Diop"]},
+  {"name": "Magatte Diop", "genre": "Homme", "generation": 6, "parents": ["Amadou Bamba Diop (Badara)", "Nafissatou Seck"], "enfants": ["Ibrahima Gabar Diop (Magatte)", "Fatou Cisse Diop (Magatte)", "Assane Gabar Diop", "Amadou Bamba Diop (Magatte)", "Lamine Gabar Diop"]},
 
 
   {"name": "Betty Bamba Diop", "genre": "Homme", "generation": 6, "parents": ["Amadou Bamba Diop (Badara)", "Khady Ba"], "enfants": []},
