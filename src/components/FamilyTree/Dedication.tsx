@@ -54,6 +54,12 @@ export const Dedication = () => {
                 fille d'Iba Diallo, frère de Gabar Biram Médor Diop.
               </p>
               <p>
+                Elle aimait me parler de ses parents, de mon histoire, et m'incitait à nouer des
+                liens avec mes proches. Elle évoquait souvent sa parenté avec mon grand-père
+                Amadou Bamba Diop, et me parlait de sa sœur Yacine Diop qu'elle aimait tant.
+                C'est d'elle que me vient cet intérêt pour la généalogie.
+              </p>
+              <p>
                 À travers cet arbre généalogique et toutes les recherches que j'ai menées sur
                 notre histoire familiale, j'ai cherché à me rapprocher d'elle encore davantage,
                 à redécouvrir son histoire et celle de nos ancêtres.
