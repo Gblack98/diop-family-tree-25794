@@ -259,7 +259,8 @@ export const FamilyView = () => {
     if (!svgRef.current || !zoomRef.current || !dimensions.width || !dimensions.height) return;
     const svg = d3.select(svgRef.current);
     const isMobile = dimensions.width < 640;
-    const scale = isMobile ? 0.6 : 0.8;
+    const isTablet = dimensions.width >= 640 && dimensions.width < 1024;
+    const scale = isMobile ? 0.45 : isTablet ? 0.55 : 0.65;
 
     svg.transition().duration(750).call(
       zoomRef.current.transform,
@@ -300,24 +301,32 @@ export const FamilyView = () => {
     svg.call(zoom);
     zoomRef.current = zoom;
 
-    // Centrage initial
-    const initialScale = isMobile ? 0.6 : isTablet ? 0.7 : 0.8;
+    // Centrage initial (échelle réduite pour voir plus de la constellation)
+    const initialScale = isMobile ? 0.45 : isTablet ? 0.55 : 0.65;
     svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(initialScale));
 
-    // Paramètres adaptatifs pour la simulation
-    const linkDistance = isMobile ? 120 : isTablet ? 150 : 180;
-    const chargeStrength = isMobile ? -800 : isTablet ? -1000 : -1200;
-    const collisionRadius = isMobile ? 45 : isTablet ? 55 : 65;
+    // Paramètres adaptatifs pour la simulation (optimisés pour 200+ personnes)
+    const linkDistance = isMobile ? 160 : isTablet ? 220 : 280;
+    const chargeStrength = isMobile ? -1400 : isTablet ? -1800 : -2400;
+    const collisionRadius = isMobile ? 60 : isTablet ? 80 : 100;
 
-    // Simulation de force DYNAMIQUE (ne pas arrêter)
+    // Simulation de force DYNAMIQUE (optimisée pour grands arbres)
     const simulation = d3.forceSimulation(nodes)
       .force("link", d3.forceLink<Node, Link>(links)
         .id((d) => d.id)
-        .distance((d) => d.type === "marriage" ? linkDistance : linkDistance * 0.6))
-      .force("charge", d3.forceManyBody().strength(chargeStrength))
-      .force("collide", d3.forceCollide().radius(collisionRadius))
-      .force("center", d3.forceCenter(0, 0))
-      .alphaDecay(0.02); // Simulation plus lente pour garder le mouvement
+        .distance((d) => d.type === "marriage" ? linkDistance : linkDistance * 0.7)
+        .strength(0.8))
+      .force("charge", d3.forceManyBody()
+        .strength(chargeStrength)
+        .distanceMin(50)
+        .distanceMax(800))
+      .force("collide", d3.forceCollide()
+        .radius(collisionRadius)
+        .strength(0.9)
+        .iterations(2))
+      .force("center", d3.forceCenter(0, 0).strength(0.05))
+      .alphaDecay(0.03)
+      .velocityDecay(0.4); // Mouvement plus fluide et stable
 
     simulationRef.current = simulation;
 
