@@ -56,25 +56,23 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
   };
 
   return (
-    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh] bg-gradient-to-br from-background via-background to-muted/20 border-border/50">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
       <DialogDescription className="sr-only">
         Détails de l'archive de {archive.person}
       </DialogDescription>
-
+      
       <DialogHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3 animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="flex-1">
-            <DialogTitle className="text-2xl sm:text-3xl font-bold leading-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              {archive.title}
-            </DialogTitle>
-            <div className="flex flex-wrap items-center gap-2 mt-3">
-              <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-300 hover:scale-105 font-semibold">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+          <div>
+            <DialogTitle className="text-2xl font-bold leading-tight">{archive.title}</DialogTitle>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
                 {archive.person}
               </Badge>
-              <span className="text-sm text-muted-foreground font-medium">• {archive.date}</span>
+              <span className="text-sm text-muted-foreground">• {archive.date}</span>
             </div>
           </div>
-
+          
           {/* Boutons Desktop */}
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             {isDownloadable && (
@@ -83,7 +81,7 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
                 disabled={isDownloading}
                 variant="outline"
                 size="sm"
-                className="items-center gap-2 hover:bg-primary/10 hover:border-primary/50 transition-all duration-300 hover:scale-105"
+                className="items-center gap-2"
               >
                 {isDownloading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -97,7 +95,7 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
               onClick={handleViewInTree}
               variant="outline"
               size="sm"
-              className="items-center gap-2 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/20"
+              className="items-center gap-2 hover:bg-primary hover:text-white transition-colors"
             >
               <Network className="w-4 h-4" />
               Voir dans l'arbre
@@ -108,9 +106,9 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
       
       {/* Zone Média : Image unique ou Carrousel */}
       {displayImages.length > 0 && (
-        <div className="mt-4 mb-6 w-full animate-in fade-in zoom-in-95 duration-700" style={{ animationDelay: '100ms' }}>
+        <div className="mt-2 mb-4 w-full">
           {displayImages.length === 1 ? (
-            <div className="aspect-video overflow-hidden rounded-xl border-2 border-border/50 bg-gradient-to-br from-muted/50 to-muted/30 shadow-lg hover:shadow-xl transition-all duration-500 flex items-center justify-center group">
+            <div className="aspect-video overflow-hidden rounded-lg border bg-muted shadow-sm flex items-center justify-center">
               {failedImages.has(0) ? (
                 <div className="flex flex-col items-center justify-center text-muted-foreground">
                   <ImageOff className="w-12 h-12 mb-2 opacity-50" />
@@ -120,10 +118,10 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
                 <img
                   src={displayImages[0]}
                   alt={archive.title}
-                  loading="eager"
+                  loading="lazy"
                   decoding="async"
                   onError={() => handleImageError(0)}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-contain"
                 />
               )}
             </div>
@@ -132,7 +130,7 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
               <CarouselContent>
                 {displayImages.map((img, index) => (
                   <CarouselItem key={index}>
-                    <div className="aspect-video overflow-hidden rounded-xl border-2 border-border/50 bg-gradient-to-br from-muted/50 to-muted/30 shadow-lg flex items-center justify-center relative hover:shadow-xl transition-shadow duration-500">
+                    <div className="aspect-video overflow-hidden rounded-lg border bg-muted shadow-sm flex items-center justify-center relative">
                       {failedImages.has(index) ? (
                         <div className="flex flex-col items-center justify-center text-muted-foreground">
                           <ImageOff className="w-12 h-12 mb-2 opacity-50" />
@@ -148,7 +146,7 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
                           className="w-full h-full object-contain"
                         />
                       )}
-                      <div className="absolute bottom-3 right-3 backdrop-blur-md bg-black/50 text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20 shadow-lg">
+                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
                         {index + 1} / {displayImages.length}
                       </div>
                     </div>
@@ -161,31 +159,25 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
           )}
         </div>
       )}
-
-
-      <div className="space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '200ms' }}>
+      
+      <div className="space-y-6">
         <div className="prose prose-sm dark:prose-invert max-w-none">
-          <p className="text-muted-foreground leading-relaxed text-base sm:text-lg whitespace-pre-wrap">
+          <p className="text-muted-foreground leading-relaxed text-base whitespace-pre-wrap">
             {archive.fullContent || archive.content}
           </p>
         </div>
-
+        
         {archive.achievements && archive.achievements.length > 0 && (
-          <div className="relative bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 p-5 sm:p-6 rounded-xl border-2 border-border/40 backdrop-blur-sm overflow-hidden group hover:border-primary/30 transition-all duration-500">
-            {/* Subtle background gradient on hover */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
-            <h4 className="font-bold text-lg mb-4 flex items-center gap-2 relative z-10">
-              <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors duration-500">
-                <ExternalLink className="w-4 h-4 text-primary" />
-              </div>
+          <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+            <h4 className="font-semibold mb-3 flex items-center gap-2">
+              <ExternalLink className="w-4 h-4 text-primary" />
               Réalisations notables
             </h4>
-            <ul className="space-y-3 relative z-10">
+            <ul className="space-y-2">
               {archive.achievements.map((achievement, i) => (
-                <li key={i} className="text-sm sm:text-base text-muted-foreground flex items-start gap-3 group/item hover:text-foreground transition-colors duration-300">
-                  <span className="text-primary mt-1.5 w-2 h-2 rounded-full bg-primary shrink-0 group-hover/item:scale-125 transition-transform duration-300" />
-                  <span className="leading-relaxed">{achievement}</span>
+                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2.5">
+                  <span className="text-primary mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                  <span>{achievement}</span>
                 </li>
               ))}
             </ul>
@@ -193,13 +185,13 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
         )}
 
         {/* Boutons Mobile (en bas) */}
-        <div className="sm:hidden flex flex-col gap-3 mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '300ms' }}>
+        <div className="sm:hidden flex flex-col gap-2 mt-4">
           {isDownloadable && (
             <Button
               onClick={handleDownload}
               disabled={isDownloading}
               variant="outline"
-              className="w-full flex items-center justify-center gap-2 hover:bg-primary/10 hover:border-primary/50 transition-all duration-300"
+              className="w-full flex items-center justify-center gap-2"
               size="lg"
             >
               {isDownloading ? (
@@ -212,7 +204,7 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
           )}
           <Button
             onClick={handleViewInTree}
-            className="w-full flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 hover:scale-105"
+            className="w-full flex items-center justify-center gap-2"
             size="lg"
           >
             <Network className="w-4 h-4" />
