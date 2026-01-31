@@ -63,26 +63,46 @@ export const FamilyTreeCanvas = ({
       );
     };
 
-    // RESET (CENTRAGE PARFAIT)
+    // RESET (CENTRAGE PARFAIT - basé sur le centre de tous les nœuds visibles)
     window.__treeReset = () => {
       if (!svgRef.current || !zoomRef.current || persons.length === 0) return;
       const svg = d3.select(svgRef.current);
 
-      const rootNode = persons.find(p => p.level === 0) || persons[0];
-      
-      // Zoom initial - équilibre entre lisibilité et vue d'ensemble
+      // Calculer la bounding box de tous les nœuds visibles
+      const xs = persons.map(p => p.x);
+      const ys = persons.map(p => p.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+
+      // Centre réel de l'arbre
+      const treeCenterX = (minX + maxX) / 2;
+      const treeCenterY = (minY + maxY) / 2;
+
+      // Dimensions de l'arbre
+      const treeWidth = maxX - minX + dimensions.nodeWidth * 2;
+      const treeHeight = maxY - minY + dimensions.nodeHeight * 2;
+
       const isMobile = dimensions.width < 640;
       const isTablet = dimensions.width >= 640 && dimensions.width < 1024;
 
-      // Zoom optimal : mobile plus petit pour voir plus de l'arbre
-      const initialScale = isMobile ? 0.5 : isTablet ? 0.65 : 0.75;
+      // Calculer le zoom optimal pour que l'arbre rentre dans l'écran
+      const headerOffset = isMobile ? 80 : isTablet ? 70 : 60;
+      const availableWidth = dimensions.width * 0.9;
+      const availableHeight = (dimensions.height - headerOffset) * 0.85;
 
-      // CENTRAGE PARFAIT :
-      // X : Centre horizontal de l'écran - position de la racine ajustée au zoom
-      // Y : Centre vertical (légèrement haut sur mobile pour compenser header)
-      const headerOffset = isMobile ? 40 : isTablet ? 30 : 0;
-      const x = dimensions.width / 2 - (rootNode.x * initialScale);
-      const y = (dimensions.height / 2) - (rootNode.y * initialScale) - headerOffset; 
+      const scaleX = availableWidth / treeWidth;
+      const scaleY = availableHeight / treeHeight;
+
+      // Prendre le zoom minimum entre X et Y, avec des limites raisonnables
+      const maxInitialScale = isMobile ? 0.6 : isTablet ? 0.75 : 0.85;
+      const minInitialScale = isMobile ? 0.25 : isTablet ? 0.35 : 0.4;
+      const initialScale = Math.max(minInitialScale, Math.min(maxInitialScale, Math.min(scaleX, scaleY)));
+
+      // Centrer sur le centre réel de l'arbre
+      const x = dimensions.width / 2 - (treeCenterX * initialScale);
+      const y = (dimensions.height / 2) - (treeCenterY * initialScale) + (headerOffset / 4);
 
       svg.transition().duration(750).call(
         zoomRef.current.transform,
