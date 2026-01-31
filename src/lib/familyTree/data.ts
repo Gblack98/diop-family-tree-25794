@@ -1,5 +1,49 @@
 import { Person } from "./types";
 
+/**
+ * Family Tree Data - Famille Diop
+ *
+ * Structure complète de l'arbre généalogique de la famille Diop
+ * avec 218 membres répartis sur 6+ générations.
+ *
+ * @summary
+ * - **Total**: 218 personnes
+ * - **Générations**: 0 (racines) à 6+
+ * - **Lignées principales**: Diop, Seck, Diagne, Ba, Diallo
+ *
+ * @structure
+ * Chaque personne est représentée par un objet avec:
+ * - `name`: Nom complet de la personne
+ * - `genre`: "Homme" ou "Femme"
+ * - `generation`: Niveau générationnel (0 = ancêtres racines)
+ * - `parents`: Array des noms des parents (max 2)
+ * - `enfants`: Array des noms des enfants
+ *
+ * @generations
+ * - **Génération 0**: Ancêtres racines (Daro Wade, Waly Bandia Gueye, Charles Medor Diop, etc.)
+ * - **Génération 1**: Première descendance (Fasseck Birame Lo, Gabriel Birame Medor, Bakar Waly)
+ * - **Génération 2**: Deuxième descendance (Birame Medor Diop, Diarra Ba, Ndiogou Seck, etc.)
+ * - **Génération 3**: Troisième descendance (Gabar Diop, Yatma Seck, Betty Ba, etc.)
+ * - **Génération 4**: Quatrième descendance (Alioune Badara, Mar Seck, Marieme Ndiaye, etc.)
+ * - **Génération 5**: Cinquième descendance (Binta Yama Seck, Nafissatou Seck, etc.)
+ * - **Génération 6**: Sixième descendance (Magatte Diop, Pape Mar Diagne, etc.)
+ *
+ * @connections
+ * Principales connexions inter-familiales:
+ * - Diop ↔ Ba (Birame Medor Diop × Diarra Ba)
+ * - Diop ↔ Seck (Amadou Bamba Diop × Nafissatou Seck)
+ * - Seck ↔ Diagne (Magatte Diop × Diarra Diagne - mariage entre cousins)
+ * - Seck ↔ Diouf (Mar Seck parents: Yatma Seck × Oulimata Diouf)
+ * - Diallo ↔ Ba (Bilal Diallo × Diarra Ba)
+ *
+ * @history
+ * Dernières mises à jour:
+ * - 2025-01: +43 personnes (lignée Binta Yama Seck, ancêtres Seck)
+ * - 2025-01: Corrections de données (Magatte Diop genre, relations parentales)
+ * - 2025-01: Réorganisation pour meilleure cohérence
+ *
+ * @see {@link https://github.com/Gblack98/diop-family-tree-25794}
+ */
 export const familyData: Person[] = [
     {"name": "Daro Wade", "genre": "Femme", "generation": 0, "parents": [], "enfants": ["Fasseck Birame Lo"]},
     {"name": "Waly Bandia Gueye", "genre": "Homme", "generation": 0, "parents": [], "enfants": ["Bakar Waly"]},

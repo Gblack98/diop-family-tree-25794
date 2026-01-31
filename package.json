@@ -1,7 +1,22 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "diop-family-tree",
+  "version": "1.1.0",
+  "description": "Interactive family tree application for the Diop family - 218 members across 6+ generations",
+  "author": "Ibrahima Gabar Diop",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gblack98/diop-family-tree-25794.git"
+  },
+  "keywords": [
+    "family-tree",
+    "genealogy",
+    "react",
+    "typescript",
+    "d3",
+    "visualization"
+  ],
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

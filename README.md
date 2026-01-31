@@ -340,9 +340,9 @@ Le projet inclut plusieurs optimisations :
 ### Structure de la Famille Diop
 
 - **6+ Générations** trackées
-- **~130+ Membres** de famille
-- **Ancêtres Racines** : Daro Wade, Waly Bandia Gueye, Charles Medor Diop, Bercy Ndack Ndir
-- **Membre Vedette** : Ibrahima Gabar Diop (né 1947)
+- **218 Membres** de famille
+- **Ancêtres Racines** : Daro Wade, Waly Bandia Gueye, Charles Medor Diop, Bercy Ndack Ndir, Ndiogou Seck, William Diouf
+- **Lignées Principales** : Diop, Seck, Diagne, Ba, Diallo
 
 ### Algorithmes Généalogiques
 
