@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import PersonsManager from "./pages/admin/PersonsManager";
+import ArchivesManager from "./pages/admin/ArchivesManager";
 import { ProtectedRoute } from "./components/Admin/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <PersonsManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/archives"
+            element={
+              <ProtectedRoute>
+                <ArchivesManager />
               </ProtectedRoute>
             }
           />

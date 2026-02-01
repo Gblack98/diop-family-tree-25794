@@ -163,8 +163,10 @@ export const AdminDashboard = () => {
                 <p className="text-sm text-muted-foreground mb-3">
                   Ajouter des biographies, photos et documents
                 </p>
-                <Button size="sm" variant="outline" className="w-full" disabled>
-                  Bientôt disponible
+                <Button size="sm" variant="outline" className="w-full" asChild>
+                  <Link to="/admin/archives">
+                    Gérer
+                  </Link>
                 </Button>
               </div>
             </div>
