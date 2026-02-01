@@ -8,6 +8,9 @@ import Archives from "./pages/Archives";
 import { FamilyView } from "./pages/FamilyView";
 import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
+import AdminLogin from "./pages/admin/Login";
+import AdminDashboard from "./pages/admin/Dashboard";
+import { ProtectedRoute } from "./components/Admin/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +26,18 @@ const App = () => (
           <Route path="/help" element={<Help />} />
           <Route path="/family/:personName" element={<FamilyView />} />
           <Route path="/constellation/:personName" element={<FamilyView />} />
+
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
