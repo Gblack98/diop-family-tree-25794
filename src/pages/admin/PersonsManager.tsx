@@ -205,60 +205,62 @@ export const PersonsManager = () => {
               <p className="text-muted-foreground">Aucune personne trouvée</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Genre</TableHead>
-                  <TableHead>Génération</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPersons.map((person) => (
-                  <TableRow key={person.id}>
-                    <TableCell className="font-medium">{person.name}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          person.genre === 'Homme'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                            : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
-                        }`}
-                      >
-                        {person.genre}
-                      </span>
-                    </TableCell>
-                    <TableCell>{person.generation}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Modifier {person.name}</DialogTitle>
-                          </DialogHeader>
-                          <PersonForm person={person} onSuccess={loadPersons} />
-                        </DialogContent>
-                      </Dialog>
-
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(person.id, person.name)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      )}
-                    </TableCell>
+            <div className="overflow-auto max-h-[calc(100vh-280px)]">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Genre</TableHead>
+                    <TableHead>Génération</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredPersons.map((person) => (
+                    <TableRow key={person.id}>
+                      <TableCell className="font-medium">{person.name}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            person.genre === 'Homme'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                              : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
+                          }`}
+                        >
+                          {person.genre}
+                        </span>
+                      </TableCell>
+                      <TableCell>{person.generation}</TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Modifier {person.name}</DialogTitle>
+                            </DialogHeader>
+                            <PersonForm person={person} onSuccess={loadPersons} />
+                          </DialogContent>
+                        </Dialog>
+
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(person.id, person.name)}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </Card>
       </main>
