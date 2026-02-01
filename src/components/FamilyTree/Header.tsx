@@ -11,14 +11,16 @@ import {
   Download,
   Menu,
   Archive,
-  HelpCircle
+  HelpCircle,
+  Shield
 } from "lucide-react";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HeaderProps {
   totalMembers: number;
@@ -49,6 +51,7 @@ export const Header = ({
   selectedPerson,
   selectedPerson2,
 }: HeaderProps) => {
+  const { user } = useAuth();
   const modes: { value: ViewMode; label: string, icon: React.ElementType }[] = [
     { value: "tree", label: "Arbre Complet", icon: TreeDeciduous },
     { value: "ancestors", label: "Ascendants", icon: Users },
@@ -106,6 +109,14 @@ export const Header = ({
             <div className="flex gap-1.5 items-center flex-shrink-0">
               <Link to="/archives" className="p-2 rounded-lg hover:bg-accent transition-colors active:scale-95" title="Archives familiales">
                 <Archive className="w-5 h-5" />
+              </Link>
+
+              <Link
+                to={user ? "/admin/dashboard" : "/admin/login"}
+                className="p-2 rounded-lg hover:bg-accent transition-colors active:scale-95"
+                title={user ? "Tableau de bord admin" : "Connexion admin"}
+              >
+                <Shield className="w-5 h-5" />
               </Link>
 
               <Link to="/help" className="p-1.5 rounded-md opacity-50 hover:opacity-100 hover:bg-accent/50 transition-all active:scale-95" title="Aide">
@@ -171,6 +182,15 @@ export const Header = ({
             >
               <Archive className="w-4 h-4"/>
               <span className="hidden lg:inline">Archives</span>
+            </Link>
+
+            <Link
+              to={user ? "/admin/dashboard" : "/admin/login"}
+              className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors text-xs md:text-sm font-medium flex items-center gap-2"
+              title={user ? "Tableau de bord admin" : "Connexion admin"}
+            >
+              <Shield className="w-4 h-4"/>
+              <span className="hidden lg:inline">Admin</span>
             </Link>
 
             <Link

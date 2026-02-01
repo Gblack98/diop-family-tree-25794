@@ -29,6 +29,7 @@ import {
 import { Plus, Pencil, Trash2, Search, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { MultiSelect, Option } from '@/components/ui/multi-select';
 
 interface Person {
   id: string;
@@ -278,47 +279,145 @@ const PersonForm = ({
 }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [allPersons, setAllPersons] = useState<Option[]>([]);
   const [formData, setFormData] = useState({
     name: person?.name || '',
     genre: person?.genre || 'Homme',
     generation: person?.generation?.toString() || '0',
+    parents: [] as string[],
+    children: [] as string[],
   });
+
+  // Charger toutes les personnes et les relations existantes
+  useEffect(() => {
+    loadPersonsAndRelations();
+  }, []);
+
+  const loadPersonsAndRelations = async () => {
+    try {
+      // Charger toutes les personnes
+      const { data: persons, error: personsError } = await supabase
+        .from('persons')
+        .select('id, name')
+        .order('name');
+
+      if (personsError) throw personsError;
+
+      const options: Option[] = (persons || [])
+        .filter((p) => p.id !== person?.id) // Exclure la personne elle-même
+        .map((p) => ({ value: p.id, label: p.name }));
+
+      setAllPersons(options);
+
+      // Si on modifie une personne, charger ses relations
+      if (person) {
+        const { data: parentRels, error: parentError } = await supabase
+          .from('relationships')
+          .select('parent_id')
+          .eq('child_id', person.id);
+
+        const { data: childRels, error: childError } = await supabase
+          .from('relationships')
+          .select('child_id')
+          .eq('parent_id', person.id);
+
+        if (parentError) throw parentError;
+        if (childError) throw childError;
+
+        setFormData((prev) => ({
+          ...prev,
+          parents: (parentRels || []).map((r) => r.parent_id),
+          children: (childRels || []).map((r) => r.child_id),
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const data = {
+      // Validation: max 2 parents
+      if (formData.parents.length > 2) {
+        toast({
+          title: 'Erreur',
+          description: 'Une personne ne peut avoir que 2 parents maximum',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const personData = {
         name: formData.name.trim(),
         genre: formData.genre as 'Homme' | 'Femme',
         generation: parseInt(formData.generation),
       };
 
+      let personId: string;
+
       if (person) {
-        // Update
+        // Update personne
         const { error } = await supabase
           .from('persons')
-          .update(data)
+          .update(personData)
           .eq('id', person.id);
 
         if (error) throw error;
-
-        toast({
-          title: 'Succès',
-          description: 'Personne modifiée',
-        });
+        personId = person.id;
       } else {
-        // Insert
-        const { error } = await supabase.from('persons').insert(data);
+        // Insert personne
+        const { data, error } = await supabase
+          .from('persons')
+          .insert(personData)
+          .select('id')
+          .single();
 
         if (error) throw error;
-
-        toast({
-          title: 'Succès',
-          description: 'Personne ajoutée',
-        });
+        personId = data.id;
       }
+
+      // Gérer les relations parent-enfant
+      if (person) {
+        // Supprimer toutes les relations existantes pour cette personne
+        await supabase.from('relationships').delete().eq('child_id', person.id);
+        await supabase.from('relationships').delete().eq('parent_id', person.id);
+      }
+
+      // Créer les nouvelles relations parents
+      if (formData.parents.length > 0) {
+        const parentRelations = formData.parents.map((parentId) => ({
+          parent_id: parentId,
+          child_id: personId,
+        }));
+
+        const { error: parentError } = await supabase
+          .from('relationships')
+          .insert(parentRelations);
+
+        if (parentError) throw parentError;
+      }
+
+      // Créer les nouvelles relations enfants
+      if (formData.children.length > 0) {
+        const childRelations = formData.children.map((childId) => ({
+          parent_id: personId,
+          child_id: childId,
+        }));
+
+        const { error: childError } = await supabase
+          .from('relationships')
+          .insert(childRelations);
+
+        if (childError) throw childError;
+      }
+
+      toast({
+        title: 'Succès',
+        description: person ? 'Personne modifiée avec succès' : 'Personne ajoutée avec succès',
+      });
 
       onSuccess();
     } catch (error: any) {
@@ -375,6 +474,39 @@ const PersonForm = ({
         <p className="text-xs text-muted-foreground">
           0 = Ancêtres racines, 1 = Première descendance, etc.
         </p>
+      </div>
+
+      <div className="border-t pt-4 mt-4">
+        <h3 className="text-sm font-semibold mb-3">Relations familiales</h3>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Parents (max 2)</label>
+            <MultiSelect
+              options={allPersons}
+              selected={formData.parents}
+              onChange={(parents) => setFormData({ ...formData, parents })}
+              placeholder="Sélectionner les parents..."
+              maxSelected={2}
+            />
+            <p className="text-xs text-muted-foreground">
+              Sélectionnez jusqu'à 2 parents
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Enfants</label>
+            <MultiSelect
+              options={allPersons}
+              selected={formData.children}
+              onChange={(children) => setFormData({ ...formData, children })}
+              placeholder="Sélectionner les enfants..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Sélectionnez les enfants de cette personne
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
