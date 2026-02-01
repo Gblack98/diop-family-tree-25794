@@ -144,8 +144,10 @@ export const AdminDashboard = () => {
                 <p className="text-sm text-muted-foreground mb-3">
                   Ajouter, modifier ou supprimer des membres de la famille
                 </p>
-                <Button size="sm" variant="outline" className="w-full" disabled>
-                  Bientôt disponible
+                <Button size="sm" variant="outline" className="w-full" asChild>
+                  <Link to="/admin/persons">
+                    Gérer
+                  </Link>
                 </Button>
               </div>
             </div>
