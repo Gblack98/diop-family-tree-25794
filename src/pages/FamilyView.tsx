@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import * as d3 from "d3";
-import { ArrowLeft, Home, Users, Sparkles, ZoomIn, ZoomOut, RotateCcw, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, Home, Users, Sparkles, ZoomIn, ZoomOut, RotateCcw, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFamilyData } from "@/hooks/useFamilyData";
-import { familyData as staticFamilyData } from "@/lib/familyTree/data";
 
 // Types basés sur la structure de données du projet
 interface PersonData {
@@ -101,13 +100,8 @@ export const FamilyView = () => {
   const simulationRef = useRef<d3.Simulation<Node, Link> | null>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown>>();
 
-  // Charger les données depuis Supabase
-  const { familyData: supabaseData, loading: dataLoading } = useFamilyData();
-
-  // Utiliser les données Supabase si disponibles, sinon fallback sur données statiques
-  const familyData = useMemo(() => {
-    return supabaseData.length > 0 ? supabaseData : staticFamilyData;
-  }, [supabaseData]);
+  // Charger les données (le hook retourne déjà les données statiques comme fallback)
+  const { familyData } = useFamilyData();
 
   // Récupération de la personne centrale
   const centralPerson = useMemo(() => {
@@ -518,16 +512,6 @@ export const FamilyView = () => {
       }
     };
   }, [nodes, links, dimensions, navigate]);
-
-  // Écran de chargement
-  if (dataLoading) {
-    return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4 p-4">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-muted-foreground">Chargement des données...</p>
-      </div>
-    );
-  }
 
   if (!centralPerson) {
     return (
