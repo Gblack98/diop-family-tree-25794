@@ -61,17 +61,28 @@ export const FamilyTreeViewer = () => {
   const { familyData, loading: dataLoading, error: dataError } = useFamilyData();
 
   // Utiliser les données Supabase si disponibles, sinon fallback sur données statiques
-  const dataToUse = familyData.length > 0 ? familyData : staticFamilyData;
+  const dataToUse = useMemo(() => {
+    return familyData.length > 0 ? familyData : staticFamilyData;
+  }, [familyData]);
 
   const [engine, setEngine] = useState<FamilyTreeEngine | null>(null);
+  const engineInitialized = useRef(false);
 
-  // Créer/recréer l'engine quand les données changent
+  // Créer l'engine UNE SEULE FOIS quand les données sont chargées
   useEffect(() => {
-    if (dataToUse.length > 0) {
+    if (dataToUse.length > 0 && !engineInitialized.current) {
+      engineInitialized.current = true;
       const newEngine = new FamilyTreeEngine(dataToUse, dimensions);
       setEngine(newEngine);
     }
-  }, [dataToUse, dimensions]);
+  }, [dataToUse]); // Retirer dimensions des dépendances
+
+  // Mettre à jour les dimensions de l'engine existant (sans le recréer)
+  useEffect(() => {
+    if (engine && engine.updateDimensions) {
+      engine.updateDimensions(dimensions);
+    }
+  }, [engine, dimensions]);
   
   const [currentMode, setCurrentMode] = useState<ViewMode>("tree");
   const [selectedPerson, setSelectedPerson] = useState<PersonNode | null>(null);

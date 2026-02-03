@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { Person } from '@/lib/familyTree/types';
 
@@ -14,16 +14,36 @@ interface SupabaseRelationship {
   child_id: string;
 }
 
+// Cache global pour éviter les rechargements
+let cachedData: Person[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export function useFamilyData() {
-  const [familyData, setFamilyData] = useState<Person[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [familyData, setFamilyData] = useState<Person[]>(cachedData || []);
+  const [loading, setLoading] = useState(!cachedData);
   const [error, setError] = useState<string | null>(null);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
+    // Utiliser le cache si disponible et pas expiré
+    const now = Date.now();
+    if (cachedData && (now - cacheTimestamp) < CACHE_DURATION) {
+      setFamilyData(cachedData);
+      setLoading(false);
+      return;
+    }
+
+    // Éviter les chargements multiples simultanés
+    if (loadingRef.current) return;
+
     loadFamilyData();
   }, []);
 
   const loadFamilyData = async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+
     try {
       setLoading(true);
       setError(null);
@@ -45,10 +65,8 @@ export function useFamilyData() {
 
       // Créer un map id -> name pour lookup rapide
       const idToName: Record<string, string> = {};
-      const nameToId: Record<string, string> = {};
       (persons || []).forEach((p) => {
         idToName[p.id] = p.name;
-        nameToId[p.name] = p.id;
       });
 
       // Créer les maps de relations
@@ -84,16 +102,25 @@ export function useFamilyData() {
         enfants: childrenByParentId[p.id] || [],
       }));
 
+      // Mettre en cache
+      cachedData = transformedData;
+      cacheTimestamp = Date.now();
+
       setFamilyData(transformedData);
     } catch (err: any) {
       console.error('Error loading family data:', err);
       setError(err.message || 'Erreur lors du chargement des données');
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   };
 
   const refresh = () => {
+    // Invalider le cache et recharger
+    cachedData = null;
+    cacheTimestamp = 0;
+    loadingRef.current = false;
     loadFamilyData();
   };
 
