@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,25 +9,40 @@ import { Lock, Mail, Loader2 } from 'lucide-react';
 export const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [localError, setLocalError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { signIn, isAuthenticated, loading: authLoading, error: authError, user } = useAuth();
   const navigate = useNavigate();
+
+  // Si déjà authentifié, rediriger vers le dashboard
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      console.log('User authenticated, redirecting to dashboard');
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
+
+  // Afficher l'erreur d'auth si le profil n'est pas trouvé
+  const displayError = localError || (user && authError ? authError : '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setLocalError('');
+    setSubmitting(true);
 
     try {
+      console.log('Attempting login for:', email);
       await signIn(email, password);
-      navigate('/admin/dashboard');
+      console.log('SignIn successful, waiting for profile load...');
+      // La redirection se fera via le useEffect quand isAuthenticated devient true
     } catch (err: any) {
-      setError(err.message || 'Identifiants incorrects');
-    } finally {
-      setLoading(false);
+      console.error('Login error:', err);
+      setLocalError(err.message || 'Identifiants incorrects');
+      setSubmitting(false);
     }
   };
+
+  const isLoading = submitting || (user && authLoading);
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background p-4">
@@ -54,7 +69,7 @@ export const AdminLogin = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
                 required
-                disabled={loading}
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -70,23 +85,23 @@ export const AdminLogin = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10"
                 required
-                disabled={loading}
+                disabled={isLoading}
               />
             </div>
           </div>
 
-          {error && (
+          {displayError && (
             <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
-              {error}
+              {displayError}
             </div>
           )}
 
           <Button
             type="submit"
             className="w-full"
-            disabled={loading}
+            disabled={isLoading}
           >
-            {loading ? (
+            {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Connexion...

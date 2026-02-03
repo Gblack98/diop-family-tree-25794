@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 export interface UserProfile {
   id: string;
   role: 'admin' | 'moderator';
-  username: string;
+  display_name: string | null;
   email: string | null;
   suspended: boolean;
 }
@@ -14,6 +14,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Récupérer la session actuelle
@@ -30,6 +31,7 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
         loadProfile(session.user.id);
@@ -44,16 +46,33 @@ export function useAuth() {
 
   const loadProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      setError(null);
+      console.log('Loading profile for user:', userId);
+
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error loading profile:', error);
+      if (fetchError) {
+        console.error('Profile fetch error:', fetchError);
+
+        // Afficher l'erreur mais ne pas bloquer
+        if (fetchError.code === 'PGRST116') {
+          setError('Profil non trouvé. Vérifiez que votre compte existe dans la table profiles.');
+        } else {
+          setError(`Erreur: ${fetchError.message}`);
+        }
+        setProfile(null);
+      } else {
+        console.log('Profile loaded successfully:', data);
+        setProfile(data);
+        setError(null);
+      }
+    } catch (err: any) {
+      console.error('Error loading profile:', err);
+      setError(err.message || 'Erreur lors du chargement du profil');
       setProfile(null);
     } finally {
       setLoading(false);
@@ -61,24 +80,35 @@ export function useAuth() {
   };
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
+    setError(null);
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) throw error;
+    if (error) {
+      setLoading(false);
+      throw error;
+    }
+
+    // Le profil sera chargé via onAuthStateChange
     return data;
   };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    setProfile(null);
+    setUser(null);
   };
 
   return {
     user,
     profile,
     loading,
+    error,
     signIn,
     signOut,
     isAdmin: profile?.role === 'admin',
