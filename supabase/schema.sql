@@ -6,6 +6,8 @@
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Enable pg_trgm for fuzzy search on names
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 -- ============================================================================
 -- TABLE: profiles
@@ -43,7 +45,8 @@ CREATE TABLE persons (
 );
 
 -- Index pour recherches et tri
-CREATE INDEX idx_persons_name ON persons(name);
+-- Utilisation de GIN index pour la recherche rapide de texte (ex: "Diop" trouve "Ibrahima Diop")
+CREATE INDEX idx_persons_name_trgm ON persons USING GIN (name gin_trgm_ops);
 CREATE INDEX idx_persons_generation ON persons(generation);
 CREATE INDEX idx_persons_created_at ON persons(created_at DESC);
 

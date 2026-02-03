@@ -7,8 +7,10 @@ import { ModePanel } from "./ModePanel";
 import { FamilyTreeCanvas } from "./FamilyTreeCanvas";
 import { Dedication } from "./Dedication";
 import { FamilyTreeEngine } from "@/lib/familyTree/FamilyTreeEngine";
-import { familyData } from "@/lib/familyTree/data";
+import { useFamilyData } from "@/hooks/useFamilyData";
+import { familyData as staticFamilyData } from "@/lib/familyTree/data";
 import { ViewMode, PersonNode, TreeDimensions } from "@/lib/familyTree/types";
+import { Loader2 } from "lucide-react";
 
 const getResponsiveDimensions = (): TreeDimensions => {
   const width = window.innerWidth;
@@ -56,7 +58,20 @@ const getResponsiveDimensions = (): TreeDimensions => {
 
 export const FamilyTreeViewer = () => {
   const [dimensions, setDimensions] = useState(getResponsiveDimensions());
-  const [engine] = useState(() => new FamilyTreeEngine(familyData, dimensions));
+  const { familyData, loading: dataLoading, error: dataError } = useFamilyData();
+
+  // Utiliser les données Supabase si disponibles, sinon fallback sur données statiques
+  const dataToUse = familyData.length > 0 ? familyData : staticFamilyData;
+
+  const [engine, setEngine] = useState<FamilyTreeEngine | null>(null);
+
+  // Créer/recréer l'engine quand les données changent
+  useEffect(() => {
+    if (dataToUse.length > 0) {
+      const newEngine = new FamilyTreeEngine(dataToUse, dimensions);
+      setEngine(newEngine);
+    }
+  }, [dataToUse, dimensions]);
   
   const [currentMode, setCurrentMode] = useState<ViewMode>("tree");
   const [selectedPerson, setSelectedPerson] = useState<PersonNode | null>(null);
@@ -70,6 +85,8 @@ export const FamilyTreeViewer = () => {
   const isFocusHandled = useRef(false);
 
   const updateTree = useCallback(() => {
+    if (!engine) return;
+
     if (engine.updateDimensions) {
        engine.updateDimensions(dimensions);
     }
@@ -82,6 +99,8 @@ export const FamilyTreeViewer = () => {
   }, [engine, currentMode, selectedPerson, selectedPerson2, dimensions]);
 
   useEffect(() => {
+    if (!engine) return;
+
     engine.initializeExpanded(3);
     setAllPersons(engine.getAllPersons());
 
@@ -119,7 +138,7 @@ export const FamilyTreeViewer = () => {
         p => p.name.toLowerCase() === focusName.toLowerCase()
       );
 
-      if (targetPerson) {
+      if (targetPerson && engine) {
         isFocusHandled.current = true;
         setTimeout(() => {
             engine.expandToRoot(targetPerson);
@@ -136,6 +155,8 @@ export const FamilyTreeViewer = () => {
   }, [allPersons, searchParams, engine, updateTree, setSearchParams]);
 
   const handleNodeClick = useCallback((person: PersonNode) => {
+    if (!engine) return;
+
     isFocusHandled.current = true;
     if (selectedPerson?.name === person.name && person.enfants.length > 0) {
       engine.toggleExpand(person);
@@ -159,6 +180,8 @@ export const FamilyTreeViewer = () => {
   }, [selectedPerson, engine, updateTree]);
 
   const handleSearchSelect = useCallback((person: PersonNode) => {
+    if (!engine) return;
+
     isFocusHandled.current = true;
     engine.expandToRoot(person);
     updateTree();
@@ -184,6 +207,8 @@ export const FamilyTreeViewer = () => {
   }, []);
 
   const handleToggleExpand = useCallback((person: PersonNode) => {
+    if (!engine) return;
+
     engine.toggleExpand(person);
     updateTree();
     setSelectedPerson(person);
@@ -233,9 +258,33 @@ export const FamilyTreeViewer = () => {
   );
 
   const links = useMemo(
-    () => engine.getLinks(),
-    [visiblePersons] // eslint-disable-line react-hooks/exhaustive-deps
+    () => engine?.getLinks() || [],
+    [engine, visiblePersons] // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  // Écran de chargement
+  if (dataLoading || !engine) {
+    return (
+      <div className="h-dvh w-dvw flex flex-col items-center justify-center bg-background">
+        <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">Chargement de l'arbre généalogique...</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          {dataLoading ? "Récupération des données..." : "Initialisation..."}
+        </p>
+      </div>
+    );
+  }
+
+  // Erreur de chargement
+  if (dataError) {
+    return (
+      <div className="h-dvh w-dvw flex flex-col items-center justify-center bg-background">
+        <p className="text-lg text-destructive mb-2">Erreur de chargement</p>
+        <p className="text-sm text-muted-foreground">{dataError}</p>
+        <p className="text-xs text-muted-foreground mt-4">Utilisation des données locales...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-dvh w-dvw overflow-hidden bg-background font-sans relative">

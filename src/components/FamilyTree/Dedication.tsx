@@ -4,13 +4,30 @@ import { Heart, X } from "lucide-react";
 export const Dedication = () => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Données extraites pour la maintenabilité
+  const dedicationData = {
+    name: "Binta Yama Seck",
+    years: "1938 — 2020",
+    paragraphs: [
+      <>
+        Ce projet est dédié à ma grand-mère, <span className="text-foreground font-medium">Binta Yama Seck</span>,
+        qui m'a profondément inspiré. Elle aimait me parler de ses parents, de mon histoire,
+        et m'incitait à nouer des liens avec mes proches. C'est d'elle que me vient cet
+        intérêt pour la généalogie.
+      </>,
+      "Elle évoquait souvent sa parenté avec mon grand-père Amadou Bamba Diop, et me parlait de Yacine Diop, la sœur de ce dernier, qu'elle aimait beaucoup. Elle était elle-même l'arrière-petite-fille de Fatou Diallo, fille d'Iba Diallo, frère de Gabar Biram Médor Diop.",
+      "À travers cet arbre généalogique et toutes les recherches que j'ai menées sur notre histoire familiale, j'ai cherché à me rapprocher d'elle encore davantage, à redécouvrir son histoire et celle de nos ancêtres."
+    ],
+    signature: "Avec tout mon amour — Ton petit-fils"
+  };
+
   return (
     <>
       {/* Bouton discret - Mobile: bas droite (legend à gauche), Desktop: bas gauche (legend à droite) */}
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-20 right-4 sm:bottom-6 sm:right-auto sm:left-6 z-50 p-3 bg-rose-500/90 backdrop-blur-sm border border-rose-400 rounded-full shadow-lg hover:bg-rose-500 hover:scale-110 transition-all duration-300 group"
-        title="En mémoire de Binta Yama Seck"
+        title={`En mémoire de ${dedicationData.name}`}
       >
         <Heart className="w-5 h-5 text-white fill-white group-hover:scale-110 transition-all" />
       </button>
@@ -40,36 +57,22 @@ export const Dedication = () => {
                 En mémoire de
               </h2>
               <p className="text-2xl sm:text-3xl font-bold text-rose-500 mt-1">
-                Binta Yama Seck
+                {dedicationData.name}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                1938 — 2020
+                {dedicationData.years}
               </p>
             </div>
 
             <div className="space-y-4 text-muted-foreground leading-relaxed text-sm sm:text-base">
-              <p>
-                Ce projet est dédié à ma grand-mère, <span className="text-foreground font-medium">Binta Yama Seck</span>,
-                qui m'a profondément inspiré. Elle aimait me parler de ses parents, de mon histoire,
-                et m'incitait à nouer des liens avec mes proches. C'est d'elle que me vient cet
-                intérêt pour la généalogie.
-              </p>
-              <p>
-                Elle évoquait souvent sa parenté avec mon grand-père Amadou Bamba Diop, et me
-                parlait de Yacine Diop, la sœur de ce dernier, qu'elle aimait beaucoup. Elle était
-                elle-même l'arrière-petite-fille de Fatou Diallo, fille d'Iba Diallo, frère de
-                Gabar Biram Médor Diop.
-              </p>
-              <p>
-                À travers cet arbre généalogique et toutes les recherches que j'ai menées sur
-                notre histoire familiale, j'ai cherché à me rapprocher d'elle encore davantage,
-                à redécouvrir son histoire et celle de nos ancêtres.
-              </p>
+              {dedicationData.paragraphs.map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
             </div>
 
             <div className="mt-6 pt-4 border-t border-border/50 text-center">
               <p className="text-xs text-muted-foreground">
-                Avec tout mon amour — Ton petit-fils
+                {dedicationData.signature}
               </p>
             </div>
           </div>
