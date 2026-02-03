@@ -184,8 +184,10 @@ export const AdminDashboard = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Ajouter, suspendre ou gérer les modérateurs
                     </p>
-                    <Button size="sm" variant="outline" className="w-full" disabled>
-                      Bientôt disponible
+                    <Button size="sm" variant="outline" className="w-full" asChild>
+                      <Link to="/admin/users">
+                        Gérer
+                      </Link>
                     </Button>
                   </div>
                 </div>
@@ -201,16 +203,18 @@ export const AdminDashboard = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Voir toutes les modifications et les restaurer
                     </p>
-                    <Button size="sm" variant="outline" className="w-full" disabled>
-                      Bientôt disponible
+                    <Button size="sm" variant="outline" className="w-full" asChild>
+                      <Link to="/admin/history">
+                        Consulter
+                      </Link>
                     </Button>
                   </div>
                 </div>
               </Card>
 
-              <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer group">
+              <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer group opacity-50">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                     <Settings className="w-6 h-6 text-primary" />
                   </div>
                   <div className="flex-1">
@@ -219,7 +223,7 @@ export const AdminDashboard = () => {
                       Configuration générale de l'application
                     </p>
                     <Button size="sm" variant="outline" className="w-full" disabled>
-                      Bientôt disponible
+                      Bientôt
                     </Button>
                   </div>
                 </div>
@@ -227,15 +231,6 @@ export const AdminDashboard = () => {
             </>
           )}
         </div>
-
-        {/* Info */}
-        <Card className="mt-8 p-6 bg-primary/5">
-          <h3 className="font-semibold mb-2">🚀 Interface en construction</h3>
-          <p className="text-sm text-muted-foreground">
-            Les fonctionnalités de gestion seront ajoutées progressivement au cours des prochaines semaines.
-            En attendant, vous pouvez utiliser le SQL Editor de Supabase pour gérer les données directement.
-          </p>
-        </Card>
       </main>
     </div>
   );

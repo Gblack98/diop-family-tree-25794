@@ -12,6 +12,8 @@ import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import PersonsManager from "./pages/admin/PersonsManager";
 import ArchivesManager from "./pages/admin/ArchivesManager";
+import UsersManager from "./pages/admin/UsersManager";
+import HistoryManager from "./pages/admin/HistoryManager";
 import { ProtectedRoute } from "./components/Admin/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -53,6 +55,22 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <ArchivesManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <UsersManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/history"
+            element={
+              <ProtectedRoute>
+                <HistoryManager />
               </ProtectedRoute>
             }
           />
