@@ -10,7 +10,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -40,24 +39,31 @@ import {
   Calendar,
   User,
   Award,
+  AlertCircle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
+// Interface compatible avec les deux structures de table
 interface Archive {
   id: string;
   person_id: string | null;
   category: string;
   title: string;
-  content: string;
-  full_content: string | null;
-  date: string;
-  images: string[] | null;
-  achievements: string[] | null;
+  // Nouvelle structure
+  content?: string;
+  full_content?: string | null;
+  date?: string;
+  images?: string[] | null;
+  achievements?: string[] | null;
+  // Ancienne structure (fallback)
+  description?: string | null;
+  image_url?: string | null;
+  // Common
   created_at: string;
   person?: {
     name: string;
-  };
+  } | null;
 }
 
 interface Person {
@@ -75,11 +81,24 @@ const CATEGORIES = [
   { value: 'document', label: 'Document', icon: File, description: 'Document officiel' },
 ];
 
+// Helper pour normaliser les archives (supporte les deux structures)
+const normalizeArchive = (archive: any): Archive => {
+  return {
+    ...archive,
+    content: archive.content || archive.description || '',
+    images: archive.images || (archive.image_url ? [archive.image_url] : []),
+    date: archive.date || archive.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    achievements: archive.achievements || [],
+    full_content: archive.full_content || '',
+  };
+};
+
 export const ArchivesManager = () => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const [archives, setArchives] = useState<Archive[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -91,8 +110,10 @@ export const ArchivesManager = () => {
   }, []);
 
   const loadArchives = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('archives')
         .select(`
           *,
@@ -100,10 +121,18 @@ export const ArchivesManager = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setArchives(data || []);
-    } catch (error) {
-      console.error('Error loading archives:', error);
+      if (fetchError) {
+        console.error('Error loading archives:', fetchError);
+        setError(fetchError.message);
+        return;
+      }
+
+      // Normaliser les données pour supporter les deux structures
+      const normalizedArchives = (data || []).map(normalizeArchive);
+      setArchives(normalizedArchives);
+    } catch (err: any) {
+      console.error('Error loading archives:', err);
+      setError(err.message || 'Erreur de chargement');
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les archives',
@@ -115,9 +144,10 @@ export const ArchivesManager = () => {
   };
 
   const filteredArchives = archives.filter((archive) => {
+    const content = archive.content || archive.description || '';
     const matchesSearch =
-      archive.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      archive.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      archive.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      content.toLowerCase().includes(searchQuery.toLowerCase()) ||
       archive.person?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
       selectedCategory === 'all' || archive.category === selectedCategory;
@@ -142,8 +172,9 @@ export const ArchivesManager = () => {
       const archive = archives.find((a) => a.id === id);
 
       // Supprimer les images du storage
-      if (archive?.images && archive.images.length > 0) {
-        const fileNames = archive.images.map(url => url.split('/').pop()).filter(Boolean);
+      const images = archive?.images || (archive?.image_url ? [archive.image_url] : []);
+      if (images.length > 0) {
+        const fileNames = images.map(url => url.split('/').pop()).filter(Boolean);
         if (fileNames.length > 0) {
           await supabase.storage.from('family-images').remove(fileNames as string[]);
         }
@@ -172,6 +203,16 @@ export const ArchivesManager = () => {
     return CATEGORIES.find((c) => c.value === category) || CATEGORIES[CATEGORIES.length - 1];
   };
 
+  const getArchiveImages = (archive: Archive): string[] => {
+    if (archive.images && archive.images.length > 0) return archive.images;
+    if (archive.image_url) return [archive.image_url];
+    return [];
+  };
+
+  const getArchiveContent = (archive: Archive): string => {
+    return archive.content || archive.description || '';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
@@ -188,35 +229,36 @@ export const ArchivesManager = () => {
               <div>
                 <h1 className="text-2xl font-bold">Gestion des archives</h1>
                 <p className="text-sm text-muted-foreground">
-                  {archives.length} archives • {filteredArchives.length} affichées
+                  {archives.length} archive{archives.length > 1 ? 's' : ''} • {filteredArchives.length} affichée{filteredArchives.length > 1 ? 's' : ''}
                 </p>
               </div>
             </div>
 
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nouvelle archive
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Créer une nouvelle archive</DialogTitle>
-                </DialogHeader>
-                <ArchiveForm
-                  onSuccess={() => {
-                    setIsAddDialogOpen(false);
-                    loadArchives();
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nouvelle archive
+            </Button>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Error message */}
+        {error && (
+          <Card className="p-4 mb-6 border-destructive bg-destructive/10">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-destructive" />
+              <div>
+                <p className="font-medium text-destructive">Erreur de chargement</p>
+                <p className="text-sm text-muted-foreground">{error}</p>
+                <Button variant="link" className="p-0 h-auto text-sm" onClick={loadArchives}>
+                  Réessayer
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Filters */}
         <Card className="p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -255,33 +297,40 @@ export const ArchivesManager = () => {
             <p className="text-muted-foreground">Chargement...</p>
           </div>
         ) : filteredArchives.length === 0 ? (
-          <div className="p-12 text-center">
+          <Card className="p-12 text-center">
             <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">Aucune archive trouvée</p>
-            <Button className="mt-4" onClick={() => setIsAddDialogOpen(true)}>
+            <p className="text-muted-foreground mb-4">
+              {archives.length === 0 ? 'Aucune archive trouvée' : 'Aucun résultat pour cette recherche'}
+            </p>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Créer la première archive
+              Créer une archive
             </Button>
-          </div>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredArchives.map((archive) => {
               const catInfo = getCategoryInfo(archive.category);
               const CatIcon = catInfo.icon;
+              const images = getArchiveImages(archive);
+              const content = getArchiveContent(archive);
 
               return (
                 <Card key={archive.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   {/* Image preview */}
-                  {archive.images && archive.images.length > 0 ? (
+                  {images.length > 0 ? (
                     <div className="relative h-48 bg-muted">
                       <img
-                        src={archive.images[0]}
+                        src={images[0]}
                         alt={archive.title}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                       />
-                      {archive.images.length > 1 && (
+                      {images.length > 1 && (
                         <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                          +{archive.images.length - 1} photos
+                          +{images.length - 1} photos
                         </div>
                       )}
                     </div>
@@ -318,16 +367,10 @@ export const ArchivesManager = () => {
                     )}
 
                     {/* Content preview */}
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                      {archive.content}
-                    </p>
-
-                    {/* Achievements preview */}
-                    {archive.achievements && archive.achievements.length > 0 && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-4">
-                        <Award className="w-3 h-3" />
-                        {archive.achievements.length} réalisation{archive.achievements.length > 1 ? 's' : ''}
-                      </div>
+                    {content && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                        {content}
+                      </p>
                     )}
 
                     {/* Actions */}
@@ -366,6 +409,22 @@ export const ArchivesManager = () => {
         )}
       </main>
 
+      {/* Add Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Créer une nouvelle archive</DialogTitle>
+          </DialogHeader>
+          <ArchiveForm
+            onSuccess={() => {
+              setIsAddDialogOpen(false);
+              loadArchives();
+            }}
+            onCancel={() => setIsAddDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* View Dialog */}
       <Dialog open={!!viewingArchive} onOpenChange={() => setViewingArchive(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -379,7 +438,7 @@ export const ArchivesManager = () => {
       <Dialog open={!!editingArchive} onOpenChange={() => setEditingArchive(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Modifier {editingArchive?.title}</DialogTitle>
+            <DialogTitle>Modifier l'archive</DialogTitle>
           </DialogHeader>
           {editingArchive && (
             <ArchiveForm
@@ -388,6 +447,7 @@ export const ArchivesManager = () => {
                 setEditingArchive(null);
                 loadArchives();
               }}
+              onCancel={() => setEditingArchive(null)}
             />
           )}
         </DialogContent>
@@ -401,6 +461,10 @@ const ArchiveViewer = ({ archive }: { archive: Archive }) => {
   const catInfo = CATEGORIES.find((c) => c.value === archive.category) || CATEGORIES[0];
   const CatIcon = catInfo.icon;
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const images = archive.images || (archive.image_url ? [archive.image_url] : []);
+  const content = archive.content || archive.description || '';
+  const achievements = archive.achievements || [];
 
   return (
     <div className="space-y-6">
@@ -432,20 +496,27 @@ const ArchiveViewer = ({ archive }: { archive: Archive }) => {
       </div>
 
       {/* Images Gallery */}
-      {archive.images && archive.images.length > 0 && (
+      {images.length > 0 && (
         <div className="space-y-3">
           <h3 className="font-medium flex items-center gap-2">
             <Camera className="w-4 h-4" />
-            Photos ({archive.images.length})
+            Photos ({images.length})
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {archive.images.map((img, idx) => (
+            {images.map((img, idx) => (
               <div
                 key={idx}
-                className="relative aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                className="relative aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-muted"
                 onClick={() => setSelectedImage(img)}
               >
-                <img src={img} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                <img
+                  src={img}
+                  alt={`Photo ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23f0f0f0" width="100" height="100"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999">Image</text></svg>';
+                  }}
+                />
               </div>
             ))}
           </div>
@@ -453,12 +524,14 @@ const ArchiveViewer = ({ archive }: { archive: Archive }) => {
       )}
 
       {/* Content */}
-      <div className="space-y-3">
-        <h3 className="font-medium">Description</h3>
-        <div className={`prose prose-sm max-w-none ${archive.category === 'citation' ? 'text-xl italic border-l-4 border-primary pl-4' : ''}`}>
-          {archive.content}
+      {content && (
+        <div className="space-y-3">
+          <h3 className="font-medium">Description</h3>
+          <div className={`prose prose-sm max-w-none ${archive.category === 'citation' ? 'text-xl italic border-l-4 border-primary pl-4' : ''}`}>
+            {content}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Full Content */}
       {archive.full_content && (
@@ -471,14 +544,14 @@ const ArchiveViewer = ({ archive }: { archive: Archive }) => {
       )}
 
       {/* Achievements */}
-      {archive.achievements && archive.achievements.length > 0 && (
+      {achievements.length > 0 && (
         <div className="space-y-3">
           <h3 className="font-medium flex items-center gap-2">
             <Award className="w-4 h-4" />
             Réalisations
           </h3>
           <ul className="space-y-2">
-            {archive.achievements.map((achievement, idx) => (
+            {achievements.map((achievement, idx) => (
               <li key={idx} className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg">
                 <Award className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                 <span>{achievement}</span>
@@ -491,7 +564,7 @@ const ArchiveViewer = ({ archive }: { archive: Archive }) => {
       {/* Image Lightbox */}
       {selectedImage && (
         <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
           <button
@@ -516,9 +589,11 @@ const ArchiveViewer = ({ archive }: { archive: Archive }) => {
 const ArchiveForm = ({
   archive,
   onSuccess,
+  onCancel,
 }: {
   archive?: Archive;
   onSuccess: () => void;
+  onCancel: () => void;
 }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -526,15 +601,19 @@ const ArchiveForm = ({
   const [persons, setPersons] = useState<Person[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Initialiser avec les données normalisées
+  const initialImages = archive?.images || (archive?.image_url ? [archive.image_url] : []);
+  const initialContent = archive?.content || archive?.description || '';
+
   const [formData, setFormData] = useState({
     person_id: archive?.person_id || '',
     category: archive?.category || 'biographie',
     title: archive?.title || '',
-    content: archive?.content || '',
+    content: initialContent,
     full_content: archive?.full_content || '',
     date: archive?.date || new Date().toISOString().split('T')[0],
-    images: archive?.images || [] as string[],
-    achievements: archive?.achievements || [] as string[],
+    images: initialImages as string[],
+    achievements: (archive?.achievements || []) as string[],
   });
 
   const [newAchievement, setNewAchievement] = useState('');
@@ -566,7 +645,6 @@ const ArchiveForm = ({
 
     try {
       for (const file of Array.from(files)) {
-        // Valider le type de fichier
         if (!file.type.startsWith('image/')) {
           toast({
             title: 'Erreur',
@@ -576,7 +654,6 @@ const ArchiveForm = ({
           continue;
         }
 
-        // Valider la taille (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
           toast({
             title: 'Erreur',
@@ -586,21 +663,23 @@ const ArchiveForm = ({
           continue;
         }
 
-        // Générer un nom de fichier unique
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-        // Upload vers Supabase Storage
         const { error } = await supabase.storage
           .from('family-images')
           .upload(fileName, file);
 
         if (error) {
           console.error('Upload error:', error);
+          toast({
+            title: 'Erreur upload',
+            description: error.message,
+            variant: 'destructive',
+          });
           continue;
         }
 
-        // Obtenir l'URL publique
         const { data: urlData } = supabase.storage
           .from('family-images')
           .getPublicUrl(fileName);
@@ -634,7 +713,6 @@ const ArchiveForm = ({
   };
 
   const removeImage = async (urlToRemove: string) => {
-    // Supprimer du storage
     const fileName = urlToRemove.split('/').pop();
     if (fileName) {
       await supabase.storage.from('family-images').remove([fileName]);
@@ -665,29 +743,41 @@ const ArchiveForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.title.trim()) {
+      toast({
+        title: 'Erreur',
+        description: 'Le titre est requis',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.content.trim()) {
+      toast({
+        title: 'Erreur',
+        description: 'Le contenu/description est requis',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const data = {
+      // Préparer les données - compatible avec les deux structures
+      const data: any = {
         person_id: formData.person_id || null,
         category: formData.category,
         title: formData.title.trim(),
-        content: formData.content.trim(),
-        full_content: formData.full_content.trim() || null,
-        date: formData.date,
-        images: formData.images.length > 0 ? formData.images : null,
-        achievements: formData.achievements.length > 0 ? formData.achievements : null,
       };
 
-      if (!data.content) {
-        toast({
-          title: 'Erreur',
-          description: 'Le contenu est requis',
-          variant: 'destructive',
-        });
-        setLoading(false);
-        return;
-      }
+      // Essayer d'abord avec la nouvelle structure
+      data.content = formData.content.trim();
+      data.full_content = formData.full_content.trim() || null;
+      data.date = formData.date;
+      data.images = formData.images.length > 0 ? formData.images : null;
+      data.achievements = formData.achievements.length > 0 ? formData.achievements : null;
 
       if (archive) {
         const { error } = await supabase
@@ -695,7 +785,25 @@ const ArchiveForm = ({
           .update(data)
           .eq('id', archive.id);
 
-        if (error) throw error;
+        if (error) {
+          // Fallback: essayer avec l'ancienne structure
+          if (error.message.includes('column')) {
+            const oldData = {
+              person_id: formData.person_id || null,
+              category: formData.category,
+              title: formData.title.trim(),
+              description: formData.content.trim(),
+              image_url: formData.images[0] || null,
+            };
+            const { error: oldError } = await supabase
+              .from('archives')
+              .update(oldData)
+              .eq('id', archive.id);
+            if (oldError) throw oldError;
+          } else {
+            throw error;
+          }
+        }
 
         toast({
           title: 'Succès',
@@ -704,7 +812,22 @@ const ArchiveForm = ({
       } else {
         const { error } = await supabase.from('archives').insert(data);
 
-        if (error) throw error;
+        if (error) {
+          // Fallback: essayer avec l'ancienne structure
+          if (error.message.includes('column')) {
+            const oldData = {
+              person_id: formData.person_id || null,
+              category: formData.category,
+              title: formData.title.trim(),
+              description: formData.content.trim(),
+              image_url: formData.images[0] || null,
+            };
+            const { error: oldError } = await supabase.from('archives').insert(oldData);
+            if (oldError) throw oldError;
+          } else {
+            throw error;
+          }
+        }
 
         toast({
           title: 'Succès',
@@ -714,6 +837,7 @@ const ArchiveForm = ({
 
       onSuccess();
     } catch (error: any) {
+      console.error('Submit error:', error);
       toast({
         title: 'Erreur',
         description: error.message || 'Une erreur est survenue',
@@ -763,15 +887,7 @@ const ArchiveForm = ({
         <Input
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          placeholder={
-            formData.category === 'biographie'
-              ? 'Ex: Biographie de Gabar Diop'
-              : formData.category === 'photo'
-              ? 'Ex: Album de mariage 1985'
-              : formData.category === 'citation'
-              ? 'Ex: Paroles de sagesse'
-              : 'Titre de l\'archive'
-          }
+          placeholder="Titre de l'archive"
           required
         />
       </div>
@@ -820,11 +936,9 @@ const ArchiveForm = ({
           placeholder={
             formData.category === 'citation'
               ? 'La citation exacte...'
-              : formData.category === 'biographie'
-              ? 'Résumé de la vie et des accomplissements...'
               : 'Description de l\'archive...'
           }
-          rows={formData.category === 'citation' ? 3 : 4}
+          rows={4}
           className={formData.category === 'citation' ? 'text-lg italic' : ''}
           required
         />
@@ -833,24 +947,19 @@ const ArchiveForm = ({
       {/* Full Content (for biographies and articles) */}
       {(formData.category === 'biographie' || formData.category === 'article') && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">Contenu complet</label>
+          <label className="text-sm font-medium">Contenu complet (optionnel)</label>
           <Textarea
             value={formData.full_content}
             onChange={(e) => setFormData({ ...formData, full_content: e.target.value })}
-            placeholder="Texte complet de la biographie ou de l'article..."
-            rows={10}
+            placeholder="Texte complet..."
+            rows={8}
           />
-          <p className="text-xs text-muted-foreground">
-            Vous pouvez écrire un texte long avec des paragraphes
-          </p>
         </div>
       )}
 
       {/* Images Upload */}
       <div className="space-y-3">
-        <label className="text-sm font-medium">
-          {formData.category === 'photo' ? 'Photos de l\'album' : 'Images'}
-        </label>
+        <label className="text-sm font-medium">Images</label>
 
         <div className="flex items-center gap-3">
           <input
@@ -871,12 +980,12 @@ const ArchiveForm = ({
             {uploading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Upload en cours...
+                Upload...
               </>
             ) : (
               <>
                 <Upload className="w-4 h-4 mr-2" />
-                {formData.category === 'photo' ? 'Ajouter des photos' : 'Ajouter une image'}
+                Ajouter des images
               </>
             )}
           </Button>
@@ -885,15 +994,17 @@ const ArchiveForm = ({
           </span>
         </div>
 
-        {/* Image preview grid */}
         {formData.images.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
             {formData.images.map((url, idx) => (
               <div key={idx} className="relative group aspect-square">
                 <img
                   src={url}
                   alt={`Image ${idx + 1}`}
                   className="w-full h-full object-cover rounded-lg"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23f0f0f0" width="100" height="100"/></svg>';
+                  }}
                 />
                 <button
                   type="button"
@@ -906,15 +1017,12 @@ const ArchiveForm = ({
             ))}
           </div>
         )}
-        <p className="text-xs text-muted-foreground">
-          Formats: JPG, PNG, GIF. Max 5MB par image.
-        </p>
       </div>
 
       {/* Achievements (for biographies) */}
       {formData.category === 'biographie' && (
         <div className="space-y-3">
-          <label className="text-sm font-medium">Réalisations / Accomplissements</label>
+          <label className="text-sm font-medium">Réalisations</label>
 
           <div className="flex gap-2">
             <Input
@@ -958,6 +1066,9 @@ const ArchiveForm = ({
 
       {/* Submit */}
       <div className="flex justify-end gap-2 pt-4 border-t">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Annuler
+        </Button>
         <Button type="submit" disabled={loading || uploading}>
           {loading ? (
             <>
@@ -965,9 +1076,9 @@ const ArchiveForm = ({
               Enregistrement...
             </>
           ) : archive ? (
-            'Enregistrer les modifications'
+            'Enregistrer'
           ) : (
-            'Créer l\'archive'
+            'Créer'
           )}
         </Button>
       </div>
