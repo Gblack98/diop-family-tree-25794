@@ -125,6 +125,13 @@ DROP POLICY IF EXISTS "Moderators and admins can update archives" ON archives;
 DROP POLICY IF EXISTS "Only admins can delete archives" ON archives;
 DROP POLICY IF EXISTS "Authenticated users can create archives" ON archives;
 DROP POLICY IF EXISTS "Authenticated users can update archives" ON archives;
+DROP POLICY IF EXISTS "Anyone can read archives" ON archives;
+
+-- SELECT: tout le monde peut lire les archives (public + authenticated)
+CREATE POLICY "Anyone can read archives"
+  ON archives FOR SELECT
+  TO authenticated, anon
+  USING (true);
 
 CREATE POLICY "Authenticated users can create archives"
   ON archives FOR INSERT
@@ -146,4 +153,5 @@ DO $$
 BEGIN
   RAISE NOTICE 'Politiques RLS corrigees avec succes (v3)!';
   RAISE NOTICE 'Les fonctions public.is_admin() et public.is_not_suspended() ont ete creees.';
+  RAISE NOTICE 'La policy SELECT sur archives a ete (re)creee pour permettre la lecture publique.';
 END $$;
