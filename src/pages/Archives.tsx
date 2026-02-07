@@ -47,14 +47,20 @@ const Archives = () => {
           .select("*, person:persons(name)")
           .order("created_at", { ascending: false });
 
-        if (!error && data && data.length > 0) {
+        if (error) {
+          console.warn('Supabase query error:', error);
+          setArchives(staticArchivesData);
+        } else if (data && data.length > 0) {
+          console.log('Loaded archives from Supabase:', data.length);
           setArchives(data.map(mapSupabaseToArchive));
         } else {
+          console.log('No archives in Supabase, using static data:', staticArchivesData.length);
           // Fallback sur les données statiques
           setArchives(staticArchivesData);
         }
-      } catch {
-        // En cas d'erreur réseau, utiliser les données statiques
+      } catch (err) {
+        // En cas d'erreur réseau ou autre, utiliser les données statiques
+        console.error('Error loading archives:', err);
         setArchives(staticArchivesData);
       } finally {
         setLoading(false);
