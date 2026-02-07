@@ -486,7 +486,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
   const initialContent = archive?.content || archive?.description || '';
 
   const [formData, setFormData] = useState({
-    person_id: archive?.person_id || '',
+    person_id: archive?.person_id || 'none',
     category: archive?.category || 'biographie',
     title: archive?.title || '',
     content: initialContent,
@@ -582,7 +582,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
     setLoading(true);
     try {
       const data: any = {
-        person_id: formData.person_id || null,
+        person_id: formData.person_id === 'none' ? null : (formData.person_id || null),
         category: formData.category,
         title: formData.title.trim(),
         content: formData.content.trim(),
@@ -596,7 +596,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
         const { error } = await supabase.from('archives').update(data).eq('id', archive.id);
         if (error) {
           if (error.message.includes('column')) {
-            const oldData = { person_id: formData.person_id || null, category: formData.category, title: formData.title.trim(), description: formData.content.trim(), image_url: formData.images[0] || null };
+            const oldData = { person_id: formData.person_id === 'none' ? null : (formData.person_id || null), category: formData.category, title: formData.title.trim(), description: formData.content.trim(), image_url: formData.images[0] || null };
             const { error: oldError } = await supabase.from('archives').update(oldData).eq('id', archive.id);
             if (oldError) throw oldError;
           } else throw error;
@@ -606,7 +606,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
         const { error } = await supabase.from('archives').insert(data);
         if (error) {
           if (error.message.includes('column')) {
-            const oldData = { person_id: formData.person_id || null, category: formData.category, title: formData.title.trim(), description: formData.content.trim(), image_url: formData.images[0] || null };
+            const oldData = { person_id: formData.person_id === 'none' ? null : (formData.person_id || null), category: formData.category, title: formData.title.trim(), description: formData.content.trim(), image_url: formData.images[0] || null };
             const { error: oldError } = await supabase.from('archives').insert(oldData);
             if (oldError) throw oldError;
           } else throw error;
@@ -658,7 +658,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
           <Select value={formData.person_id} onValueChange={(value) => setFormData({ ...formData, person_id: value })}>
             <SelectTrigger><SelectValue placeholder="Aucune personne" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Aucune personne</SelectItem>
+              <SelectItem value="none">Aucune personne</SelectItem>
               {persons.map((person) => <SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>)}
             </SelectContent>
           </Select>
