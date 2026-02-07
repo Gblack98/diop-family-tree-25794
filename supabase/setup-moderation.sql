@@ -27,9 +27,14 @@ CREATE TABLE IF NOT EXISTS pending_changes (
 );
 
 -- Indexes pour performance
+-- Ensure indexes are idempotent when re-running the script
+DROP INDEX IF EXISTS idx_pending_changes_status;
 CREATE INDEX idx_pending_changes_status ON pending_changes(status);
+DROP INDEX IF EXISTS idx_pending_changes_table_name;
 CREATE INDEX idx_pending_changes_table_name ON pending_changes(table_name);
+DROP INDEX IF EXISTS idx_pending_changes_requested_by;
 CREATE INDEX idx_pending_changes_requested_by ON pending_changes(requested_by);
+DROP INDEX IF EXISTS idx_pending_changes_created_at;
 CREATE INDEX idx_pending_changes_created_at ON pending_changes(created_at DESC);
 
 COMMENT ON TABLE pending_changes IS 'Changements en attente d''approbation par les administrateurs (modérateurs)';
@@ -52,6 +57,8 @@ DECLARE
   v_change pending_changes%ROWTYPE;
   v_result JSONB;
   v_new_id UUID;
+  v_parent_id UUID;
+  v_child_id UUID;
 BEGIN
   -- Vérifier que l'approuveur est admin
   IF NOT EXISTS (
@@ -134,15 +141,27 @@ BEGIN
 
     WHEN 'relationships' THEN
       IF v_change.action = 'INSERT' THEN
-        INSERT INTO relationships (parent_id, child_id, created_by, created_at)
-        VALUES (
-          (v_change.new_data->>'parent_id')::UUID,
-          (v_change.new_data->>'child_id')::UUID,
-          v_change.requested_by,
-          NOW()
-        )
-        RETURNING id INTO v_new_id;
-        v_result := json_build_object('new_id', v_new_id);
+        v_parent_id := (v_change.new_data->>'parent_id')::UUID;
+        v_child_id := (v_change.new_data->>'child_id')::UUID;
+
+        -- Si la relation existe déjà, ne pas tenter de ré-insérer (évite violation contrainte unique)
+        SELECT id INTO v_new_id FROM relationships
+        WHERE parent_id = v_parent_id AND child_id = v_child_id;
+
+        IF v_new_id IS NULL THEN
+          INSERT INTO relationships (parent_id, child_id, created_by, created_at)
+          VALUES (
+            v_parent_id,
+            v_child_id,
+            v_change.requested_by,
+            NOW()
+          )
+          RETURNING id INTO v_new_id;
+          v_result := json_build_object('new_id', v_new_id, 'inserted', true);
+        ELSE
+          -- Relationship already exists: mark as approved without duplicate insert
+          v_result := json_build_object('new_id', v_new_id, 'inserted', false, 'note', 'relationship already exists');
+        END IF;
       END IF;
   END CASE;
 
@@ -216,11 +235,13 @@ $$;
 ALTER TABLE pending_changes ENABLE ROW LEVEL SECURITY;
 
 -- Lecture : admins voient tout, modérateurs voient leurs propres changements + tous les en attente
+DROP POLICY IF EXISTS "Admins can read all pending changes" ON pending_changes;
 CREATE POLICY "Admins can read all pending changes"
   ON pending_changes FOR SELECT
   TO authenticated
   USING (public.is_admin());
 
+DROP POLICY IF EXISTS "Moderators can read pending changes" ON pending_changes;
 CREATE POLICY "Moderators can read pending changes"
   ON pending_changes FOR SELECT
   TO authenticated
@@ -232,6 +253,7 @@ CREATE POLICY "Moderators can read pending changes"
   );
 
 -- Insertion : modérateurs et admins créent des changements
+DROP POLICY IF EXISTS "Authenticated users can create pending changes" ON pending_changes;
 CREATE POLICY "Authenticated users can create pending changes"
   ON pending_changes FOR INSERT
   TO authenticated
@@ -241,6 +263,7 @@ CREATE POLICY "Authenticated users can create pending changes"
   );
 
 -- Les admins ne modifient que les champs review
+DROP POLICY IF EXISTS "Admins can review pending changes" ON pending_changes;
 CREATE POLICY "Admins can review pending changes"
   ON pending_changes FOR UPDATE
   TO authenticated
@@ -255,6 +278,8 @@ CREATE POLICY "Admins can review pending changes"
 -- Pour les persons : les modérateurs ne peuvent plus créer directement
 DROP POLICY IF EXISTS "Authenticated users can create persons" ON persons;
 
+-- Ensure policy creation is idempotent
+DROP POLICY IF EXISTS "Admins can create persons" ON persons;
 CREATE POLICY "Admins can create persons"
   ON persons FOR INSERT
   TO authenticated
@@ -265,6 +290,8 @@ CREATE POLICY "Admins can create persons"
 -- Update : idem (sauf admins qui peuvent faire directement)
 DROP POLICY IF EXISTS "Authenticated users can update persons" ON persons;
 
+-- Ensure policy creation is idempotent
+DROP POLICY IF EXISTS "Admins can update persons" ON persons;
 CREATE POLICY "Admins can update persons"
   ON persons FOR UPDATE
   TO authenticated
@@ -273,6 +300,8 @@ CREATE POLICY "Admins can update persons"
 -- Similar pour archives et relationships...
 DROP POLICY IF EXISTS "Authenticated users can create archives" ON archives;
 
+-- Ensure policy creation is idempotent for archives
+DROP POLICY IF EXISTS "Admins can create archives" ON archives;
 CREATE POLICY "Admins can create archives"
   ON archives FOR INSERT
   TO authenticated
@@ -282,6 +311,8 @@ CREATE POLICY "Admins can create archives"
 
 DROP POLICY IF EXISTS "Authenticated users can update archives" ON archives;
 
+-- Ensure policy creation is idempotent for archives update
+DROP POLICY IF EXISTS "Admins can update archives" ON archives;
 CREATE POLICY "Admins can update archives"
   ON archives FOR UPDATE
   TO authenticated

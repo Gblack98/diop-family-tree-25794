@@ -18,22 +18,28 @@
 -- ÉTAPE 1 : Créer les users via Supabase Auth Web UI
 -- Supabase → Authentication → Users → Add user
 -- Crée 5 users avec :
--- - Email: moderator1@diop-family.local, moderator2@, ... moderator5@
--- - Password: généré (note les UUIDs qu'on affichera)
+
+-- Crée 5 users avec :
+-- - Email: badara@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
+-- - Email: demba@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
+-- - Email: lamine@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
+-- - Email: ibrahima@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
+-- - Email: ousmane@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
+-- Puis note les UUIDs générés pour l'étape 2
 
 -- ÉTAPE 2 : Créer les profils (exécute ce SQL avec les UUIDs réels)
 -- Remplace les UUIDs par ceux générés lors de la création des users
 
--- Exemple de profils modérateurs
+-- Profils modérateurs avec les vrais noms
 -- (Note: remplace les UUID par les vrais IDs des utilisateurs créés)
 
 INSERT INTO profiles (id, role, username, email, suspended)
 VALUES
-  ('00000000-0000-0000-0000-000000000001'::uuid, 'moderator', 'amadou_moderator', 'amadou@diop-family.local', false),
-  ('00000000-0000-0000-0000-000000000002'::uuid, 'moderator', 'fatou_moderator', 'fatou@diop-family.local', false),
-  ('00000000-0000-0000-0000-000000000003'::uuid, 'moderator', 'ibrahima_moderator', 'ibrahima@diop-family.local', false),
-  ('00000000-0000-0000-0000-000000000004'::uuid, 'moderator', 'marie_moderator', 'marie@diop-family.local', false),
-  ('00000000-0000-0000-0000-000000000005'::uuid, 'moderator', 'pierre_moderator', 'pierre@diop-family.local', false)
+  ('2b258d8e-9e2b-47d0-ad6f-d476de2da74b'::uuid, 'moderator', 'badara_moderateur', 'badara@diop-family.moderateur', false),
+  ('c0b4ce96-5faf-4893-b5fd-c2c9493a72e0'::uuid, 'moderator', 'demba_moderateur', 'demba@diop-family.moderateur', false),
+  ('dd3e6c92-1d5a-4cfa-8164-e855d6b59057'::uuid, 'moderator', 'lamine_moderateur', 'lamine@diop-family.moderateur', false),
+  ('4ebb239a-2744-477a-b91e-efb92cc4e27b'::uuid, 'moderator', 'ibrahima_moderateur', 'ibrahima@diop-family.moderateur', false),
+  ('0b19cfc9-c5bc-445b-a323-1160ee93818e'::uuid, 'moderator', 'ousmane_moderateur', 'ousmane@diop-family.moderateur', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Afficher les profils créés
