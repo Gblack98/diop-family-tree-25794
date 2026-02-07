@@ -86,14 +86,23 @@ const CATEGORIES = [
   { value: 'document', label: 'Document', icon: File, description: 'Document officiel' },
 ];
 
-const normalizeArchive = (archive: any): Archive => ({
-  ...archive,
-  content: archive.content || archive.description || '',
-  images: archive.images || (archive.image_url ? [archive.image_url] : []),
-  date: archive.date || archive.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
-  achievements: archive.achievements || [],
-  full_content: archive.full_content || '',
-});
+const normalizeArchive = (archive: any): Archive => {
+  if (!archive) return {} as Archive;
+  return {
+    ...archive,
+    id: archive.id || '',
+    category: archive.category || 'document',
+    title: archive.title || 'Sans titre',
+    content: archive.content || archive.description || '',
+    images: Array.isArray(archive.images) ? archive.images : (archive.image_url ? [archive.image_url] : []),
+    date: archive.date || archive.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    achievements: Array.isArray(archive.achievements) ? archive.achievements : [],
+    full_content: archive.full_content || '',
+    created_at: archive.created_at || new Date().toISOString(),
+    person_id: archive.person_id || null,
+    person: archive.person || null,
+  };
+};
 
 export const ArchivesManager = () => {
   const { isAdmin } = useAuth();
@@ -168,13 +177,17 @@ export const ArchivesManager = () => {
     CATEGORIES.find((c) => c.value === category) || CATEGORIES[CATEGORIES.length - 1];
 
   const getArchiveImages = (archive: Archive): string[] => {
-    if (archive.images && archive.images.length > 0) return archive.images;
-    if (archive.image_url) return [archive.image_url];
+    if (Array.isArray(archive.images) && archive.images.length > 0) {
+      return archive.images.filter((img): img is string => typeof img === 'string');
+    }
+    if (typeof archive.image_url === 'string') return [archive.image_url];
     return [];
   };
 
-  const getArchiveContent = (archive: Archive): string =>
-    archive.content || archive.description || '';
+  const getArchiveContent = (archive: Archive): string => {
+    const content = archive.content || archive.description || '';
+    return typeof content === 'string' ? content : '';
+  };
 
   const addButton = (
     <Button size={isMobile ? 'sm' : 'default'} onClick={() => setIsAddDialogOpen(true)}>
@@ -379,12 +392,19 @@ export const ArchivesManager = () => {
 
 // Archive Viewer
 const ArchiveViewer = ({ archive }: { archive: Archive }) => {
+  if (!archive) {
+    return <div className="p-4 text-muted-foreground">Archive non disponible</div>;
+  }
   const catInfo = CATEGORIES.find((c) => c.value === archive.category) || CATEGORIES[0];
-  const CatIcon = catInfo.icon;
+  const CatIcon = catInfo?.icon || FileText;
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const images = archive.images || (archive.image_url ? [archive.image_url] : []);
+  const images = (archive.images && archive.images.length > 0) 
+    ? archive.images.filter((img): img is string => typeof img === 'string')
+    : (archive.image_url ? [archive.image_url] : []);
   const content = archive.content || archive.description || '';
-  const achievements = archive.achievements || [];
+  const achievements = (archive.achievements && Array.isArray(archive.achievements)) 
+    ? archive.achievements.filter((a): a is string => typeof a === 'string')
+    : [];
 
   return (
     <div className="space-y-6">
@@ -393,7 +413,7 @@ const ArchiveViewer = ({ archive }: { archive: Archive }) => {
           <CatIcon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl sm:text-2xl font-bold">{archive.title}</h2>
+          <h2 className="text-xl sm:text-2xl font-bold">{archive.title || 'Sans titre'}</h2>
           <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">{catInfo.label}</span>
             {archive.date && <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{archive.date}</span>}
@@ -503,10 +523,20 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const { error } = await supabase.storage.from('family-images').upload(fileName, file);
         if (error) { toast({ title: 'Erreur upload', description: error.message, variant: 'destructive' }); continue; }
+        try {
           const urlRes = supabase.storage.from('family-images').getPublicUrl(fileName);
           // getPublicUrl returns { data: { publicUrl } }
           const publicUrl = (urlRes as any)?.data?.publicUrl ?? (urlRes as any)?.publicUrl ?? '';
-          if (publicUrl) uploadedUrls.push(publicUrl);
+          if (publicUrl) {
+            uploadedUrls.push(publicUrl);
+          } else {
+            toast({ title: 'Avertissement', description: `Impossible de générer l'URL pour ${file.name}`, variant: 'destructive' });
+          }
+        } catch (urlErr: any) {
+          // eslint-disable-next-line no-console
+          console.error('Error generating public URL:', urlErr);
+          toast({ title: 'Erreur', description: 'Impossible de générer l\'URL pour la photo', variant: 'destructive' });
+        }
       }
       if (uploadedUrls.length > 0) {
         setFormData({ ...formData, images: [...formData.images, ...uploadedUrls] });
@@ -547,6 +577,8 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
     e.preventDefault();
     if (!formData.title.trim()) { toast({ title: 'Erreur', description: 'Le titre est requis', variant: 'destructive' }); return; }
     if (!formData.content.trim()) { toast({ title: 'Erreur', description: 'Le contenu/description est requis', variant: 'destructive' }); return; }
+    if (!formData.category) { toast({ title: 'Erreur', description: 'Le type d\'archive est requis', variant: 'destructive' }); return; }
+    if (!formData.date) { toast({ title: 'Erreur', description: 'La date est requise', variant: 'destructive' }); return; }
     setLoading(true);
     try {
       const data: any = {
@@ -584,6 +616,8 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
       onSuccess();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message || 'Une erreur est survenue', variant: 'destructive' });
+      // eslint-disable-next-line no-console
+      console.error('Archive submit error:', error);
     } finally { setLoading(false); }
   };
 
