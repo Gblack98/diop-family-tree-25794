@@ -47,11 +47,11 @@ export const UsersManager = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [suspendTarget, setSuspendTarget] = useState<UserProfile | null>(null);
 
+  useEffect(() => { if (isAdmin) loadUsers(); }, [isAdmin]);
+
   if (!isAdmin) {
     return <Navigate to="/admin/dashboard" replace />;
   }
-
-  useEffect(() => { loadUsers(); }, []);
 
   const loadUsers = async () => {
     try {

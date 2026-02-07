@@ -31,7 +31,6 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
         loadProfile(session.user.id);
@@ -47,7 +46,6 @@ export function useAuth() {
   const loadProfile = async (userId: string) => {
     try {
       setError(null);
-      console.log('Loading profile for user:', userId);
 
       const { data, error: fetchError } = await supabase
         .from('profiles')
@@ -66,7 +64,6 @@ export function useAuth() {
         }
         setProfile(null);
       } else {
-        console.log('Profile loaded successfully:', data);
         setProfile(data);
         setError(null);
       }

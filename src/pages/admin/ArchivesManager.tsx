@@ -77,10 +77,10 @@ interface Person {
 }
 
 const CATEGORIES = [
-  { value: 'biographie', label: 'Biographie', icon: BookOpen, description: 'Histoire de vie détaillée' },
+  { value: 'biography', label: 'Biographie', icon: BookOpen, description: 'Histoire de vie détaillée' },
   { value: 'photo', label: 'Album Photos', icon: Camera, description: 'Collection de photos' },
   { value: 'article', label: 'Article', icon: FileText, description: 'Article ou récit' },
-  { value: 'citation', label: 'Citation', icon: Quote, description: 'Paroles mémorables' },
+  { value: 'quote', label: 'Citation', icon: Quote, description: 'Paroles mémorables' },
   { value: 'video', label: 'Vidéo', icon: Film, description: 'Contenu vidéo' },
   { value: 'audio', label: 'Audio', icon: Music, description: 'Enregistrement audio' },
   { value: 'document', label: 'Document', icon: File, description: 'Document officiel' },
@@ -439,7 +439,7 @@ const ArchiveViewer = ({ archive }: { archive: Archive }) => {
       {content && (
         <div className="space-y-2">
           <h3 className="font-medium">Description</h3>
-          <div className={`prose prose-sm max-w-none ${archive.category === 'citation' ? 'text-xl italic border-l-4 border-primary pl-4' : ''}`}>{content}</div>
+          <div className={`prose prose-sm max-w-none ${archive.category === 'quote' ? 'text-xl italic border-l-4 border-primary pl-4' : ''}`}>{content}</div>
         </div>
       )}
 
@@ -487,7 +487,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
 
   const [formData, setFormData] = useState({
     person_id: archive?.person_id || 'none',
-    category: archive?.category || 'biographie',
+    category: archive?.category || 'biography',
     title: archive?.title || '',
     content: initialContent,
     full_content: archive?.full_content || '',
@@ -666,13 +666,13 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">{formData.category === 'citation' ? 'Citation *' : 'Description / Résumé *'}</label>
+        <label className="text-sm font-medium">{formData.category === 'quote' ? 'Citation *' : 'Description / Résumé *'}</label>
         <Textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-          placeholder={formData.category === 'citation' ? 'La citation exacte...' : "Description de l'archive..."} rows={4}
-          className={formData.category === 'citation' ? 'text-lg italic' : ''} required />
+          placeholder={formData.category === 'quote' ? 'La citation exacte...' : "Description de l'archive..."} rows={4}
+          className={formData.category === 'quote' ? 'text-lg italic' : ''} required />
       </div>
 
-      {(formData.category === 'biographie' || formData.category === 'article') && (
+      {(formData.category === 'biography' || formData.category === 'article') && (
         <div className="space-y-2">
           <label className="text-sm font-medium">Contenu complet (optionnel)</label>
           <Textarea value={formData.full_content} onChange={(e) => setFormData({ ...formData, full_content: e.target.value })} placeholder="Texte complet..." rows={8} />
@@ -703,7 +703,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
         )}
       </div>
 
-      {formData.category === 'biographie' && (
+      {formData.category === 'biography' && (
         <div className="space-y-3">
           <label className="text-sm font-medium">Réalisations</label>
           <div className="flex gap-2">

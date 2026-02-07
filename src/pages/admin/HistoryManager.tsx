@@ -50,13 +50,13 @@ export const HistoryManager = () => {
   const [selectedTable, setSelectedTable] = useState<string>('all');
   const [selectedAction, setSelectedAction] = useState<string>('all');
 
+  useEffect(() => {
+    if (isAdmin) loadHistory();
+  }, [isAdmin]);
+
   if (!isAdmin) {
     return <Navigate to="/admin/dashboard" replace />;
   }
-
-  useEffect(() => {
-    loadHistory();
-  }, []);
 
   const loadHistory = async () => {
     try {
