@@ -14,6 +14,7 @@ import PersonsManager from "./pages/admin/PersonsManager";
 import ArchivesManager from "./pages/admin/ArchivesManager";
 import UsersManager from "./pages/admin/UsersManager";
 import HistoryManager from "./pages/admin/HistoryManager";
+import NotificationsPage from "./pages/admin/Notifications";
 import { ProtectedRoute } from "./components/Admin/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <HistoryManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
               </ProtectedRoute>
             }
           />

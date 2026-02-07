@@ -26,10 +26,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Search, ArrowLeft, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Plus, Pencil, Trash2, Search, Loader2, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { MultiSelect, Option } from '@/components/ui/multi-select';
+import { AdminLayout } from '@/components/Admin/AdminLayout';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Person {
   id: string;
@@ -42,11 +54,13 @@ interface Person {
 export const PersonsManager = () => {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [persons, setPersons] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGeneration, setSelectedGeneration] = useState<string>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     loadPersons();
@@ -97,13 +111,8 @@ export const PersonsManager = () => {
       return;
     }
 
-    if (!confirm(`Supprimer ${name} ? Cette action est irréversible.`)) {
-      return;
-    }
-
     try {
       const { error } = await supabase.from('persons').delete().eq('id', id);
-
       if (error) throw error;
 
       toast({
@@ -119,153 +128,218 @@ export const PersonsManager = () => {
         variant: 'destructive',
       });
     }
+    setDeleteTarget(null);
   };
 
+  const addButton = (
+    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <DialogTrigger asChild>
+        <Button size={isMobile ? 'sm' : 'default'}>
+          <Plus className="w-4 h-4 mr-2" />
+          {isMobile ? 'Ajouter' : 'Ajouter une personne'}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Ajouter une personne</DialogTitle>
+        </DialogHeader>
+        <PersonForm
+          onSuccess={() => {
+            setIsAddDialogOpen(false);
+            loadPersons();
+          }}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/admin/dashboard">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Retour
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Gestion des personnes</h1>
-                <p className="text-sm text-muted-foreground">
-                  {persons.length} personnes • {filteredPersons.length} affichées
-                </p>
-              </div>
-            </div>
-
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter une personne
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Ajouter une personne</DialogTitle>
-                </DialogHeader>
-                <PersonForm
-                  onSuccess={() => {
-                    setIsAddDialogOpen(false);
-                    loadPersons();
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
+    <AdminLayout
+      title="Gestion des personnes"
+      subtitle={`${persons.length} personnes${filteredPersons.length !== persons.length ? ` • ${filteredPersons.length} affichées` : ''}`}
+      headerAction={addButton}
+    >
+      {/* Filters */}
+      <Card className="p-3 sm:p-4 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par nom..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
+          <Select value={selectedGeneration} onValueChange={setSelectedGeneration}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Génération" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes générations</SelectItem>
+              {generations.map((gen) => (
+                <SelectItem key={gen} value={gen.toString()}>
+                  Génération {gen}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </header>
+      </Card>
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Filters */}
-        <Card className="p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher par nom..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={selectedGeneration} onValueChange={setSelectedGeneration}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Génération" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes générations</SelectItem>
-                {generations.map((gen) => (
-                  <SelectItem key={gen} value={gen.toString()}>
-                    Génération {gen}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* Content */}
+      {loading ? (
+        <Card className="p-4">
+          <div className="space-y-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-4 w-8" />
+                <Skeleton className="h-8 w-16 ml-auto" />
+              </div>
+            ))}
           </div>
         </Card>
-
-        {/* Table */}
-        <Card>
-          {loading ? (
-            <div className="p-12 text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Chargement...</p>
-            </div>
-          ) : filteredPersons.length === 0 ? (
-            <div className="p-12 text-center">
-              <p className="text-muted-foreground">Aucune personne trouvée</p>
-            </div>
-          ) : (
-            <div className="overflow-auto max-h-[calc(100vh-280px)]">
-              <Table>
-                <TableHeader className="sticky top-0 bg-background z-10">
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Genre</TableHead>
-                    <TableHead>Génération</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPersons.map((person) => (
-                    <TableRow key={person.id}>
-                      <TableCell className="font-medium">{person.name}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            person.genre === 'Homme'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                              : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
-                          }`}
-                        >
-                          {person.genre}
-                        </span>
-                      </TableCell>
-                      <TableCell>{person.generation}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Modifier {person.name}</DialogTitle>
-                            </DialogHeader>
-                            <PersonForm person={person} onSuccess={loadPersons} />
-                          </DialogContent>
-                        </Dialog>
-
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(person.id, person.name)}
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+      ) : filteredPersons.length === 0 ? (
+        <Card className="p-12 text-center">
+          <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground">Aucune personne trouvée</p>
         </Card>
-      </main>
-    </div>
+      ) : isMobile ? (
+        /* Mobile: Card view */
+        <div className="space-y-3">
+          {filteredPersons.map((person) => (
+            <Card key={person.id} className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium truncate">{person.name}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        person.genre === 'Homme'
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
+                      }`}
+                    >
+                      {person.genre}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Gén. {person.generation}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 ml-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg">
+                      <DialogHeader>
+                        <DialogTitle>Modifier {person.name}</DialogTitle>
+                      </DialogHeader>
+                      <PersonForm person={person} onSuccess={loadPersons} />
+                    </DialogContent>
+                  </Dialog>
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setDeleteTarget({ id: person.id, name: person.name })}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        /* Desktop: Table view */
+        <Card>
+          <div className="overflow-auto max-h-[calc(100vh-280px)]">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background z-10">
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Genre</TableHead>
+                  <TableHead>Génération</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPersons.map((person) => (
+                  <TableRow key={person.id}>
+                    <TableCell className="font-medium">{person.name}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          person.genre === 'Homme'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                            : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
+                        }`}
+                      >
+                        {person.genre}
+                      </span>
+                    </TableCell>
+                    <TableCell>{person.generation}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg">
+                          <DialogHeader>
+                            <DialogTitle>Modifier {person.name}</DialogTitle>
+                          </DialogHeader>
+                          <PersonForm person={person} onSuccess={loadPersons} />
+                        </DialogContent>
+                      </Dialog>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteTarget({ id: person.id, name: person.name })}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Supprimer <strong>{deleteTarget?.name}</strong> ? Cette action est irréversible et supprimera également toutes les relations associées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteTarget && handleDelete(deleteTarget.id, deleteTarget.name)}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AdminLayout>
   );
 };
 
@@ -288,14 +362,12 @@ const PersonForm = ({
     children: [] as string[],
   });
 
-  // Charger toutes les personnes et les relations existantes
   useEffect(() => {
     loadPersonsAndRelations();
   }, []);
 
   const loadPersonsAndRelations = async () => {
     try {
-      // Charger toutes les personnes
       const { data: persons, error: personsError } = await supabase
         .from('persons')
         .select('id, name')
@@ -304,12 +376,11 @@ const PersonForm = ({
       if (personsError) throw personsError;
 
       const options: Option[] = (persons || [])
-        .filter((p) => p.id !== person?.id) // Exclure la personne elle-même
+        .filter((p) => p.id !== person?.id)
         .map((p) => ({ value: p.id, label: p.name }));
 
       setAllPersons(options);
 
-      // Si on modifie une personne, charger ses relations
       if (person) {
         const { data: parentRels, error: parentError } = await supabase
           .from('relationships')
@@ -340,7 +411,6 @@ const PersonForm = ({
     setLoading(true);
 
     try {
-      // Validation: max 2 parents
       if (formData.parents.length > 2) {
         toast({
           title: 'Erreur',
@@ -359,7 +429,6 @@ const PersonForm = ({
       let personId: string;
 
       if (person) {
-        // Update personne
         const { error } = await supabase
           .from('persons')
           .update(personData)
@@ -368,7 +437,6 @@ const PersonForm = ({
         if (error) throw error;
         personId = person.id;
       } else {
-        // Insert personne
         const { data, error } = await supabase
           .from('persons')
           .insert(personData)
@@ -379,14 +447,11 @@ const PersonForm = ({
         personId = data.id;
       }
 
-      // Gérer les relations parent-enfant
       if (person) {
-        // Supprimer toutes les relations existantes pour cette personne
         await supabase.from('relationships').delete().eq('child_id', person.id);
         await supabase.from('relationships').delete().eq('parent_id', person.id);
       }
 
-      // Créer les nouvelles relations parents
       if (formData.parents.length > 0) {
         const parentRelations = formData.parents.map((parentId) => ({
           parent_id: parentId,
@@ -400,7 +465,6 @@ const PersonForm = ({
         if (parentError) throw parentError;
       }
 
-      // Créer les nouvelles relations enfants
       if (formData.children.length > 0) {
         const childRelations = formData.children.map((childId) => ({
           parent_id: personId,
@@ -443,37 +507,39 @@ const PersonForm = ({
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Genre</label>
-        <Select
-          value={formData.genre}
-          onValueChange={(value) => setFormData({ ...formData, genre: value })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Homme">Homme</SelectItem>
-            <SelectItem value="Femme">Femme</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Genre</label>
+          <Select
+            value={formData.genre}
+            onValueChange={(value) => setFormData({ ...formData, genre: value })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Homme">Homme</SelectItem>
+              <SelectItem value="Femme">Femme</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Génération</label>
-        <Input
-          type="number"
-          min="0"
-          max="20"
-          value={formData.generation}
-          onChange={(e) =>
-            setFormData({ ...formData, generation: e.target.value })
-          }
-          required
-        />
-        <p className="text-xs text-muted-foreground">
-          0 = Ancêtres racines, 1 = Première descendance, etc.
-        </p>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Génération</label>
+          <Input
+            type="number"
+            min="0"
+            max="20"
+            value={formData.generation}
+            onChange={(e) =>
+              setFormData({ ...formData, generation: e.target.value })
+            }
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            0 = Ancêtres racines
+          </p>
+        </div>
       </div>
 
       <div className="border-t pt-4 mt-4">
@@ -489,9 +555,6 @@ const PersonForm = ({
               placeholder="Sélectionner les parents..."
               maxSelected={2}
             />
-            <p className="text-xs text-muted-foreground">
-              Sélectionnez jusqu'à 2 parents
-            </p>
           </div>
 
           <div className="space-y-2">
@@ -502,9 +565,6 @@ const PersonForm = ({
               onChange={(children) => setFormData({ ...formData, children })}
               placeholder="Sélectionner les enfants..."
             />
-            <p className="text-xs text-muted-foreground">
-              Sélectionnez les enfants de cette personne
-            </p>
           </div>
         </div>
       </div>
