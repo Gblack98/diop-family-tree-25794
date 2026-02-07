@@ -15,6 +15,7 @@ import ArchivesManager from "./pages/admin/ArchivesManager";
 import UsersManager from "./pages/admin/UsersManager";
 import HistoryManager from "./pages/admin/HistoryManager";
 import NotificationsPage from "./pages/admin/Notifications";
+import ChangeRequests from "./pages/admin/ChangeRequests";
 import { ProtectedRoute } from "./components/Admin/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/change-requests"
+            element={
+              <ProtectedRoute>
+                <ChangeRequests />
               </ProtectedRoute>
             }
           />

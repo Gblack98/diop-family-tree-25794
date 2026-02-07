@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ChevronRight,
   TreePine,
+  CheckSquare,
 } from 'lucide-react';
 
 interface NavItem {
@@ -40,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Personnes', path: '/admin/persons', icon: Users },
   { label: 'Archives', path: '/admin/archives', icon: FileText },
   { label: 'Utilisateurs', path: '/admin/users', icon: UserCog, adminOnly: true },
+  { label: 'Changements', path: '/admin/change-requests', icon: CheckSquare, adminOnly: true },
   { label: 'Historique', path: '/admin/history', icon: History, adminOnly: true },
   { label: 'Notifications', path: '/admin/notifications', icon: Bell, adminOnly: true },
 ];
