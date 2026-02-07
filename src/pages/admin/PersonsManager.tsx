@@ -447,35 +447,66 @@ const PersonForm = ({
         personId = data.id;
       }
 
+      // Gérer les relations : calculer les différences au lieu de tout supprimer
       if (person) {
-        await supabase.from('relationships').delete().eq('child_id', person.id);
-        await supabase.from('relationships').delete().eq('parent_id', person.id);
-      }
-
-      if (formData.parents.length > 0) {
-        const parentRelations = formData.parents.map((parentId) => ({
-          parent_id: parentId,
-          child_id: personId,
-        }));
-
-        const { error: parentError } = await supabase
+        // Charger les relations actuelles
+        const { data: currentParentRels } = await supabase
           .from('relationships')
-          .insert(parentRelations);
-
-        if (parentError) throw parentError;
-      }
-
-      if (formData.children.length > 0) {
-        const childRelations = formData.children.map((childId) => ({
-          parent_id: personId,
-          child_id: childId,
-        }));
-
-        const { error: childError } = await supabase
+          .select('parent_id')
+          .eq('child_id', personId);
+        const { data: currentChildRels } = await supabase
           .from('relationships')
-          .insert(childRelations);
+          .select('child_id')
+          .eq('parent_id', personId);
 
-        if (childError) throw childError;
+        const currentParents = (currentParentRels || []).map((r) => r.parent_id);
+        const currentChildren = (currentChildRels || []).map((r) => r.child_id);
+
+        // Parents à supprimer et à ajouter
+        const parentsToRemove = currentParents.filter((p) => !formData.parents.includes(p));
+        const parentsToAdd = formData.parents.filter((p) => !currentParents.includes(p));
+
+        // Enfants à supprimer et à ajouter
+        const childrenToRemove = currentChildren.filter((c) => !formData.children.includes(c));
+        const childrenToAdd = formData.children.filter((c) => !currentChildren.includes(c));
+
+        // Supprimer les relations obsolètes
+        for (const parentId of parentsToRemove) {
+          await supabase.from('relationships').delete()
+            .eq('parent_id', parentId).eq('child_id', personId);
+        }
+        for (const childId of childrenToRemove) {
+          await supabase.from('relationships').delete()
+            .eq('parent_id', personId).eq('child_id', childId);
+        }
+
+        // Ajouter les nouvelles relations
+        if (parentsToAdd.length > 0) {
+          const { error: parentError } = await supabase
+            .from('relationships')
+            .insert(parentsToAdd.map((parentId) => ({ parent_id: parentId, child_id: personId })));
+          if (parentError) throw parentError;
+        }
+        if (childrenToAdd.length > 0) {
+          const { error: childError } = await supabase
+            .from('relationships')
+            .insert(childrenToAdd.map((childId) => ({ parent_id: personId, child_id: childId })));
+          if (childError) throw childError;
+        }
+      } else {
+        // Nouvelle personne : insérer toutes les relations
+        if (formData.parents.length > 0) {
+          const { error: parentError } = await supabase
+            .from('relationships')
+            .insert(formData.parents.map((parentId) => ({ parent_id: parentId, child_id: personId })));
+          if (parentError) throw parentError;
+        }
+        if (formData.children.length > 0) {
+          const { error: childError } = await supabase
+            .from('relationships')
+            .insert(formData.children.map((childId) => ({ parent_id: personId, child_id: childId })));
+          if (childError) throw childError;
+        }
       }
 
       toast({
