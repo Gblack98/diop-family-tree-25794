@@ -69,7 +69,7 @@ DECLARE
   v_message TEXT;
 BEGIN
   -- Récupérer le profil de l'acteur
-  SELECT display_name, username, email, role INTO actor_profile
+  SELECT username, email, role INTO actor_profile
   FROM profiles
   WHERE id = NEW.changed_by;
 
@@ -110,7 +110,7 @@ BEGIN
   END IF;
 
   -- Construire le message
-  v_message := COALESCE(actor_profile.display_name, actor_profile.username, actor_profile.email, 'Un modérateur')
+  v_message := COALESCE(actor_profile.username, actor_profile.email, 'Un modérateur')
     || ' a ' || v_action_label || ' ' || v_table_label;
   IF v_target_label != '' THEN
     v_message := v_message || ' : "' || v_target_label || '"';
@@ -131,7 +131,7 @@ BEGIN
     ) VALUES (
       admin_record.id,
       NEW.id,
-      COALESCE(actor_profile.display_name, actor_profile.username, actor_profile.email, 'Modérateur'),
+      COALESCE(actor_profile.username, actor_profile.email, 'Modérateur'),
       NEW.action,
       NEW.table_name,
       v_target_label,
