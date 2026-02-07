@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
@@ -113,7 +112,7 @@ export const ChangeRequests = () => {
   const handleApprove = async (changeId: string) => {
     setApproving(changeId);
     try {
-      const { data, error } = await supabase.rpc('approve_change', {
+      const { error } = await supabase.rpc('approve_change', {
         p_change_id: changeId,
         p_reviewer_id: (await supabase.auth.getUser()).data.user?.id,
       });
@@ -140,7 +139,7 @@ export const ChangeRequests = () => {
 
   const handleReject = async (changeId: string) => {
     try {
-      const { data, error } = await supabase.rpc('reject_change', {
+      const { error } = await supabase.rpc('reject_change', {
         p_change_id: changeId,
         p_reviewer_id: (await supabase.auth.getUser()).data.user?.id,
         p_reason: rejectReason || null,
