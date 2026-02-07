@@ -53,6 +53,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AdminLayout } from '@/components/Admin/AdminLayout';
 import { Skeleton } from '@/components/ui/skeleton';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
 interface Archive {
   id: string;
@@ -330,22 +331,28 @@ export const ArchivesManager = () => {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="w-full max-w-lg sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Créer une nouvelle archive</DialogTitle></DialogHeader>
-          <ArchiveForm onSuccess={() => { setIsAddDialogOpen(false); loadArchives(); }} onCancel={() => setIsAddDialogOpen(false)} />
+          <ErrorBoundary>
+            <ArchiveForm onSuccess={() => { setIsAddDialogOpen(false); loadArchives(); }} onCancel={() => setIsAddDialogOpen(false)} />
+          </ErrorBoundary>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!viewingArchive} onOpenChange={() => setViewingArchive(null)}>
         <DialogContent className="w-full max-w-lg sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
-          {viewingArchive && <ArchiveViewer archive={viewingArchive} />}
+          <ErrorBoundary>
+            {viewingArchive && <ArchiveViewer archive={viewingArchive} />}
+          </ErrorBoundary>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!editingArchive} onOpenChange={() => setEditingArchive(null)}>
         <DialogContent className="w-full max-w-lg sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Modifier l'archive</DialogTitle></DialogHeader>
-          {editingArchive && (
-            <ArchiveForm archive={editingArchive} onSuccess={() => { setEditingArchive(null); loadArchives(); }} onCancel={() => setEditingArchive(null)} />
-          )}
+          <ErrorBoundary>
+            {editingArchive && (
+              <ArchiveForm archive={editingArchive} onSuccess={() => { setEditingArchive(null); loadArchives(); }} onCancel={() => setEditingArchive(null)} />
+            )}
+          </ErrorBoundary>
         </DialogContent>
       </Dialog>
 
@@ -477,7 +484,10 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
       const { data, error } = await supabase.from('persons').select('id, name').order('name');
       if (error) throw error;
       setPersons(data || []);
-    } catch (error) { console.error('Error loading persons:', error); }
+    } catch (err: any) {
+      console.error('Error loading persons:', err);
+      toast({ title: 'Erreur', description: 'Impossible de charger la liste des personnes', variant: 'destructive' });
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -493,8 +503,10 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const { error } = await supabase.storage.from('family-images').upload(fileName, file);
         if (error) { toast({ title: 'Erreur upload', description: error.message, variant: 'destructive' }); continue; }
-        const { data: urlData } = supabase.storage.from('family-images').getPublicUrl(fileName);
-        uploadedUrls.push(urlData.publicUrl);
+          const urlRes = supabase.storage.from('family-images').getPublicUrl(fileName);
+          // getPublicUrl returns { data: { publicUrl } }
+          const publicUrl = (urlRes as any)?.data?.publicUrl ?? (urlRes as any)?.publicUrl ?? '';
+          if (publicUrl) uploadedUrls.push(publicUrl);
       }
       if (uploadedUrls.length > 0) {
         setFormData({ ...formData, images: [...formData.images, ...uploadedUrls] });
@@ -509,8 +521,14 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
   };
 
   const removeImage = async (urlToRemove: string) => {
-    const fileName = urlToRemove.split('/').pop();
-    if (fileName) await supabase.storage.from('family-images').remove([fileName]);
+    try {
+      const fileName = urlToRemove.split('/').pop();
+      if (fileName) await supabase.storage.from('family-images').remove([fileName]);
+    } catch (err) {
+      // ignore storage removal errors but log
+      // eslint-disable-next-line no-console
+      console.error('Error removing image from storage', err);
+    }
     setFormData({ ...formData, images: formData.images.filter((url) => url !== urlToRemove) });
   };
 
