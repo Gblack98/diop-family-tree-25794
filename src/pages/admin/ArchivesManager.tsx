@@ -520,7 +520,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
         if (!file.type.startsWith('image/')) { toast({ title: 'Erreur', description: `${file.name} n'est pas une image`, variant: 'destructive' }); continue; }
         if (file.size > 5 * 1024 * 1024) { toast({ title: 'Erreur', description: `${file.name} dépasse 5MB`, variant: 'destructive' }); continue; }
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const { error } = await supabase.storage.from('family-images').upload(fileName, file);
         if (error) { toast({ title: 'Erreur upload', description: error.message, variant: 'destructive' }); continue; }
         try {

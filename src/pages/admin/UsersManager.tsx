@@ -291,8 +291,8 @@ const CreateUserForm = ({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
       toast({ title: 'Erreur', description: 'Tous les champs sont requis', variant: 'destructive' });
       return;
     }
-    if (formData.password.length < 6) {
-      toast({ title: 'Erreur', description: 'Le mot de passe doit contenir au moins 6 caractères', variant: 'destructive' });
+    if (formData.password.length < 8) {
+      toast({ title: 'Erreur', description: 'Le mot de passe doit contenir au moins 8 caractères', variant: 'destructive' });
       return;
     }
     setLoading(true);
@@ -308,7 +308,7 @@ const CreateUserForm = ({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user.id,
         email: formData.email.trim(),
-        username: formData.displayName.trim().toLowerCase().replace(/\s+/g, '-'),
+        username: formData.displayName.trim().toLowerCase().replace(/\s+/g, '-') + '-' + Date.now().toString(36),
         display_name: formData.displayName.trim(),
         role: formData.role,
         suspended: false,
@@ -328,27 +328,27 @@ const CreateUserForm = ({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Nom d'affichage *</label>
+        <label htmlFor="create-user-name" className="text-sm font-medium">Nom d'affichage *</label>
         <div className="relative">
           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input value={formData.displayName} onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+          <Input id="create-user-name" value={formData.displayName} onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
             placeholder="Ex: Moussa Diop" className="pl-10" required />
         </div>
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium">Email *</label>
+        <label htmlFor="create-user-email" className="text-sm font-medium">Email *</label>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          <Input id="create-user-email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             placeholder="moderateur@example.com" className="pl-10" required />
         </div>
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium">Mot de passe *</label>
+        <label htmlFor="create-user-password" className="text-sm font-medium">Mot de passe *</label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            placeholder="Minimum 6 caractères" className="pl-10" minLength={6} required />
+          <Input id="create-user-password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            placeholder="Minimum 8 caractères" className="pl-10" minLength={8} required />
         </div>
         <p className="text-xs text-muted-foreground">Partagez ce mot de passe avec le modérateur de manière sécurisée</p>
       </div>

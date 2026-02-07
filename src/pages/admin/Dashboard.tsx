@@ -16,6 +16,7 @@ import {
   Pencil,
   Trash2,
   Activity,
+  RefreshCw,
 } from 'lucide-react';
 
 interface RecentActivity {
@@ -176,10 +177,18 @@ export const AdminDashboard = () => {
       : []),
   ];
 
+  const refreshButton = (
+    <Button variant="outline" size="sm" onClick={() => { setLoading(true); loadData(); }} disabled={loading}>
+      <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+      Actualiser
+    </Button>
+  );
+
   return (
     <AdminLayout
       title="Tableau de bord"
       subtitle={`Bienvenue, ${profile?.display_name || profile?.username || 'Admin'}`}
+      headerAction={refreshButton}
     >
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">

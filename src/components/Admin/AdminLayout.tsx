@@ -143,7 +143,7 @@ export const AdminLayout = ({ children, title, subtitle, headerAction }: AdminLa
       {/* Mobile Sidebar (Sheet) */}
       {isMobile && (
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="w-72 p-0">
+          <SheetContent side="left" className="w-72 max-w-[85vw] p-0">
             <SheetHeader className="sr-only">
               <SheetTitle>Menu de navigation</SheetTitle>
             </SheetHeader>
@@ -212,7 +212,7 @@ export const AdminLayout = ({ children, title, subtitle, headerAction }: AdminLa
               <div className="hidden sm:flex items-center gap-2 pl-3 border-l">
                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                   <span className="text-xs font-bold text-primary">
-                    {profile?.display_name?.[0]?.toUpperCase() || profile?.username?.[0]?.toUpperCase() || 'A'}
+                    {profile?.display_name?.[0]?.toUpperCase() || profile?.username?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || 'A'}
                   </span>
                 </div>
                 <div className="hidden md:block">
