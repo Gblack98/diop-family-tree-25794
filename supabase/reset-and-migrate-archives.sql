@@ -352,15 +352,29 @@ Au fil des années, il forme plus de 34 promotions d'ingénieurs. Des générati
   );
 
   -- ========================================
-  -- Archive 18: Regroupement famille Diop
+  -- Archive 18: Regroupement famille Diop - Mariage de Mame Njoboss
   -- ========================================
-  INSERT INTO archives (person_id, category, title, content, date)
+  INSERT INTO archives (person_id, category, title, content, date, images)
   VALUES (
     NULL,
     'photo',
     'Regroupement de la famille Diop',
     'Rassemblement lors du mariage de Mame Njoboss, fille de Saliou Diop et petite fille de Badara Gabar Diop.',
-    '07/01/2023'
+    '07/01/2023',
+    ARRAY[
+      '/images/famille/regroupement famille/IMG-20230107-WA0016.jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0017(1).jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0018.jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0020.jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0021.jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0022.jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0023.jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0024.jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0025.jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0026.jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0027(1).jpg',
+      '/images/famille/regroupement famille/IMG-20230107-WA0030.jpg'
+    ]::TEXT[]
   );
 
   -- Résultat
