@@ -5,6 +5,35 @@
 -- Crée les modérateurs et le système d'approbation des changements
 -- ============================================================================
 
+-- ============================================================================
+-- HELPER FUNCTIONS
+-- ============================================================================
+
+-- Fonction pour vérifier si l'utilisateur courant est admin
+DROP FUNCTION IF EXISTS public.is_admin();
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Fonction pour vérifier si l'utilisateur courant n'est pas suspendu
+DROP FUNCTION IF EXISTS public.is_not_suspended();
+CREATE OR REPLACE FUNCTION public.is_not_suspended()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid() AND suspended = FALSE
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- ============================================================================
 -- 1. TABLE: pending_changes
 -- Stocke tous les changements en attente d'approbation (INSERT, UPDATE)
 CREATE TABLE IF NOT EXISTS pending_changes (
