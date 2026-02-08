@@ -20,11 +20,13 @@
 -- Crée 5 users avec :
 
 -- Crée 5 users avec :
--- - Email: badara@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
--- - Email: demba@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
--- - Email: lamine@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
--- - Email: ibrahima@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
--- - Email: ousmane@diop-family.moderateur, [MOT DE PASSE SUPPRIME]
+-- - Email: badara@diop-family.moderateur
+-- - Email: demba@diop-family.moderateur
+-- - Email: lamine@diop-family.moderateur
+-- - Email: ibrahima@diop-family.moderateur
+-- - Email: ousmane@diop-family.moderateur
+-- IMPORTANT: Définir un mot de passe fort et unique pour chaque modérateur
+-- Ne JAMAIS stocker les mots de passe dans le code source
 -- Puis note les UUIDs générés pour l'étape 2
 
 -- ÉTAPE 2 : Créer les profils (exécute ce SQL avec les UUIDs réels)
