@@ -17,6 +17,10 @@ import {
   Trash2,
   Activity,
   RefreshCw,
+  Eye,
+  CalendarDays,
+  CalendarRange,
+  TrendingUp,
 } from 'lucide-react';
 import { formatTimeAgo } from '@/lib/utils/formatTimeAgo';
 
@@ -33,6 +37,18 @@ interface RecentActivity {
   } | null;
 }
 
+interface VisitPeriod {
+  visits: number;
+  unique_sessions: number;
+}
+
+interface VisitStats {
+  today: VisitPeriod;
+  this_week: VisitPeriod;
+  this_month: VisitPeriod;
+  total: VisitPeriod;
+}
+
 export const AdminDashboard = () => {
   const { profile, isAdmin } = useAuth();
   const [stats, setStats] = useState({
@@ -42,6 +58,7 @@ export const AdminDashboard = () => {
     users: 0,
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,7 +67,7 @@ export const AdminDashboard = () => {
 
   const loadData = async () => {
     try {
-      const [personsRes, archivesRes, relationsRes, usersRes, activityRes] =
+      const [personsRes, archivesRes, relationsRes, usersRes, activityRes, visitsRes] =
         await Promise.all([
           supabase.from('persons').select('*', { count: 'exact', head: true }),
           supabase.from('archives').select('*', { count: 'exact', head: true }),
@@ -63,6 +80,9 @@ export const AdminDashboard = () => {
                 .order('changed_at', { ascending: false })
                 .limit(8)
             : Promise.resolve({ data: [] }),
+          isAdmin
+            ? supabase.rpc('get_visit_stats')
+            : Promise.resolve({ data: null }),
         ]);
 
       setStats({
@@ -74,6 +94,10 @@ export const AdminDashboard = () => {
 
       if (activityRes.data) {
         setRecentActivity(activityRes.data as RecentActivity[]);
+      }
+
+      if (visitsRes.data) {
+        setVisitStats(visitsRes.data as VisitStats);
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -176,8 +200,8 @@ export const AdminDashboard = () => {
       subtitle={`Bienvenue, ${profile?.display_name || profile?.username || 'Admin'}`}
       headerAction={refreshButton}
     >
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      {/* Stats contenu */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
         {statCards.map((stat) => (
           <Card key={stat.label} className="p-4 sm:p-5">
             {loading ? (
@@ -199,6 +223,74 @@ export const AdminDashboard = () => {
           </Card>
         ))}
       </div>
+
+      {/* Stats visiteurs — admins seulement */}
+      {isAdmin && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Visiteurs du site
+          </h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {[
+              {
+                label: "Aujourd'hui",
+                icon: Eye,
+                color: 'text-cyan-500',
+                bg: 'bg-cyan-500/10',
+                visits: visitStats?.today.visits ?? 0,
+                unique: visitStats?.today.unique_sessions ?? 0,
+              },
+              {
+                label: 'Cette semaine',
+                icon: CalendarDays,
+                color: 'text-indigo-500',
+                bg: 'bg-indigo-500/10',
+                visits: visitStats?.this_week.visits ?? 0,
+                unique: visitStats?.this_week.unique_sessions ?? 0,
+              },
+              {
+                label: 'Ce mois',
+                icon: CalendarRange,
+                color: 'text-violet-500',
+                bg: 'bg-violet-500/10',
+                visits: visitStats?.this_month.visits ?? 0,
+                unique: visitStats?.this_month.unique_sessions ?? 0,
+              },
+              {
+                label: 'Total',
+                icon: TrendingUp,
+                color: 'text-rose-500',
+                bg: 'bg-rose-500/10',
+                visits: visitStats?.total.visits ?? 0,
+                unique: visitStats?.total.unique_sessions ?? 0,
+              },
+            ].map((card) => (
+              <Card key={card.label} className="p-4 sm:p-5">
+                {loading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-12" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">{card.label}</p>
+                      <p className="text-2xl sm:text-3xl font-bold">{card.visits}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {card.unique} session{card.unique !== 1 ? 's' : ''} uniques
+                      </p>
+                    </div>
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 ${card.bg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                      <card.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${card.color}`} />
+                    </div>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Actions rapides */}

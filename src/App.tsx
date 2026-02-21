@@ -17,16 +17,16 @@ import HistoryManager from "./pages/admin/HistoryManager";
 import NotificationsPage from "./pages/admin/Notifications";
 import ChangeRequests from "./pages/admin/ChangeRequests";
 import { ProtectedRoute } from "./components/Admin/ProtectedRoute";
+import { usePageTracking } from "./hooks/usePageTracking";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
+// Composant interne — doit être dans BrowserRouter pour accéder à useLocation
+const AppRoutes = () => {
+  usePageTracking();
+
+  return (
+    <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/archives" element={<Archives />} />
           <Route path="/help" element={<Help />} />
@@ -96,6 +96,16 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
