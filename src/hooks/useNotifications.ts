@@ -6,6 +6,7 @@ export interface Notification {
   id: string;
   admin_id: string;
   change_history_id: string | null;
+  pending_change_id: string | null;
   actor_name: string;
   action_type: 'INSERT' | 'UPDATE' | 'DELETE';
   target_table: string;

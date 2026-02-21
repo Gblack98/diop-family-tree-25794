@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import {
   Users,
   FileText,
   GitBranch,
+  Clock,
 } from 'lucide-react';
 import { formatTimeAgo } from '@/lib/utils/formatTimeAgo';
 
@@ -44,6 +45,8 @@ export const NotificationBell = () => {
     }
   };
 
+  // Séparer les demandes en attente des notifications informatives
+  const pendingCount = notifications.filter(n => n.pending_change_id && !n.read).length;
   const recentNotifications = notifications.slice(0, 8);
 
   return (
@@ -52,7 +55,12 @@ export const NotificationBell = () => {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+            <span className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full flex items-center justify-center
+              ${pendingCount > 0
+                ? 'bg-amber-500 text-white'
+                : 'bg-destructive text-destructive-foreground'
+              }`}
+            >
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -61,7 +69,15 @@ export const NotificationBell = () => {
       <PopoverContent align="end" className="w-80 sm:w-96 p-0">
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b">
-          <h3 className="font-semibold text-sm">Notifications</h3>
+          <div>
+            <h3 className="font-semibold text-sm">Notifications</h3>
+            {pendingCount > 0 && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-0.5">
+                <Clock className="w-3 h-3" />
+                {pendingCount} demande{pendingCount > 1 ? 's' : ''} à approuver
+              </p>
+            )}
+          </div>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -76,13 +92,11 @@ export const NotificationBell = () => {
         </div>
 
         {/* Notifications list */}
-        <ScrollArea className="max-h-80">
+        <ScrollArea className="max-h-96">
           {recentNotifications.length === 0 ? (
             <div className="p-6 text-center">
               <Bell className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Aucune notification
-              </p>
+              <p className="text-sm text-muted-foreground">Aucune notification</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -101,10 +115,18 @@ export const NotificationBell = () => {
 
         {/* Footer */}
         {notifications.length > 0 && (
-          <div className="p-2 border-t">
-            <Button variant="ghost" size="sm" className="w-full text-xs" asChild>
+          <div className="p-2 border-t flex gap-1">
+            {pendingCount > 0 && (
+              <Button size="sm" className="flex-1 text-xs h-8 bg-amber-500 hover:bg-amber-600 text-white" asChild>
+                <Link to="/admin/change-requests">
+                  <Clock className="w-3.5 h-3.5 mr-1" />
+                  Voir les demandes ({pendingCount})
+                </Link>
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="flex-1 text-xs h-8" asChild>
               <Link to="/admin/notifications">
-                Voir toutes les notifications
+                Toutes les notifications
               </Link>
             </Button>
           </div>
@@ -124,33 +146,64 @@ const NotificationItem = ({
   onRead: (id: string) => void;
   getActionIcon: (action: string) => React.ReactNode;
   getTableIcon: (table: string) => React.ReactNode;
-}) => (
-  <div
-    className={`flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors cursor-pointer ${
-      !notification.read ? 'bg-primary/5' : ''
-    }`}
-    onClick={() => !notification.read && onRead(notification.id)}
-  >
-    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-      {getActionIcon(notification.action_type)}
-    </div>
-    <div className="min-w-0 flex-1">
-      <p className={`text-sm leading-snug ${!notification.read ? 'font-medium' : ''}`}>
-        {notification.message}
-      </p>
-      <div className="flex items-center gap-2 mt-1">
-        <span className="text-xs text-muted-foreground">
-          {formatTimeAgo(notification.created_at)}
-        </span>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          {getTableIcon(notification.target_table)}
-        </span>
+}) => {
+  const navigate = useNavigate();
+  const isPending = !!notification.pending_change_id;
+
+  const handleClick = () => {
+    if (!notification.read) onRead(notification.id);
+    if (isPending) {
+      navigate('/admin/change-requests');
+    }
+  };
+
+  return (
+    <div
+      className={`flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors cursor-pointer ${
+        !notification.read
+          ? isPending
+            ? 'bg-amber-50 dark:bg-amber-950/20'
+            : 'bg-primary/5'
+          : ''
+      }`}
+      onClick={handleClick}
+    >
+      {/* Icône */}
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+        isPending ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-muted'
+      }`}>
+        {isPending
+          ? <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          : getActionIcon(notification.action_type)
+        }
       </div>
+
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm leading-snug ${!notification.read ? 'font-medium' : ''}`}>
+          {notification.message}
+        </p>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <span className="text-xs text-muted-foreground">
+            {formatTimeAgo(notification.created_at, true)}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            {getTableIcon(notification.target_table)}
+          </span>
+          {isPending && (
+            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+              → Approbation requise
+            </span>
+          )}
+        </div>
+      </div>
+
+      {!notification.read && (
+        <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-2 ${
+          isPending ? 'bg-amber-500' : 'bg-primary'
+        }`} />
+      )}
     </div>
-    {!notification.read && (
-      <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2" />
-    )}
-  </div>
-);
+  );
+};
 
 export default NotificationBell;
