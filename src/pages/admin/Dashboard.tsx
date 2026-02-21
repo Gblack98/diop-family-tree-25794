@@ -7,6 +7,15 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AdminLayout } from '@/components/Admin/AdminLayout';
 import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import {
   Users,
   FileText,
   UserCog,
@@ -21,8 +30,10 @@ import {
   CalendarDays,
   CalendarRange,
   TrendingUp,
+  BarChart2,
 } from 'lucide-react';
 import { formatTimeAgo } from '@/lib/utils/formatTimeAgo';
+import { useActiveVisitors } from '@/hooks/useActiveVisitors';
 
 interface RecentActivity {
   id: string;
@@ -42,21 +53,50 @@ interface VisitPeriod {
   unique_sessions: number;
 }
 
+interface DailyPoint {
+  date: string;
+  visits: number;
+  unique_sessions: number;
+}
+
+interface TopPage {
+  path: string;
+  visits: number;
+  unique_sessions: number;
+}
+
 interface VisitStats {
   today: VisitPeriod;
   this_week: VisitPeriod;
   this_month: VisitPeriod;
   total: VisitPeriod;
+  daily_series: DailyPoint[];
+  top_pages: TopPage[];
+}
+
+// Label lisible pour une page path
+function pathLabel(path: string): string {
+  const map: Record<string, string> = {
+    '/': 'Accueil',
+    '/archives': 'Archives',
+    '/help': 'Aide',
+  };
+  if (map[path]) return map[path];
+  if (path.startsWith('/family/')) return `Famille: ${decodeURIComponent(path.replace('/family/', ''))}`;
+  if (path.startsWith('/constellation/')) return `Constellation: ${decodeURIComponent(path.replace('/constellation/', ''))}`;
+  return path;
+}
+
+// Formate la date pour l'axe X (JJ/MM)
+function shortDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export const AdminDashboard = () => {
   const { profile, isAdmin } = useAuth();
-  const [stats, setStats] = useState({
-    persons: 0,
-    archives: 0,
-    relationships: 0,
-    users: 0,
-  });
+  const activeVisitors = useActiveVisitors(5);
+  const [stats, setStats] = useState({ persons: 0, archives: 0, relationships: 0, users: 0 });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,14 +148,10 @@ export const AdminDashboard = () => {
 
   const getActionIcon = (action: string) => {
     switch (action) {
-      case 'INSERT':
-        return <Plus className="w-3.5 h-3.5 text-green-500" />;
-      case 'UPDATE':
-        return <Pencil className="w-3.5 h-3.5 text-blue-500" />;
-      case 'DELETE':
-        return <Trash2 className="w-3.5 h-3.5 text-destructive" />;
-      default:
-        return null;
+      case 'INSERT': return <Plus className="w-3.5 h-3.5 text-green-500" />;
+      case 'UPDATE': return <Pencil className="w-3.5 h-3.5 text-blue-500" />;
+      case 'DELETE': return <Trash2 className="w-3.5 h-3.5 text-destructive" />;
+      default: return null;
     }
   };
 
@@ -153,52 +189,41 @@ export const AdminDashboard = () => {
   ];
 
   const actionCards = [
-    {
-      title: 'Gérer les personnes',
-      description: 'Ajouter, modifier ou supprimer des membres',
-      icon: Users,
-      path: '/admin/persons',
-      count: stats.persons,
-    },
-    {
-      title: 'Gérer les archives',
-      description: 'Photos, biographies, articles et documents',
-      icon: FileText,
-      path: '/admin/archives',
-      count: stats.archives,
-    },
+    { title: 'Gérer les personnes', description: 'Ajouter, modifier ou supprimer des membres', icon: Users, path: '/admin/persons', count: stats.persons },
+    { title: 'Gérer les archives', description: 'Photos, biographies, articles et documents', icon: FileText, path: '/admin/archives', count: stats.archives },
     ...(isAdmin
       ? [
-          {
-            title: 'Gérer les utilisateurs',
-            description: 'Créer des modérateurs, gérer les rôles',
-            icon: UserCog,
-            path: '/admin/users',
-            count: stats.users,
-          },
-          {
-            title: 'Historique',
-            description: 'Voir toutes les modifications',
-            icon: History,
-            path: '/admin/history',
-            count: undefined as number | undefined,
-          },
+          { title: 'Gérer les utilisateurs', description: 'Créer des modérateurs, gérer les rôles', icon: UserCog, path: '/admin/users', count: stats.users },
+          { title: 'Historique', description: 'Voir toutes les modifications', icon: History, path: '/admin/history', count: undefined as number | undefined },
         ]
       : []),
   ];
 
-  const refreshButton = (
-    <Button variant="outline" size="sm" onClick={() => { setLoading(true); loadData(); }} disabled={loading}>
-      <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-      Actualiser
-    </Button>
+  // Préparer les données du graphique : afficher les 14 derniers jours
+  const chartData = (visitStats?.daily_series ?? [])
+    .slice(-14)
+    .map((d) => ({ ...d, label: shortDate(d.date) }));
+
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      {isAdmin && activeVisitors !== null && (
+        <span className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1.5 rounded-full">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+          {activeVisitors} visiteur{activeVisitors !== 1 ? 's' : ''} actif{activeVisitors !== 1 ? 's' : ''} (5 min)
+        </span>
+      )}
+      <Button variant="outline" size="sm" onClick={() => { setLoading(true); loadData(); }} disabled={loading}>
+        <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        Actualiser
+      </Button>
+    </div>
   );
 
   return (
     <AdminLayout
       title="Tableau de bord"
       subtitle={`Bienvenue, ${profile?.display_name || profile?.username || 'Admin'}`}
-      headerAction={refreshButton}
+      headerAction={headerActions}
     >
       {/* Stats contenu */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
@@ -224,46 +249,20 @@ export const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Stats visiteurs — admins seulement */}
+      {/* Section visiteurs — admins seulement */}
       {isAdmin && (
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Visiteurs du site
           </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+
+          {/* 4 cartes compteurs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
             {[
-              {
-                label: "Aujourd'hui",
-                icon: Eye,
-                color: 'text-cyan-500',
-                bg: 'bg-cyan-500/10',
-                visits: visitStats?.today.visits ?? 0,
-                unique: visitStats?.today.unique_sessions ?? 0,
-              },
-              {
-                label: 'Cette semaine',
-                icon: CalendarDays,
-                color: 'text-indigo-500',
-                bg: 'bg-indigo-500/10',
-                visits: visitStats?.this_week.visits ?? 0,
-                unique: visitStats?.this_week.unique_sessions ?? 0,
-              },
-              {
-                label: 'Ce mois',
-                icon: CalendarRange,
-                color: 'text-violet-500',
-                bg: 'bg-violet-500/10',
-                visits: visitStats?.this_month.visits ?? 0,
-                unique: visitStats?.this_month.unique_sessions ?? 0,
-              },
-              {
-                label: 'Total',
-                icon: TrendingUp,
-                color: 'text-rose-500',
-                bg: 'bg-rose-500/10',
-                visits: visitStats?.total.visits ?? 0,
-                unique: visitStats?.total.unique_sessions ?? 0,
-              },
+              { label: "Aujourd'hui",   icon: Eye,          color: 'text-cyan-500',   bg: 'bg-cyan-500/10',   visits: visitStats?.today.visits ?? 0,      unique: visitStats?.today.unique_sessions ?? 0 },
+              { label: 'Cette semaine', icon: CalendarDays, color: 'text-indigo-500', bg: 'bg-indigo-500/10', visits: visitStats?.this_week.visits ?? 0,   unique: visitStats?.this_week.unique_sessions ?? 0 },
+              { label: 'Ce mois',       icon: CalendarRange,color: 'text-violet-500', bg: 'bg-violet-500/10', visits: visitStats?.this_month.visits ?? 0,  unique: visitStats?.this_month.unique_sessions ?? 0 },
+              { label: 'Total',         icon: TrendingUp,   color: 'text-rose-500',   bg: 'bg-rose-500/10',   visits: visitStats?.total.visits ?? 0,       unique: visitStats?.total.unique_sessions ?? 0 },
             ].map((card) => (
               <Card key={card.label} className="p-4 sm:p-5">
                 {loading ? (
@@ -289,9 +288,133 @@ export const AdminDashboard = () => {
               </Card>
             ))}
           </div>
+
+          {/* Graphique + Top pages */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Courbe 14 derniers jours */}
+            <Card className="lg:col-span-2 p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart2 className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Tendance — 14 derniers jours</h3>
+              </div>
+              {loading ? (
+                <Skeleton className="h-44 w-full" />
+              ) : chartData.length === 0 || chartData.every(d => d.visits === 0) ? (
+                <div className="h-44 flex items-center justify-center text-sm text-muted-foreground">
+                  Aucune visite enregistrée pour le moment
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={176}>
+                  <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="visitsGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12 }}
+                      formatter={(value: number, name: string) => [
+                        value,
+                        name === 'visits' ? 'Visites' : 'Sessions uniques',
+                      ]}
+                      labelFormatter={(label) => `Jour : ${label}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="visits"
+                      stroke="#6366f1"
+                      strokeWidth={2}
+                      fill="url(#visitsGrad)"
+                      dot={false}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="unique_sessions"
+                      stroke="#06b6d4"
+                      strokeWidth={1.5}
+                      fill="none"
+                      dot={false}
+                      strokeDasharray="4 2"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0.5 bg-indigo-500 rounded inline-block" />
+                  Visites totales
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-0.5 bg-cyan-500 rounded inline-block border-dashed" />
+                  Sessions uniques
+                </span>
+              </div>
+            </Card>
+
+            {/* Top pages */}
+            <Card className="p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Eye className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Pages populaires (30j)</h3>
+              </div>
+              {loading ? (
+                <div className="space-y-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="space-y-1">
+                      <Skeleton className="h-3 w-3/4" />
+                      <Skeleton className="h-2 w-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : !visitStats?.top_pages?.length ? (
+                <p className="text-sm text-muted-foreground">Aucune donnée</p>
+              ) : (
+                <div className="space-y-3">
+                  {visitStats.top_pages.map((page, idx) => {
+                    const max = visitStats.top_pages[0].visits;
+                    const pct = max > 0 ? Math.round((page.visits / max) * 100) : 0;
+                    return (
+                      <div key={page.path}>
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-medium truncate max-w-[160px]" title={page.path}>
+                            {idx + 1}. {pathLabel(page.path)}
+                          </span>
+                          <span className="text-muted-foreground flex-shrink-0 ml-2">
+                            {page.visits} vue{page.visits !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-1.5">
+                          <div
+                            className="bg-indigo-500 h-1.5 rounded-full transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
       )}
 
+      {/* Grille actions rapides + activité récente */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Actions rapides */}
         <div className="lg:col-span-2">
@@ -313,9 +436,7 @@ export const AdminDashboard = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {card.description}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{card.description}</p>
                     </div>
                   </div>
                 </Card>
@@ -330,9 +451,7 @@ export const AdminDashboard = () => {
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold">Activité récente</h2>
               <Button variant="ghost" size="sm" asChild>
-                <Link to="/admin/history" className="text-xs">
-                  Voir tout
-                </Link>
+                <Link to="/admin/history" className="text-xs">Voir tout</Link>
               </Button>
             </div>
             <Card className="divide-y">
@@ -365,9 +484,7 @@ export const AdminDashboard = () => {
                           {entry.profile?.display_name || entry.profile?.email || 'Système'}
                         </span>{' '}
                         {getActionLabel(entry.action)} {getTableLabel(entry.table_name)}{' '}
-                        <span className="text-muted-foreground">
-                          {getItemLabel(entry)}
-                        </span>
+                        <span className="text-muted-foreground">{getItemLabel(entry)}</span>
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {formatTimeAgo(entry.changed_at)}

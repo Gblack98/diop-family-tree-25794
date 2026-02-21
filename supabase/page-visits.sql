@@ -61,6 +61,7 @@ DECLARE
   v_total_visits      INTEGER;
   v_total_unique      INTEGER;
   v_daily_series      JSONB;
+  v_top_pages         JSONB;
 BEGIN
   -- Aujourd'hui
   SELECT COUNT(*), COUNT(DISTINCT session_id)
@@ -115,12 +116,38 @@ BEGIN
     GROUP BY gs.day_date
   ) daily;
 
+  -- Top 5 pages (30 derniers jours)
+  SELECT COALESCE(
+    jsonb_agg(
+      jsonb_build_object(
+        'path', page_path,
+        'visits', visit_count,
+        'unique_sessions', unique_count
+      )
+      ORDER BY visit_count DESC
+    ),
+    '[]'::JSONB
+  )
+  INTO v_top_pages
+  FROM (
+    SELECT
+      page_path,
+      COUNT(*) AS visit_count,
+      COUNT(DISTINCT session_id) AS unique_count
+    FROM page_visits
+    WHERE visited_at >= NOW() - INTERVAL '30 days'
+    GROUP BY page_path
+    ORDER BY visit_count DESC
+    LIMIT 5
+  ) pages;
+
   RETURN jsonb_build_object(
-    'today',       jsonb_build_object('visits', v_today_visits,  'unique_sessions', v_today_unique),
-    'this_week',   jsonb_build_object('visits', v_week_visits,   'unique_sessions', v_week_unique),
-    'this_month',  jsonb_build_object('visits', v_month_visits,  'unique_sessions', v_month_unique),
-    'total',       jsonb_build_object('visits', v_total_visits,  'unique_sessions', v_total_unique),
-    'daily_series', v_daily_series
+    'today',        jsonb_build_object('visits', v_today_visits,  'unique_sessions', v_today_unique),
+    'this_week',    jsonb_build_object('visits', v_week_visits,   'unique_sessions', v_week_unique),
+    'this_month',   jsonb_build_object('visits', v_month_visits,  'unique_sessions', v_month_unique),
+    'total',        jsonb_build_object('visits', v_total_visits,  'unique_sessions', v_total_unique),
+    'daily_series', v_daily_series,
+    'top_pages',    v_top_pages
   );
 END;
 $$;
