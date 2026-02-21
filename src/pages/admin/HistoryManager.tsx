@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -17,12 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, History } from 'lucide-react';
+import { Plus, Pencil, Trash2, History, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AdminLayout } from '@/components/Admin/AdminLayout';
 import { Skeleton } from '@/components/ui/skeleton';
+
+const PAGE_SIZE = 25;
 
 interface ChangeHistoryEntry {
   id: string;
@@ -49,33 +52,39 @@ export const HistoryManager = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTable, setSelectedTable] = useState<string>('all');
   const [selectedAction, setSelectedAction] = useState<string>('all');
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     if (isAdmin) loadHistory();
-  }, [isAdmin]);
+  }, [isAdmin, page, selectedTable, selectedAction]);
 
   if (!isAdmin) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
   const loadHistory = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('change_history')
-        .select(`
-          *,
-          profile:profiles(display_name, email)
-        `)
+        .select(`*, profile:profiles(display_name, email)`, { count: 'exact' })
         .order('changed_at', { ascending: false })
-        .limit(100);
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      if (selectedTable !== 'all') query = query.eq('table_name', selectedTable);
+      if (selectedAction !== 'all') query = query.eq('action', selectedAction);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
       setHistory(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error loading history:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger l\'historique',
+        description: "Impossible de charger l'historique",
         variant: 'destructive',
       });
     } finally {
@@ -83,11 +92,13 @@ export const HistoryManager = () => {
     }
   };
 
-  const filteredHistory = history.filter((entry) => {
-    const matchesTable = selectedTable === 'all' || entry.table_name === selectedTable;
-    const matchesAction = selectedAction === 'all' || entry.action === selectedAction;
-    return matchesTable && matchesAction;
-  });
+  const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
+    setter(value);
+    setPage(0);
+  };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const filteredHistory = history;
 
   const getActionIcon = (action: string) => {
     switch (action) {
@@ -142,12 +153,12 @@ export const HistoryManager = () => {
   return (
     <AdminLayout
       title="Historique des modifications"
-      subtitle={`${filteredHistory.length} entrée${filteredHistory.length > 1 ? 's' : ''} affichée${filteredHistory.length > 1 ? 's' : ''}`}
+      subtitle={`${totalCount} entrée${totalCount > 1 ? 's' : ''} au total`}
     >
       {/* Filters */}
       <Card className="p-3 sm:p-4 mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
-          <Select value={selectedTable} onValueChange={setSelectedTable}>
+          <Select value={selectedTable} onValueChange={handleFilterChange(setSelectedTable)}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Table" />
             </SelectTrigger>
@@ -159,7 +170,7 @@ export const HistoryManager = () => {
             </SelectContent>
           </Select>
 
-          <Select value={selectedAction} onValueChange={setSelectedAction}>
+          <Select value={selectedAction} onValueChange={handleFilterChange(setSelectedAction)}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Action" />
             </SelectTrigger>
@@ -288,6 +299,35 @@ export const HistoryManager = () => {
             </Table>
           </div>
         </Card>
+      )}
+
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Page {page + 1} sur {totalPages} — {totalCount} entrée{totalCount > 1 ? 's' : ''}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 0}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages - 1}
+            >
+              Suivant
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Info card */}

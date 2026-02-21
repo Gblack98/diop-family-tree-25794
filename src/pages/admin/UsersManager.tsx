@@ -297,6 +297,9 @@ const CreateUserForm = ({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
     }
     setLoading(true);
     try {
+      // Sauvegarder la session admin avant signUp (signUp peut connecter le nouvel user)
+      const { data: { session: adminSession } } = await supabase.auth.getSession();
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
@@ -304,6 +307,17 @@ const CreateUserForm = ({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
       });
       if (authError) throw authError;
       if (!authData.user) throw new Error("Erreur lors de la création. Vérifiez que l'email n'est pas déjà utilisé.");
+
+      // Restaurer la session admin si elle a changé
+      if (adminSession) {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession?.user.id !== adminSession.user.id) {
+          await supabase.auth.setSession({
+            access_token: adminSession.access_token,
+            refresh_token: adminSession.refresh_token,
+          });
+        }
+      }
 
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user.id,

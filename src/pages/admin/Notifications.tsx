@@ -24,6 +24,7 @@ import {
   Check,
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+import { formatTimeAgo } from '@/lib/utils/formatTimeAgo';
 
 export const NotificationsPage = () => {
   const { isAdmin } = useAuth();
@@ -66,27 +67,6 @@ export const NotificationsPage = () => {
       case 'relationships': return 'Relations';
       default: return table;
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    const diffH = Math.floor(diffMin / 60);
-    const diffD = Math.floor(diffH / 24);
-
-    if (diffMin < 1) return "À l'instant";
-    if (diffMin < 60) return `Il y a ${diffMin} min`;
-    if (diffH < 24) return `Il y a ${diffH}h`;
-    if (diffD < 7) return `Il y a ${diffD} jour${diffD > 1 ? 's' : ''}`;
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   const markAllButton = unreadCount > 0 ? (
@@ -176,7 +156,7 @@ export const NotificationsPage = () => {
                   </p>
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(notif.created_at)}
+                      {formatTimeAgo(notif.created_at)}
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                       {getTableIcon(notif.target_table)}

@@ -18,6 +18,7 @@ import {
   Activity,
   RefreshCw,
 } from 'lucide-react';
+import { formatTimeAgo } from '@/lib/utils/formatTimeAgo';
 
 interface RecentActivity {
   id: string;
@@ -118,21 +119,6 @@ export const AdminDashboard = () => {
     if (data.name) return `"${data.name}"`;
     if (data.title) return `"${data.title}"`;
     return '';
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    const diffH = Math.floor(diffMin / 60);
-    const diffD = Math.floor(diffH / 24);
-
-    if (diffMin < 1) return "À l'instant";
-    if (diffMin < 60) return `Il y a ${diffMin} min`;
-    if (diffH < 24) return `Il y a ${diffH}h`;
-    if (diffD < 7) return `Il y a ${diffD}j`;
-    return date.toLocaleDateString('fr-FR');
   };
 
   const statCards = [

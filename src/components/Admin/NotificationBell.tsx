@@ -13,12 +13,12 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Check,
   CheckCheck,
   Users,
   FileText,
   GitBranch,
 } from 'lucide-react';
+import { formatTimeAgo } from '@/lib/utils/formatTimeAgo';
 
 export const NotificationBell = () => {
   const { isAdmin } = useAuth();
@@ -42,21 +42,6 @@ export const NotificationBell = () => {
       case 'relationships': return <GitBranch className="w-3.5 h-3.5" />;
       default: return null;
     }
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    const diffH = Math.floor(diffMin / 60);
-    const diffD = Math.floor(diffH / 24);
-
-    if (diffMin < 1) return "À l'instant";
-    if (diffMin < 60) return `${diffMin}min`;
-    if (diffH < 24) return `${diffH}h`;
-    if (diffD < 7) return `${diffD}j`;
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
   };
 
   const recentNotifications = notifications.slice(0, 8);
@@ -108,7 +93,6 @@ export const NotificationBell = () => {
                   onRead={markAsRead}
                   getActionIcon={getActionIcon}
                   getTableIcon={getTableIcon}
-                  formatTimeAgo={formatTimeAgo}
                 />
               ))}
             </div>
@@ -135,13 +119,11 @@ const NotificationItem = ({
   onRead,
   getActionIcon,
   getTableIcon,
-  formatTimeAgo,
 }: {
   notification: Notification;
   onRead: (id: string) => void;
   getActionIcon: (action: string) => React.ReactNode;
   getTableIcon: (table: string) => React.ReactNode;
-  formatTimeAgo: (date: string) => string;
 }) => (
   <div
     className={`flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors cursor-pointer ${
