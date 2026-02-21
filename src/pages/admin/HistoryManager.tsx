@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, Pencil, Trash2, History, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AdminLayout } from '@/components/Admin/AdminLayout';
@@ -45,7 +43,6 @@ interface ChangeHistoryEntry {
 }
 
 export const HistoryManager = () => {
-  const { isAdmin } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [history, setHistory] = useState<ChangeHistoryEntry[]>([]);
@@ -56,12 +53,8 @@ export const HistoryManager = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    if (isAdmin) loadHistory();
-  }, [isAdmin, page, selectedTable, selectedAction]);
-
-  if (!isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
+    loadHistory();
+  }, [page, selectedTable, selectedAction]);
 
   const loadHistory = async () => {
     setLoading(true);

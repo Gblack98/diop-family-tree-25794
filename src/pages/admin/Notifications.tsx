@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -27,9 +26,8 @@ import {
   ArrowRight,
   ExternalLink,
 } from 'lucide-react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { formatTimeAgo } from '@/lib/utils/formatTimeAgo';
-import { useToast } from '@/hooks/use-toast';
 
 // ---- Types ----
 interface PendingChangeDetail {
@@ -105,8 +103,6 @@ const MiniDiff = ({ change }: { change: PendingChangeDetail }) => {
 
 // ---- Page principale ----
 export const NotificationsPage = () => {
-  const { isAdmin } = useAuth();
-  const { toast } = useToast();
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
   const [filterTable, setFilterTable] = useState<string>('all');
   const [filterRead, setFilterRead] = useState<string>('all');
@@ -114,10 +110,6 @@ export const NotificationsPage = () => {
   const [pendingDetails, setPendingDetails] = useState<Record<string, PendingChangeDetail>>({});
   const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
-  if (!isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
 
   const filteredNotifications = notifications.filter((n) => {
     const matchesTable = filterTable === 'all' || n.target_table === filterTable;

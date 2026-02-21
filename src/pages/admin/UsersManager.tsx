@@ -22,7 +22,6 @@ import {
   Loader2, Shield, ShieldAlert, ShieldCheck, UserX, UserCheck,
   UserPlus, Mail, Lock, User,
 } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AdminLayout } from '@/components/Admin/AdminLayout';
@@ -39,7 +38,7 @@ interface UserProfile {
 }
 
 export const UsersManager = () => {
-  const { isAdmin, profile } = useAuth();
+  const { profile } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -47,11 +46,7 @@ export const UsersManager = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [suspendTarget, setSuspendTarget] = useState<UserProfile | null>(null);
 
-  useEffect(() => { if (isAdmin) loadUsers(); }, [isAdmin]);
-
-  if (!isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
+  useEffect(() => { loadUsers(); }, []);
 
   const loadUsers = async () => {
     try {

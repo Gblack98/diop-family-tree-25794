@@ -63,7 +63,7 @@ const App = () => (
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <UsersManager />
               </ProtectedRoute>
             }
@@ -71,7 +71,7 @@ const App = () => (
           <Route
             path="/admin/history"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <HistoryManager />
               </ProtectedRoute>
             }
@@ -79,7 +79,7 @@ const App = () => (
           <Route
             path="/admin/notifications"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <NotificationsPage />
               </ProtectedRoute>
             }
@@ -87,7 +87,7 @@ const App = () => (
           <Route
             path="/admin/change-requests"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="admin">
                 <ChangeRequests />
               </ProtectedRoute>
             }

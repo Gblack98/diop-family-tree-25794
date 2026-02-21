@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -38,7 +39,6 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AdminLayout } from '@/components/Admin/AdminLayout';
-import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatTimeAgo } from '@/lib/utils/formatTimeAgo';
 
@@ -143,8 +143,7 @@ const ChangeDiff = ({ change }: { change: PendingChange }) => {
 };
 
 export const ChangeRequests = () => {
-  const { isAdmin, profile } = useAuth();
-  const navigate = useNavigate();
+  const { profile } = useAuth();
   const { toast } = useToast();
   const [changes, setChanges] = useState<PendingChange[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,12 +153,6 @@ export const ChangeRequests = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [approving, setApproving] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState(false);
-
-  useEffect(() => {
-    if (!isAdmin) {
-      navigate('/admin/dashboard');
-    }
-  }, [isAdmin, navigate]);
 
   useEffect(() => {
     loadChanges();

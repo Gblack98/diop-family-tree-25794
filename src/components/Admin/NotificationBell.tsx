@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,6 +25,7 @@ import { formatTimeAgo } from '@/lib/utils/formatTimeAgo';
 export const NotificationBell = () => {
   const { isAdmin } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [open, setOpen] = useState(false);
 
   if (!isAdmin) return null;
 
@@ -50,7 +52,7 @@ export const NotificationBell = () => {
   const recentNotifications = notifications.slice(0, 8);
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
@@ -105,6 +107,7 @@ export const NotificationBell = () => {
                   key={notif.id}
                   notification={notif}
                   onRead={markAsRead}
+                  onClose={() => setOpen(false)}
                   getActionIcon={getActionIcon}
                   getTableIcon={getTableIcon}
                 />
@@ -117,14 +120,25 @@ export const NotificationBell = () => {
         {notifications.length > 0 && (
           <div className="p-2 border-t flex gap-1">
             {pendingCount > 0 && (
-              <Button size="sm" className="flex-1 text-xs h-8 bg-amber-500 hover:bg-amber-600 text-white" asChild>
+              <Button
+                size="sm"
+                className="flex-1 text-xs h-8 bg-amber-500 hover:bg-amber-600 text-white"
+                asChild
+                onClick={() => setOpen(false)}
+              >
                 <Link to="/admin/change-requests">
                   <Clock className="w-3.5 h-3.5 mr-1" />
                   Voir les demandes ({pendingCount})
                 </Link>
               </Button>
             )}
-            <Button variant="ghost" size="sm" className="flex-1 text-xs h-8" asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 text-xs h-8"
+              asChild
+              onClick={() => setOpen(false)}
+            >
               <Link to="/admin/notifications">
                 Toutes les notifications
               </Link>
@@ -139,11 +153,13 @@ export const NotificationBell = () => {
 const NotificationItem = ({
   notification,
   onRead,
+  onClose,
   getActionIcon,
   getTableIcon,
 }: {
   notification: Notification;
   onRead: (id: string) => void;
+  onClose: () => void;
   getActionIcon: (action: string) => React.ReactNode;
   getTableIcon: (table: string) => React.ReactNode;
 }) => {
@@ -152,8 +168,11 @@ const NotificationItem = ({
 
   const handleClick = () => {
     if (!notification.read) onRead(notification.id);
+    onClose();
     if (isPending) {
       navigate('/admin/change-requests');
+    } else {
+      navigate('/admin/notifications');
     }
   };
 
