@@ -17,7 +17,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, History, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, Pencil, Trash2, History, ChevronLeft, ChevronRight, RotateCcw, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AdminLayout } from '@/components/Admin/AdminLayout';
@@ -51,6 +62,9 @@ export const HistoryManager = () => {
   const [selectedAction, setSelectedAction] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [revertTarget, setRevertTarget] = useState<ChangeHistoryEntry | null>(null);
+  const [revertReason, setRevertReason] = useState('');
+  const [reverting, setReverting] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -88,6 +102,26 @@ export const HistoryManager = () => {
   const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
     setter(value);
     setPage(0);
+  };
+
+  const handleRevert = async () => {
+    if (!revertTarget) return;
+    setReverting(true);
+    try {
+      const { error } = await supabase.rpc('revert_history_entry', {
+        p_entry_id: revertTarget.id,
+        p_revert_reason: revertReason || null,
+      });
+      if (error) throw error;
+      toast({ title: 'Modification annulée', description: `La modification a été restaurée à son état précédent.` });
+      setRevertTarget(null);
+      setRevertReason('');
+      loadHistory();
+    } catch (err: any) {
+      toast({ title: 'Erreur', description: err.message || "Impossible d'annuler cette modification", variant: 'destructive' });
+    } finally {
+      setReverting(false);
+    }
   };
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
@@ -213,7 +247,7 @@ export const HistoryManager = () => {
                       {getTableLabel(entry.table_name)}
                     </span>
                     {entry.reverted && (
-                      <span className="text-xs text-muted-foreground">(annulé)</span>
+                      <span className="text-xs text-orange-600 dark:text-orange-400">(annulé)</span>
                     )}
                   </div>
                   <p className="text-sm mt-1">
@@ -227,7 +261,20 @@ export const HistoryManager = () => {
                         ? entry.profile.display_name || entry.profile.email
                         : 'Système'}
                     </span>
-                    <span>{formatDate(entry.changed_at)}</span>
+                    <div className="flex items-center gap-2">
+                      <span>{formatDate(entry.changed_at)}</span>
+                      {!entry.reverted && entry.action !== 'UPDATE' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                          onClick={() => setRevertTarget(entry)}
+                        >
+                          <RotateCcw className="w-3 h-3 mr-1" />
+                          Annuler
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -246,6 +293,7 @@ export const HistoryManager = () => {
                   <TableHead>Table</TableHead>
                   <TableHead>Données</TableHead>
                   <TableHead>Par</TableHead>
+                  <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -267,23 +315,32 @@ export const HistoryManager = () => {
                     </TableCell>
                     <TableCell>
                       {entry.action === 'DELETE' ? (
-                        <span className="text-muted-foreground">
-                          {formatData(entry.old_data)}
-                        </span>
+                        <span className="text-muted-foreground">{formatData(entry.old_data)}</span>
                       ) : (
                         <span>{formatData(entry.new_data)}</span>
                       )}
                       {entry.reverted && (
-                        <span className="ml-2 text-xs text-muted-foreground">(annulé)</span>
+                        <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">(annulé)</span>
                       )}
                     </TableCell>
                     <TableCell>
                       {entry.profile ? (
-                        <span className="text-sm">
-                          {entry.profile.display_name || entry.profile.email}
-                        </span>
+                        <span className="text-sm">{entry.profile.display_name || entry.profile.email}</span>
                       ) : (
                         <span className="text-muted-foreground">Système</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {!entry.reverted && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                          onClick={() => setRevertTarget(entry)}
+                          title="Annuler cette modification"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>
@@ -330,11 +387,46 @@ export const HistoryManager = () => {
           <div>
             <h3 className="font-medium">À propos de l'historique</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Toutes les modifications sont automatiquement enregistrées pour permettre un suivi complet.
+              Toutes les modifications sont automatiquement enregistrées. Utilisez le bouton <RotateCcw className="inline w-3 h-3" /> pour annuler une action.
             </p>
           </div>
         </div>
       </Card>
+
+      {/* Dialog de confirmation du revert */}
+      <AlertDialog open={!!revertTarget} onOpenChange={() => { setRevertTarget(null); setRevertReason(''); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Annuler cette modification ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {revertTarget && (
+                <span>
+                  Cette action va <strong>annuler {getActionLabel(revertTarget.action).toLowerCase()}</strong> de{' '}
+                  <strong>{formatData(revertTarget.new_data || revertTarget.old_data)}</strong> dans{' '}
+                  {getTableLabel(revertTarget.table_name)}. L'action contraire sera appliquée immédiatement.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Raison de l'annulation (optionnel)..."
+            value={revertReason}
+            onChange={(e) => setRevertReason(e.target.value)}
+            rows={2}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={reverting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-orange-600 text-white hover:bg-orange-700"
+              disabled={reverting}
+              onClick={handleRevert}
+            >
+              {reverting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Confirmer l'annulation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };

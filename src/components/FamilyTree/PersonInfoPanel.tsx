@@ -1,7 +1,35 @@
 import { PersonNode } from "@/lib/familyTree/types";
-import { X, Users, Heart, Baby, GitCommit, LucideIcon, ChevronDown, Eye } from "lucide-react";
+import { X, Users, Heart, Baby, GitCommit, LucideIcon, ChevronDown, Eye, BookOpen, FileText, ImageIcon, Music, Video, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase/client";
+
+interface PersonArchive {
+  id: string;
+  category: string;
+  title: string;
+  date: string;
+}
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  biography: BookOpen,
+  photo: ImageIcon,
+  article: FileText,
+  quote: FileText,
+  audio: Music,
+  video: Video,
+  document: FileText,
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  biography: 'Biographie',
+  photo: 'Photo',
+  article: 'Article',
+  quote: 'Citation',
+  audio: 'Audio',
+  video: 'Vidéo',
+  document: 'Document',
+};
 
 interface PersonInfoPanelProps {
   person: PersonNode | null;
@@ -43,17 +71,39 @@ export const PersonInfoPanel = ({
   onToggleExpand,
 }: PersonInfoPanelProps) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [archives, setArchives] = useState<PersonArchive[]>([]);
   const navigate = useNavigate();
 
   // Animation d'entrée fluide
   useEffect(() => {
     if (person) {
-      // Petit délai pour laisser le temps au DOM de se préparer
       requestAnimationFrame(() => setIsVisible(true));
+      // Chercher la personne dans Supabase par nom, puis ses archives
+      supabase
+        .from('persons')
+        .select('id')
+        .ilike('name', `%${person.name}%`)
+        .limit(1)
+        .then(({ data: persons }) => {
+          if (persons && persons.length > 0) {
+            const personId = persons[0].id;
+            return supabase
+              .from('archives')
+              .select('id, category, title, date')
+              .eq('person_id', personId)
+              .order('date', { ascending: false })
+              .limit(5);
+          }
+          return { data: null };
+        })
+        .then((res: any) => {
+          if (res?.data) setArchives(res.data as PersonArchive[]);
+        });
     } else {
       setIsVisible(false);
+      setArchives([]);
     }
-  }, [person]);
+  }, [person?.name]);
 
   if (!person) return null;
 
@@ -183,14 +233,55 @@ export const PersonInfoPanel = ({
             emptyText="Sans conjoint"
           />
           
-          <InfoSection 
+          <InfoSection
             icon={Baby}
             title="Enfants"
             count={person.enfants.length}
             items={person.enfants}
             emptyText="Sans enfants"
           />
-          
+
+          {/* Archives de la personne */}
+          {archives.length > 0 && (
+            <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+              <div className="flex items-center justify-between text-xs font-semibold text-primary uppercase tracking-wide mb-2">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Archives
+                  <span className="text-muted-foreground bg-background px-1.5 py-0.5 rounded-full border border-border text-[10px]">
+                    {archives.length}
+                  </span>
+                </div>
+                <button
+                  onClick={() => navigate('/archives')}
+                  className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 normal-case font-normal"
+                >
+                  Voir tout <ExternalLink className="w-3 h-3" />
+                </button>
+              </div>
+              <ul className="space-y-1.5">
+                {archives.map((archive) => {
+                  const Icon = CATEGORY_ICONS[archive.category] ?? FileText;
+                  return (
+                    <li
+                      key={archive.id}
+                      className="flex items-start gap-2 text-sm text-foreground pl-1 border-l-2 border-primary/20 hover:border-primary transition-colors cursor-default"
+                    >
+                      <Icon className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{archive.title}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {CATEGORY_LABELS[archive.category] ?? archive.category}
+                          {archive.date && ` · ${archive.date}`}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
           {/* Marge de sécurité en bas pour le scroll mobile */}
           <div className="h-6 sm:h-2" />
         </div>

@@ -6,8 +6,17 @@ import { ArchiveCard } from "@/components/Archives/ArchiveCard";
 import { ArchiveDialog } from "@/components/Archives/ArchiveDialog";
 import { EmptyState } from "@/components/Archives/EmptyState";
 import { Input } from "@/components/ui/input";
-import { Search, X, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, X, Loader2, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+
+type SortOption = "newest" | "oldest" | "az" | "za" | "person";
 
 const normalizeText = (text: string) => {
   return text
@@ -35,6 +44,7 @@ const Archives = () => {
   const [selectedArchive, setSelectedArchive] = useState<Archive | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [archives, setArchives] = useState<Archive[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,16 +108,25 @@ const Archives = () => {
   );
 
   const filteredArchives = useMemo(() => {
-    return normalizedArchives.filter((archive) => {
+    const filtered = normalizedArchives.filter((archive) => {
       const matchesCategory = selectedCategory === "all" || archive.category === selectedCategory;
       if (!matchesCategory) return false;
-
       if (!debouncedSearch.trim()) return true;
-
       const searchKeywords = normalizeText(debouncedSearch).split(" ").filter(Boolean);
       return searchKeywords.every((keyword) => archive._normalizedContent.includes(keyword));
     });
-  }, [selectedCategory, debouncedSearch, normalizedArchives]);
+
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "oldest": return a.id - b.id;
+        case "az":     return a.title.localeCompare(b.title, 'fr');
+        case "za":     return b.title.localeCompare(a.title, 'fr');
+        case "person": return a.person.localeCompare(b.person, 'fr');
+        case "newest":
+        default:       return b.id - a.id;
+      }
+    });
+  }, [selectedCategory, debouncedSearch, normalizedArchives, sortBy]);
 
   return (
     <div className="h-dvh w-full overflow-y-auto bg-background">
@@ -120,12 +139,13 @@ const Archives = () => {
 
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
 
-        <div className="max-w-xl mx-auto mb-8 relative group animate-in fade-in slide-in-from-top duration-500">
-          <div className="relative">
+        {/* Barre de recherche + tri */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-8 animate-in fade-in slide-in-from-top duration-500">
+          <div className="relative flex-1 group">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 group-focus-within:text-primary transition-colors" />
             <Input
               placeholder="Rechercher (ex: 'Médecin 1972', 'Gabar Dakar')..."
-              className="pl-10 pr-10 bg-muted/50 border-muted-foreground/20 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all h-12 text-base shadow-sm"
+              className="pl-10 pr-10 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-all h-12 text-base shadow-sm"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
@@ -135,14 +155,35 @@ const Archives = () => {
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted transition-colors"
               >
                 <X className="h-4 w-4" />
-                <span className="sr-only">Effacer</span>
               </button>
             )}
           </div>
-          <div className="text-xs text-muted-foreground mt-2 text-center opacity-0 group-focus-within:opacity-100 transition-opacity">
-            Astuce : Vous pouvez combiner plusieurs mots (ex: nom + année)
-          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <SelectTrigger className="w-full sm:w-48 h-12 shadow-sm">
+              <ArrowUpDown className="w-4 h-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Trier par..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Plus récents</SelectItem>
+              <SelectItem value="oldest">Plus anciens</SelectItem>
+              <SelectItem value="az">Titre A → Z</SelectItem>
+              <SelectItem value="za">Titre Z → A</SelectItem>
+              <SelectItem value="person">Par personne</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        {/* Compteur de résultats */}
+        {!loading && (
+          <p className="text-sm text-muted-foreground mb-4 animate-in fade-in duration-300">
+            {filteredArchives.length === archives.length
+              ? `${archives.length} archive${archives.length > 1 ? 's' : ''}`
+              : `${filteredArchives.length} résultat${filteredArchives.length > 1 ? 's' : ''} sur ${archives.length}`}
+            {debouncedSearch && (
+              <span> pour "<span className="font-medium text-foreground">{debouncedSearch}</span>"</span>
+            )}
+          </p>
+        )}
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24">

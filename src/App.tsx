@@ -16,6 +16,7 @@ import UsersManager from "./pages/admin/UsersManager";
 import HistoryManager from "./pages/admin/HistoryManager";
 import NotificationsPage from "./pages/admin/Notifications";
 import ChangeRequests from "./pages/admin/ChangeRequests";
+import SettingsPage from "./pages/admin/Settings";
 import { ProtectedRoute } from "./components/Admin/ProtectedRoute";
 import { usePageTracking } from "./hooks/usePageTracking";
 
@@ -89,6 +90,14 @@ const AppRoutes = () => {
             element={
               <ProtectedRoute requiredRole="admin">
                 <ChangeRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

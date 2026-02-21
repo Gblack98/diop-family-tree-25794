@@ -27,6 +27,7 @@ import {
   ChevronRight,
   TreePine,
   CheckSquare,
+  Settings,
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,16 +35,18 @@ interface NavItem {
   path: string;
   icon: React.ElementType;
   adminOnly?: boolean;
+  separator?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Tableau de bord', path: '/admin/dashboard', icon: LayoutDashboard },
-  { label: 'Personnes', path: '/admin/persons', icon: Users },
-  { label: 'Archives', path: '/admin/archives', icon: FileText },
-  { label: 'Utilisateurs', path: '/admin/users', icon: UserCog, adminOnly: true },
-  { label: 'Changements', path: '/admin/change-requests', icon: CheckSquare, adminOnly: true },
-  { label: 'Historique', path: '/admin/history', icon: History, adminOnly: true },
-  { label: 'Notifications', path: '/admin/notifications', icon: Bell, adminOnly: true },
+  { label: 'Tableau de bord',  path: '/admin/dashboard',       icon: LayoutDashboard },
+  { label: 'Personnes',        path: '/admin/persons',          icon: Users },
+  { label: 'Archives',         path: '/admin/archives',         icon: FileText },
+  { label: 'Utilisateurs',     path: '/admin/users',            icon: UserCog,     adminOnly: true },
+  { label: 'Changements',      path: '/admin/change-requests',  icon: CheckSquare, adminOnly: true },
+  { label: 'Historique',       path: '/admin/history',          icon: History,     adminOnly: true },
+  { label: 'Notifications',    path: '/admin/notifications',    icon: Bell,        adminOnly: true },
+  { label: 'Paramètres',       path: '/admin/settings',         icon: Settings,    adminOnly: true, separator: true },
 ];
 
 interface AdminLayoutProps {
@@ -96,20 +99,22 @@ export const AdminLayout = ({ children, title, subtitle, headerAction }: AdminLa
             const Icon = item.icon;
             const active = isActive(item.path);
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={onNavigate}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  active
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                } ${collapsed && !isMobile ? 'justify-center px-2' : ''}`}
-                title={collapsed ? item.label : undefined}
-              >
-                <Icon className="w-4 h-4 flex-shrink-0" />
-                {(!collapsed || isMobile) && <span>{item.label}</span>}
-              </Link>
+              <div key={item.path}>
+                {item.separator && <Separator className="my-2" />}
+                <Link
+                  to={item.path}
+                  onClick={onNavigate}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    active
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  } ${collapsed && !isMobile ? 'justify-center px-2' : ''}`}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  {(!collapsed || isMobile) && <span>{item.label}</span>}
+                </Link>
+              </div>
             );
           })}
         </nav>
