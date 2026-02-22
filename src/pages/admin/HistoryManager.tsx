@@ -49,6 +49,7 @@ interface ChangeHistoryEntry {
   revert_reason: string | null;
   profile?: {
     display_name: string | null;
+    username: string | null;
     email: string;
   };
 }
@@ -75,7 +76,7 @@ export const HistoryManager = () => {
     try {
       let query = supabase
         .from('change_history')
-        .select(`*, profile:profiles(display_name, email)`, { count: 'exact' })
+        .select(`*, profile:profiles(display_name, username, email)`, { count: 'exact' })
         .order('changed_at', { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
@@ -258,7 +259,7 @@ export const HistoryManager = () => {
                   <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                     <span>
                       {entry.profile
-                        ? entry.profile.display_name || entry.profile.email
+                        ? entry.profile.display_name || entry.profile.username || entry.profile.email
                         : 'Système'}
                     </span>
                     <div className="flex items-center gap-2">
@@ -325,7 +326,7 @@ export const HistoryManager = () => {
                     </TableCell>
                     <TableCell>
                       {entry.profile ? (
-                        <span className="text-sm">{entry.profile.display_name || entry.profile.email}</span>
+                        <span className="text-sm">{entry.profile.display_name || entry.profile.username || entry.profile.email}</span>
                       ) : (
                         <span className="text-muted-foreground">Système</span>
                       )}

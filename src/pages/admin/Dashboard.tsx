@@ -44,6 +44,7 @@ interface RecentActivity {
   changed_at: string;
   profile?: {
     display_name: string | null;
+    username: string | null;
     email: string;
   } | null;
 }
@@ -106,44 +107,49 @@ export const AdminDashboard = () => {
   }, []);
 
   const loadData = async () => {
-    try {
-      const [personsRes, archivesRes, relationsRes, usersRes, activityRes, visitsRes] =
-        await Promise.all([
-          supabase.from('persons').select('*', { count: 'exact', head: true }),
-          supabase.from('archives').select('*', { count: 'exact', head: true }),
-          supabase.from('relationships').select('*', { count: 'exact', head: true }),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
-          isAdmin
-            ? supabase
-                .from('change_history')
-                .select('*, profile:profiles(display_name, email)')
-                .order('changed_at', { ascending: false })
-                .limit(8)
-            : Promise.resolve({ data: [] }),
-          isAdmin
-            ? supabase.rpc('get_visit_stats')
-            : Promise.resolve({ data: null }),
-        ]);
+    // Promise.allSettled : chaque requête échoue indépendamment sans bloquer les autres
+    const [personsRes, archivesRes, relationsRes, usersRes, activityRes, visitsRes] =
+      await Promise.allSettled([
+        supabase.from('persons').select('*', { count: 'exact', head: true }),
+        supabase.from('archives').select('*', { count: 'exact', head: true }),
+        supabase.from('relationships').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        isAdmin
+          ? supabase
+              .from('change_history')
+              .select('*, profile:profiles(display_name, username, email)')
+              .order('changed_at', { ascending: false })
+              .limit(8)
+          : Promise.resolve({ data: [], error: null }),
+        isAdmin
+          ? supabase.rpc('get_visit_stats')
+          : Promise.resolve({ data: null, error: null }),
+      ]);
 
-      setStats({
-        persons: personsRes.count || 0,
-        archives: archivesRes.count || 0,
-        relationships: relationsRes.count || 0,
-        users: usersRes.count || 0,
-      });
-
-      if (activityRes.data) {
-        setRecentActivity(activityRes.data as RecentActivity[]);
-      }
-
-      if (visitsRes.data) {
-        setVisitStats(visitsRes.data as VisitStats);
-      }
-    } catch (error) {
-      console.error('Error loading stats:', error);
-    } finally {
-      setLoading(false);
+    if (personsRes.status === 'fulfilled') {
+      setStats((s) => ({ ...s, persons: personsRes.value.count || 0 }));
     }
+    if (archivesRes.status === 'fulfilled') {
+      setStats((s) => ({ ...s, archives: archivesRes.value.count || 0 }));
+    }
+    if (relationsRes.status === 'fulfilled') {
+      setStats((s) => ({ ...s, relationships: relationsRes.value.count || 0 }));
+    }
+    if (usersRes.status === 'fulfilled') {
+      setStats((s) => ({ ...s, users: usersRes.value.count || 0 }));
+    }
+    if (activityRes.status === 'fulfilled' && activityRes.value.data) {
+      setRecentActivity(activityRes.value.data as RecentActivity[]);
+    } else if (activityRes.status === 'rejected') {
+      console.error('Activity load error:', activityRes.reason);
+    }
+    if (visitsRes.status === 'fulfilled' && visitsRes.value.data) {
+      setVisitStats(visitsRes.value.data as VisitStats);
+    } else if (visitsRes.status === 'rejected') {
+      console.error('Visit stats error:', visitsRes.reason);
+    }
+
+    setLoading(false);
   };
 
   const getActionIcon = (action: string) => {
@@ -481,7 +487,7 @@ export const AdminDashboard = () => {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm leading-snug">
                         <span className="font-medium">
-                          {entry.profile?.display_name || entry.profile?.email || 'Système'}
+                          {entry.profile?.display_name || entry.profile?.username || entry.profile?.email || 'Système'}
                         </span>{' '}
                         {getActionLabel(entry.action)} {getTableLabel(entry.table_name)}{' '}
                         <span className="text-muted-foreground">{getItemLabel(entry)}</span>
