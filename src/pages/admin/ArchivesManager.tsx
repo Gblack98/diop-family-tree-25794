@@ -95,7 +95,7 @@ const normalizeArchive = (archive: any): Archive => {
     title: archive.title || 'Sans titre',
     content: archive.content || archive.description || '',
     images: Array.isArray(archive.images) ? archive.images : (archive.image_url ? [archive.image_url] : []),
-    date: archive.date || archive.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    date: archive.date || '',
     achievements: Array.isArray(archive.achievements) ? archive.achievements : [],
     full_content: archive.full_content || '',
     created_at: archive.created_at || new Date().toISOString(),
@@ -491,7 +491,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
     title: archive?.title || '',
     content: initialContent,
     full_content: archive?.full_content || '',
-    date: archive?.date || new Date().toISOString().split('T')[0],
+    date: archive?.date || '',
     images: initialImages as string[],
     achievements: (archive?.achievements || []) as string[],
   });
@@ -576,9 +576,8 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) { toast({ title: 'Erreur', description: 'Le titre est requis', variant: 'destructive' }); return; }
-    if (!formData.content.trim()) { toast({ title: 'Erreur', description: 'Le contenu/description est requis', variant: 'destructive' }); return; }
+    if (!formData.content.trim() && formData.category !== 'photo') { toast({ title: 'Erreur', description: 'Le contenu/description est requis', variant: 'destructive' }); return; }
     if (!formData.category) { toast({ title: 'Erreur', description: 'Le type d\'archive est requis', variant: 'destructive' }); return; }
-    if (!formData.date) { toast({ title: 'Erreur', description: 'La date est requise', variant: 'destructive' }); return; }
     setLoading(true);
     try {
       const data: any = {
@@ -587,7 +586,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
         title: formData.title.trim(),
         content: formData.content.trim(),
         full_content: formData.full_content.trim() || null,
-        date: formData.date,
+        date: formData.date || null,
         images: formData.images.length > 0 ? formData.images : null,
         achievements: formData.achievements.length > 0 ? formData.achievements : null,
       };
@@ -650,7 +649,7 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Date</label>
+          <label className="text-sm font-medium">Date <span className="text-muted-foreground font-normal">(optionnel)</span></label>
           <Input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} />
         </div>
         <div className="space-y-2">
@@ -666,10 +665,13 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">{formData.category === 'quote' ? 'Citation *' : 'Description / Résumé *'}</label>
+        <label className="text-sm font-medium">
+          {formData.category === 'quote' ? 'Citation *' : formData.category === 'photo' ? 'Description / Légende' : 'Description / Résumé *'}
+          {formData.category === 'photo' && <span className="text-muted-foreground font-normal"> (optionnel)</span>}
+        </label>
         <Textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-          placeholder={formData.category === 'quote' ? 'La citation exacte...' : "Description de l'archive..."} rows={4}
-          className={formData.category === 'quote' ? 'text-lg italic' : ''} required />
+          placeholder={formData.category === 'quote' ? 'La citation exacte...' : formData.category === 'photo' ? 'Légende ou description des photos...' : "Description de l'archive..."} rows={4}
+          className={formData.category === 'quote' ? 'text-lg italic' : ''} />
       </div>
 
       {(formData.category === 'biography' || formData.category === 'article') && (
