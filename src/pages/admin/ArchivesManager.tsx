@@ -579,14 +579,22 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
     if (!formData.content.trim() && formData.category !== 'photo') { toast({ title: 'Erreur', description: 'Le contenu/description est requis', variant: 'destructive' }); return; }
     if (!formData.category) { toast({ title: 'Erreur', description: 'Le type d\'archive est requis', variant: 'destructive' }); return; }
     setLoading(true);
+    const extractSortYear = (d: string | null): number | null => {
+      if (!d) return null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return parseInt(d.substring(0, 4));
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return parseInt(d.split('/')[2]);
+      if (/^\d{4}$/.test(d)) return parseInt(d);
+      return null;
+    };
     try {
       const data: any = {
         person_id: formData.person_id === 'none' ? null : (formData.person_id || null),
         category: formData.category,
         title: formData.title.trim(),
-        content: formData.content.trim(),
+        content: formData.content.trim() || null,
         full_content: formData.full_content.trim() || null,
         date: formData.date || null,
+        sort_year: extractSortYear(formData.date || null),
         images: formData.images.length > 0 ? formData.images : null,
         achievements: formData.achievements.length > 0 ? formData.achievements : null,
       };

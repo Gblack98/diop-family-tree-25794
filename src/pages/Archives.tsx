@@ -37,6 +37,7 @@ const mapSupabaseToArchive = (row: any, index: number): Archive => ({
   image: row.images?.[0] || undefined,
   images: row.images || undefined,
   achievements: row.achievements || undefined,
+  sort_year: row.sort_year ?? null,
 });
 
 const Archives = () => {
@@ -55,7 +56,7 @@ const Archives = () => {
         const { data, error } = await supabase
           .from("archives")
           .select("*, person:persons(name)")
-          .order("created_at", { ascending: false });
+          .order("sort_year", { ascending: false, nullsFirst: false });
 
         if (error) {
           console.warn('Supabase query error:', error);
@@ -117,13 +118,23 @@ const Archives = () => {
     });
 
     return [...filtered].sort((a, b) => {
+      const ay = (a as any).sort_year ?? null;
+      const by_ = (b as any).sort_year ?? null;
       switch (sortBy) {
-        case "oldest": return a.id - b.id;
+        case "newest":
+          if (ay === null && by_ === null) return 0;
+          if (ay === null) return 1;
+          if (by_ === null) return -1;
+          return by_ - ay;
+        case "oldest":
+          if (ay === null && by_ === null) return 0;
+          if (ay === null) return 1;
+          if (by_ === null) return -1;
+          return ay - by_;
         case "az":     return a.title.localeCompare(b.title, 'fr');
         case "za":     return b.title.localeCompare(a.title, 'fr');
         case "person": return a.person.localeCompare(b.person, 'fr');
-        case "newest":
-        default:       return b.id - a.id;
+        default:       return 0;
       }
     });
   }, [selectedCategory, debouncedSearch, normalizedArchives, sortBy]);
