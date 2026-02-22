@@ -3,7 +3,8 @@ import { PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 export function createNodeHTML(
   person: PersonNode,
   selectedPerson: PersonNode | null,
-  dimensions: TreeDimensions
+  dimensions: TreeDimensions,
+  photoUrl?: string
 ): string {
   const initial = person.name.charAt(0).toUpperCase();
   const childCount = person.enfants.length;
@@ -25,8 +26,7 @@ export function createNodeHTML(
   let highlightColor = "";
   let highlightBadge = "";
   if (hasHighlight && person.highlightLevel !== undefined) {
-    // Gradient de 200 (bleu clair) à 280 (violet) en passant par le bleu
-    const hue = 200 + (person.highlightLevel * 15); // Incrément de 15° de teinte
+    const hue = 200 + (person.highlightLevel * 15);
     highlightColor = `hsl(${hue}, 70%, 50%)`;
     highlightBadge = `
       <div style="
@@ -49,40 +49,68 @@ export function createNodeHTML(
         ? "background: linear-gradient(135deg, hsl(var(--male)), hsl(210 100% 46%));"
         : "background: linear-gradient(135deg, hsl(var(--female)), hsl(330 76% 48%));");
 
-  // Border color avec surbrillance pour les vues spéciales
+  // Border color – ordre de priorité : selected > highlight > directLine > genre
   let borderColor = isExternal
     ? (person.genre === "Homme" ? "hsl(var(--external-male))" : "hsl(var(--external-female))")
     : (person.genre === "Homme" ? "hsl(var(--male))" : "hsl(var(--female))");
 
-  // Override pour la ligne directe (gold/orange)
-  if (isInDirectLine) {
-    borderColor = "hsl(45, 100%, 50%)"; // Couleur dorée
+  if (isInDirectLine && !hasHighlight && !isSelected) {
+    borderColor = "hsl(45, 100%, 50%)";
   }
-  // Override pour le chemin avec gradient
   if (hasHighlight) {
     borderColor = highlightColor;
   }
+  if (isSelected) {
+    borderColor = "hsl(var(--primary))";
+  }
 
-  // Box shadow pour le highlight
-  const boxShadow = hasHighlight
+  // Box shadow – le nœud sélectionné a un halo primaire visible
+  const boxShadow = isSelected
+    ? `0 0 0 4px hsl(var(--primary) / 0.25), 0 6px 24px rgba(0,0,0,0.25)`
+    : hasHighlight
     ? `0 4px 20px ${highlightColor}50, 0 0 20px ${highlightColor}30`
     : isInDirectLine
     ? `0 4px 20px rgba(255, 193, 7, 0.4), 0 0 20px rgba(255, 193, 7, 0.2)`
     : "0 4px 12px rgba(0,0,0,0.15)";
 
-  // --- RENDU BADGE (Le style que vous voulez) ---
+  // Indicateur "sélectionné" — petit point primaire en haut
+  const selectedBadge = isSelected ? `
+    <div style="
+      position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+      background: hsl(var(--primary)); color: white;
+      width: 10px; height: 10px; border-radius: 50%;
+      box-shadow: 0 0 6px hsl(var(--primary) / 0.6);
+      z-index: 10;
+    "></div>
+  ` : '';
+
+  // Rendu de l'avatar (photo ou initiale)
+  const renderBadgeAvatar = photoUrl
+    ? `<img src="${photoUrl}" style="
+        width: 30px; height: 30px; border-radius: 50%;
+        object-fit: cover; flex-shrink: 0;
+        border: 1.5px solid rgba(255,255,255,0.4);
+      " />`
+    : `<div style="
+        width: 30px; height: 30px; border-radius: 50%;
+        ${avatarColor}
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 12px; color: white; flex-shrink: 0;
+      ">${initial}</div>`;
+
+  // --- RENDU BADGE (Mobile compact) ---
   if (isBadge) {
     return `
       <div style="
         width: ${dimensions.nodeWidth - 4}px;
         height: ${dimensions.nodeHeight - 4}px;
         margin: 2px;
-        background: hsl(var(--card));
+        background: ${isSelected ? "hsl(var(--primary) / 0.06)" : "hsl(var(--card))"};
         border: ${isSelected ? "2px" : isInDirectLine || hasHighlight ? "2px" : "1px"} solid ${borderColor};
         border-radius: 8px;
         box-shadow: ${boxShadow};
         display: flex;
-        flex-direction: row; /* Alignement Horizontal */
+        flex-direction: row;
         align-items: center;
         padding: 3px 4px;
         gap: 6px;
@@ -90,19 +118,7 @@ export function createNodeHTML(
         font-family: sans-serif;
         position: relative;
       ">
-        <div style="
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          ${avatarColor}
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 12px;
-          color: white;
-          flex-shrink: 0;
-        ">${initial}</div>
+        ${renderBadgeAvatar}
 
         <div style="
           font-weight: 600;
@@ -116,7 +132,7 @@ export function createNodeHTML(
           flex: 1;
         ">${person.name}</div>
 
-        ${hasHighlight ? highlightBadge : hasHiddenChildren ? `
+        ${isSelected ? selectedBadge : hasHighlight ? highlightBadge : hasHiddenChildren ? `
           <div style="
             position: absolute; top: -2px; right: -2px;
             background: hsl(var(--primary)); color: white;
@@ -136,7 +152,7 @@ export function createNodeHTML(
   const padding = isCompact ? "6px" : "10px";
 
   // Badge pour la ligne directe (Vue Ancestors)
-  const directLineBadge = isInDirectLine && !hasHighlight ? `
+  const directLineBadge = isInDirectLine && !hasHighlight && !isSelected ? `
     <div style="
       position: absolute; top: 6px; left: 6px;
       background: linear-gradient(135deg, hsl(45, 100%, 50%), hsl(35, 100%, 45%));
@@ -150,12 +166,33 @@ export function createNodeHTML(
     ">★</div>
   ` : '';
 
+  // Rendu de l'avatar desktop (photo ou initiale)
+  const renderDesktopAvatar = photoUrl
+    ? `<div style="
+        width: ${avatarSize}; height: ${avatarSize};
+        border-radius: 50%; overflow: hidden; flex-shrink: 0;
+        border: 2px solid rgba(255,255,255,0.5);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      ">
+        <img src="${photoUrl}" style="
+          width: 100%; height: 100%; object-fit: cover; display: block;
+        " />
+      </div>`
+    : `<div style="
+        width: ${avatarSize}; height: ${avatarSize};
+        border-radius: 50%;
+        ${avatarColor}
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 600; font-size: ${isCompact ? "14px" : "16px"};
+        color: white; flex-shrink: 0;
+      ">${initial}</div>`;
+
   return `
     <div style="
       width: ${dimensions.nodeWidth - 4}px;
       height: ${dimensions.nodeHeight - 4}px;
       margin: 2px;
-      background: hsl(var(--card));
+      background: ${isSelected ? "hsl(var(--primary) / 0.06)" : "hsl(var(--card))"};
       border: ${isSelected ? "3px" : isInDirectLine || hasHighlight ? "3px" : "2px"} solid ${borderColor};
       border-radius: 12px;
       box-shadow: ${boxShadow};
@@ -171,22 +208,10 @@ export function createNodeHTML(
         display: flex;
         align-items: center;
         gap: 8px;
-        background: hsl(var(--card));
+        background: transparent;
         flex: 1;
       ">
-        <div style="
-          width: ${avatarSize};
-          height: ${avatarSize};
-          border-radius: 50%;
-          ${avatarColor}
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          font-size: ${isCompact ? "14px" : "16px"};
-          color: white;
-          flex-shrink: 0;
-        ">${initial}</div>
+        ${renderDesktopAvatar}
         <div style="flex: 1; min-width: 0;">
           <div style="
             font-weight: 600;
@@ -218,8 +243,9 @@ export function createNodeHTML(
         <span style="display:flex; gap:2px">👶 ${childCount}</span>
       </div>
 
+      ${selectedBadge}
       ${directLineBadge}
-      ${hasHighlight ? highlightBadge : hasHiddenChildren ? `
+      ${!isSelected && hasHighlight ? highlightBadge : !isSelected && !hasHighlight && hasHiddenChildren ? `
         <div style="
           position: absolute; top: 6px; right: 6px;
           background: hsl(var(--primary)); color: white;

@@ -95,16 +95,18 @@ function shortDate(dateStr: string): string {
 }
 
 export const AdminDashboard = () => {
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, isModerator, loading: authLoading } = useAuth();
   const activeVisitors = useActiveVisitors(5);
   const [stats, setStats] = useState({ persons: 0, archives: 0, relationships: 0, users: 0 });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Attendre que l'auth soit prête avant de charger les données
+  // (évite que loadData s'exécute avec isAdmin=false avant que le profil soit chargé)
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!authLoading) loadData();
+  }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     // Promise.allSettled : chaque requête échoue indépendamment sans bloquer les autres
@@ -120,8 +122,15 @@ export const AdminDashboard = () => {
               .select('*, profile:profiles(display_name, username, email)')
               .order('changed_at', { ascending: false })
               .limit(8)
+          : isModerator && profile?.id
+          ? supabase
+              .from('change_history')
+              .select('*, profile:profiles(display_name, username, email)')
+              .eq('changed_by', profile.id)
+              .order('changed_at', { ascending: false })
+              .limit(8)
           : Promise.resolve({ data: [], error: null }),
-        isAdmin
+        isAdmin || isModerator
           ? supabase.rpc('get_visit_stats')
           : Promise.resolve({ data: null, error: null }),
       ]);
@@ -212,7 +221,7 @@ export const AdminDashboard = () => {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      {isAdmin && activeVisitors !== null && (
+      {(isAdmin || isModerator) && activeVisitors !== null && (
         <span className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1.5 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
           {activeVisitors} visiteur{activeVisitors !== 1 ? 's' : ''} actif{activeVisitors !== 1 ? 's' : ''} (5 min)
@@ -255,8 +264,8 @@ export const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Section visiteurs — admins seulement */}
-      {isAdmin && (
+      {/* Section visiteurs — admins et modérateurs */}
+      {(isAdmin || isModerator) && (
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Visiteurs du site
@@ -452,13 +461,17 @@ export const AdminDashboard = () => {
         </div>
 
         {/* Activité récente */}
-        {isAdmin && (
+        {(isAdmin || isModerator) && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold">Activité récente</h2>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/admin/history" className="text-xs">Voir tout</Link>
-              </Button>
+              <h2 className="text-lg font-semibold">
+                {isAdmin ? 'Activité récente' : 'Mes contributions'}
+              </h2>
+              {isAdmin && (
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/admin/history" className="text-xs">Voir tout</Link>
+                </Button>
+              )}
             </div>
             <Card className="divide-y">
               {loading ? (
