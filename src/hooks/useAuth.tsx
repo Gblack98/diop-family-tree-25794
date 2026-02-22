@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 export interface UserProfile {
   id: string;
   role: 'admin' | 'moderator';
+  username: string | null;
   display_name: string | null;
   email: string | null;
   suspended: boolean;
