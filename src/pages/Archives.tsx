@@ -63,24 +63,32 @@ const Archives = () => {
   useEffect(() => {
     const loadArchives = async () => {
       try {
-        const { data, error } = await supabase
+        // Essai avec la table de jonction archive_persons (multi-personnes)
+        let { data, error } = await supabase
           .from("archives")
           .select("*, person:persons(name), archive_persons(persons(name))")
           .order("sort_year", { ascending: false, nullsFirst: false });
+
+        // Si la table archive_persons n'existe pas encore (migration non exécutée),
+        // on retombe sur la requête simple
+        if (error && error.message?.includes('relationship')) {
+          const fallback = await supabase
+            .from("archives")
+            .select("*, person:persons(name)")
+            .order("sort_year", { ascending: false, nullsFirst: false });
+          data = fallback.data;
+          error = fallback.error;
+        }
 
         if (error) {
           console.warn('Supabase query error:', error);
           setArchives(staticArchivesData);
         } else if (data && data.length > 0) {
-          console.log('Loaded archives from Supabase:', data.length);
           setArchives(data.map(mapSupabaseToArchive));
         } else {
-          console.log('No archives in Supabase, using static data:', staticArchivesData.length);
-          // Fallback sur les données statiques
           setArchives(staticArchivesData);
         }
       } catch (err) {
-        // En cas d'erreur réseau ou autre, utiliser les données statiques
         console.error('Error loading archives:', err);
         setArchives(staticArchivesData);
       } finally {

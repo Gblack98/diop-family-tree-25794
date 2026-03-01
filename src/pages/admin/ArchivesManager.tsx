@@ -139,10 +139,20 @@ export const ArchivesManager = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fetchError } = await supabase
+      let { data, error: fetchError } = await supabase
         .from('archives')
         .select(`*, person:persons(name), archive_persons(person_id, persons(id, name))`)
         .order('created_at', { ascending: false });
+
+      // Fallback si la table archive_persons n'existe pas encore (migration non exécutée)
+      if (fetchError?.message?.includes('relationship')) {
+        const fallback = await supabase
+          .from('archives')
+          .select(`*, person:persons(name)`)
+          .order('created_at', { ascending: false });
+        data = fallback.data;
+        fetchError = fallback.error;
+      }
 
       if (fetchError) { setError(fetchError.message); return; }
       setArchives((data || []).map(normalizeArchive));
