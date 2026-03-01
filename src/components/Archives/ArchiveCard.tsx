@@ -70,12 +70,22 @@ export const ArchiveCard = ({ archive, index, onClick, searchQuery = "" }: Archi
       <div className="p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0 space-y-2">
-            <Badge 
-              variant="secondary" 
-              className="text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300"
-            >
-              {archive.person}
-            </Badge>
+            <div className="flex flex-wrap gap-1">
+              {(archive.persons || [archive.person]).slice(0, 2).map((name, i) => (
+                <Badge
+                  key={i}
+                  variant="secondary"
+                  className="text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300"
+                >
+                  {name}
+                </Badge>
+              ))}
+              {(archive.persons || []).length > 2 && (
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  +{(archive.persons as string[]).length - 2}
+                </Badge>
+              )}
+            </div>
             <h3 className="font-bold text-base sm:text-lg leading-tight group-hover:text-primary transition-colors duration-300">
               <HighlightedText text={archive.title} searchQuery={searchQuery} />
             </h3>

@@ -48,7 +48,12 @@ import {
   User,
   Award,
   AlertCircle,
+  Check,
+  ChevronsUpDown,
+  Users,
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AdminLayout } from '@/components/Admin/AdminLayout';
@@ -69,6 +74,8 @@ interface Archive {
   image_url?: string | null;
   created_at: string;
   person?: { name: string } | null;
+  archive_persons?: { person_id: string; persons: { id: string; name: string } }[];
+  persons_list?: { id: string; name: string }[];  // Calculé depuis archive_persons
 }
 
 interface Person {
@@ -88,6 +95,11 @@ const CATEGORIES = [
 
 const normalizeArchive = (archive: any): Archive => {
   if (!archive) return {} as Archive;
+  // Construire persons_list depuis archive_persons ou fallback sur person FK
+  const archivePersons: any[] = archive.archive_persons || [];
+  const personsList = archivePersons.length > 0
+    ? archivePersons.map((ap: any) => ap.persons).filter(Boolean)
+    : (archive.person ? [archive.person] : []);
   return {
     ...archive,
     id: archive.id || '',
@@ -101,6 +113,7 @@ const normalizeArchive = (archive: any): Archive => {
     created_at: archive.created_at || new Date().toISOString(),
     person_id: archive.person_id || null,
     person: archive.person || null,
+    persons_list: personsList,
   };
 };
 
@@ -128,7 +141,7 @@ export const ArchivesManager = () => {
     try {
       const { data, error: fetchError } = await supabase
         .from('archives')
-        .select(`*, person:persons(name)`)
+        .select(`*, person:persons(name), archive_persons(person_id, persons(id, name))`)
         .order('created_at', { ascending: false });
 
       if (fetchError) { setError(fetchError.message); return; }
@@ -143,10 +156,11 @@ export const ArchivesManager = () => {
 
   const filteredArchives = archives.filter((archive) => {
     const content = archive.content || archive.description || '';
+    const personsText = (archive.persons_list || []).map((p) => p.name).join(' ');
     const matchesSearch =
       archive.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      archive.person?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      personsText.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || archive.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -312,9 +326,10 @@ export const ArchivesManager = () => {
 
                   <h3 className="font-semibold text-base sm:text-lg mb-1 line-clamp-1">{archive.title}</h3>
 
-                  {archive.person && (
+                  {archive.persons_list && archive.persons_list.length > 0 && (
                     <p className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
-                      <User className="w-3 h-3" />{archive.person.name}
+                      <Users className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{archive.persons_list.map((p) => p.name).join(', ')}</span>
                     </p>
                   )}
 
@@ -417,7 +432,12 @@ const ArchiveViewer = ({ archive }: { archive: Archive }) => {
           <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">{catInfo.label}</span>
             {archive.date && <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{archive.date}</span>}
-            {archive.person && <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" />{archive.person.name}</span>}
+            {archive.persons_list && archive.persons_list.length > 0 && (
+              <span className="flex items-center gap-1 flex-wrap">
+                <Users className="w-3.5 h-3.5 shrink-0" />
+                {archive.persons_list.map((p) => p.name).join(', ')}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -481,12 +501,16 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [persons, setPersons] = useState<Person[]>([]);
+  const [personsOpen, setPersonsOpen] = useState(false);
+  const [personsSearch, setPersonsSearch] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initialImages = archive?.images || (archive?.image_url ? [archive.image_url] : []);
   const initialContent = archive?.content || archive?.description || '';
+  const initialPersonIds = archive?.persons_list?.map((p) => p.id)
+    || (archive?.person_id ? [archive.person_id] : []);
 
   const [formData, setFormData] = useState({
-    person_id: archive?.person_id || 'none',
+    person_ids: initialPersonIds,
     category: archive?.category || 'biography',
     title: archive?.title || '',
     content: initialContent,
@@ -496,6 +520,19 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
     achievements: (archive?.achievements || []) as string[],
   });
   const [newAchievement, setNewAchievement] = useState('');
+
+  const filteredPersonsForSelect = persons.filter((p) =>
+    p.name.toLowerCase().includes(personsSearch.toLowerCase())
+  );
+
+  const togglePerson = (personId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      person_ids: prev.person_ids.includes(personId)
+        ? prev.person_ids.filter((id) => id !== personId)
+        : [...prev.person_ids, personId],
+    }));
+  };
 
   useEffect(() => { loadPersons(); }, []);
 
@@ -587,8 +624,9 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
       return null;
     };
     try {
-      const data: any = {
-        person_id: formData.person_id === 'none' ? null : (formData.person_id || null),
+      const archiveData: any = {
+        // person_id conservé = première personne sélectionnée (rétrocompat)
+        person_id: formData.person_ids[0] || null,
         category: formData.category,
         title: formData.title.trim(),
         content: formData.content.trim() || null,
@@ -599,27 +637,32 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
         achievements: formData.achievements.length > 0 ? formData.achievements : null,
       };
 
+      let archiveId: string;
+
       if (archive) {
-        const { error } = await supabase.from('archives').update(data).eq('id', archive.id);
-        if (error) {
-          if (error.message.includes('column')) {
-            const oldData = { person_id: formData.person_id === 'none' ? null : (formData.person_id || null), category: formData.category, title: formData.title.trim(), description: formData.content.trim(), image_url: formData.images[0] || null };
-            const { error: oldError } = await supabase.from('archives').update(oldData).eq('id', archive.id);
-            if (oldError) throw oldError;
-          } else throw error;
-        }
+        const { error } = await supabase.from('archives').update(archiveData).eq('id', archive.id);
+        if (error) throw error;
+        archiveId = archive.id;
         toast({ title: 'Succès', description: 'Archive modifiée' });
       } else {
-        const { error } = await supabase.from('archives').insert(data);
-        if (error) {
-          if (error.message.includes('column')) {
-            const oldData = { person_id: formData.person_id === 'none' ? null : (formData.person_id || null), category: formData.category, title: formData.title.trim(), description: formData.content.trim(), image_url: formData.images[0] || null };
-            const { error: oldError } = await supabase.from('archives').insert(oldData);
-            if (oldError) throw oldError;
-          } else throw error;
-        }
+        const { data: inserted, error } = await supabase
+          .from('archives')
+          .insert(archiveData)
+          .select('id')
+          .single();
+        if (error) throw error;
+        archiveId = inserted.id;
         toast({ title: 'Succès', description: 'Archive créée' });
       }
+
+      // Sync table de jonction archive_persons
+      await supabase.from('archive_persons').delete().eq('archive_id', archiveId);
+      if (formData.person_ids.length > 0) {
+        await supabase.from('archive_persons').insert(
+          formData.person_ids.map((pid) => ({ archive_id: archiveId, person_id: pid }))
+        );
+      }
+
       onSuccess();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message || 'Une erreur est survenue', variant: 'destructive' });
@@ -661,14 +704,65 @@ const ArchiveForm = ({ archive, onSuccess, onCancel }: { archive?: Archive; onSu
           <Input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium">Personne liée</label>
-          <Select value={formData.person_id} onValueChange={(value) => setFormData({ ...formData, person_id: value })}>
-            <SelectTrigger><SelectValue placeholder="Aucune personne" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Aucune personne</SelectItem>
-              {persons.map((person) => <SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <label className="text-sm font-medium">
+            Personnes liées <span className="text-muted-foreground font-normal">(optionnel)</span>
+          </label>
+          <Popover open={personsOpen} onOpenChange={setPersonsOpen}>
+            <PopoverTrigger asChild>
+              <Button type="button" variant="outline" className="w-full justify-between font-normal">
+                {formData.person_ids.length === 0
+                  ? 'Aucune personne'
+                  : `${formData.person_ids.length} personne${formData.person_ids.length > 1 ? 's' : ''} sélectionnée${formData.person_ids.length > 1 ? 's' : ''}`}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-0" align="start">
+              <div className="p-2 border-b">
+                <Input
+                  placeholder="Rechercher une personne..."
+                  value={personsSearch}
+                  onChange={(e) => setPersonsSearch(e.target.value)}
+                  className="h-8"
+                />
+              </div>
+              <div className="max-h-52 overflow-y-auto">
+                {filteredPersonsForSelect.length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-3 text-center">Aucun résultat</p>
+                ) : (
+                  filteredPersonsForSelect.map((person) => {
+                    const selected = formData.person_ids.includes(person.id);
+                    return (
+                      <div
+                        key={person.id}
+                        className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted transition-colors"
+                        onClick={() => togglePerson(person.id)}
+                      >
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${selected ? 'bg-primary border-primary' : 'border-input'}`}>
+                          {selected && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <span className="text-sm">{person.name}</span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+          {formData.person_ids.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {formData.person_ids.map((id) => {
+                const p = persons.find((p) => p.id === id);
+                return p ? (
+                  <Badge key={id} variant="secondary" className="gap-1 text-xs">
+                    {p.name}
+                    <button type="button" onClick={() => togglePerson(id)} className="hover:text-destructive ml-0.5">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ) : null;
+              })}
+            </div>
+          )}
         </div>
       </div>
 

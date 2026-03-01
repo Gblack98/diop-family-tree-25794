@@ -27,9 +27,11 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
     setFailedImages(prev => new Set(prev).add(index));
   };
 
-  // Fonction pour naviguer vers l'arbre avec le paramètre focus
+  const personsList = archive.persons || [archive.person];
+
+  // Fonction pour naviguer vers l'arbre avec la première personne
   const handleViewInTree = () => {
-    navigate(`/?focus=${encodeURIComponent(archive.person)}`);
+    navigate(`/?focus=${encodeURIComponent(personsList[0])}`);
   };
 
   // Gestion unifiée des images (si 'images' existe, on l'utilise, sinon on fallback sur 'image')
@@ -56,9 +58,9 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
+    <DialogContent className="max-w-2xl">
       <DialogDescription className="sr-only">
-        Détails de l'archive de {archive.person}
+        Détails de l'archive de {personsList.join(', ')}
       </DialogDescription>
       
       <DialogHeader>
@@ -66,9 +68,11 @@ export const ArchiveDialog = ({ archive }: ArchiveDialogProps) => {
           <div>
             <DialogTitle className="text-2xl font-bold leading-tight">{archive.title}</DialogTitle>
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-                {archive.person}
-              </Badge>
+              {personsList.map((name, i) => (
+                <Badge key={i} variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+                  {name}
+                </Badge>
+              ))}
               <span className="text-sm text-muted-foreground">• {archive.date}</span>
             </div>
           </div>

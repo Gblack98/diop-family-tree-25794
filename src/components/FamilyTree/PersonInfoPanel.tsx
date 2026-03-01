@@ -81,7 +81,7 @@ export const PersonInfoPanel = ({
       requestAnimationFrame(() => setIsVisible(true));
       setArchivesLoading(true);
       setArchives([]);
-      // Chercher la personne dans Supabase par nom, puis ses archives
+      // Chercher la personne dans Supabase par nom, puis ses archives via la table de jonction
       supabase
         .from('persons')
         .select('id')
@@ -91,16 +91,21 @@ export const PersonInfoPanel = ({
           if (persons && persons.length > 0) {
             const personId = persons[0].id;
             return supabase
-              .from('archives')
-              .select('id, category, title, date')
+              .from('archive_persons')
+              .select('archives(id, category, title, date)')
               .eq('person_id', personId)
-              .order('date', { ascending: false })
               .limit(5);
           }
           return { data: null };
         })
         .then((res: any) => {
-          if (res?.data) setArchives(res.data as PersonArchive[]);
+          if (res?.data) {
+            const found: PersonArchive[] = res.data
+              .map((row: any) => row.archives)
+              .filter(Boolean)
+              .sort((a: any, b: any) => (b.date || '').localeCompare(a.date || ''));
+            setArchives(found);
+          }
         })
         .finally(() => setArchivesLoading(false));
     } else {

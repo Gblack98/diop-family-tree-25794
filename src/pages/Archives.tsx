@@ -26,19 +26,29 @@ const normalizeText = (text: string) => {
 };
 
 /** Convertit une archive Supabase en format Archive pour les composants publics */
-const mapSupabaseToArchive = (row: any, index: number): Archive => ({
-  id: index + 1,
-  person: row.person?.name || "Famille Diop",
-  category: row.category as ArchiveCategory,
-  title: row.title,
-  content: row.content,
-  fullContent: row.full_content || undefined,
-  date: row.date,
-  image: row.images?.[0] || undefined,
-  images: row.images || undefined,
-  achievements: row.achievements || undefined,
-  sort_year: row.sort_year ?? null,
-});
+const mapSupabaseToArchive = (row: any, index: number): Archive => {
+  // Personnes depuis la table de jonction (priorité) ou fallback sur le FK person_id
+  const personsFromJunction: string[] = (row.archive_persons || [])
+    .map((ap: any) => ap.persons?.name)
+    .filter(Boolean);
+  const personName = personsFromJunction.length > 0
+    ? personsFromJunction.join(', ')
+    : (row.person?.name || 'Famille Diop');
+  return {
+    id: index + 1,
+    person: personName,
+    persons: personsFromJunction.length > 0 ? personsFromJunction : undefined,
+    category: row.category as ArchiveCategory,
+    title: row.title,
+    content: row.content,
+    fullContent: row.full_content || undefined,
+    date: row.date,
+    image: row.images?.[0] || undefined,
+    images: row.images || undefined,
+    achievements: row.achievements || undefined,
+    sort_year: row.sort_year ?? null,
+  };
+};
 
 const Archives = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -55,7 +65,7 @@ const Archives = () => {
       try {
         const { data, error } = await supabase
           .from("archives")
-          .select("*, person:persons(name)")
+          .select("*, person:persons(name), archive_persons(persons(name))")
           .order("sort_year", { ascending: false, nullsFirst: false });
 
         if (error) {
@@ -98,6 +108,7 @@ const Archives = () => {
           [
             archive.title,
             archive.person,
+            ...(archive.persons || []),
             archive.content,
             archive.fullContent || "",
             archive.date,

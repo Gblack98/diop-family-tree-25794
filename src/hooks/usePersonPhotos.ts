@@ -34,19 +34,23 @@ export function usePersonPhotos(): Map<string, string> {
       });
 
       // 2. Photos dans les archives (priorité basse — si pas déjà dans la map)
+      //    Passe par archive_persons pour supporter plusieurs personnes par archive
       const { data: archivesData } = await supabase
         .from('archives')
-        .select('images, persons!inner(name)')
+        .select('images, archive_persons(persons(name))')
         .eq('category', 'photo')
         .not('images', 'is', null)
         .order('sort_year', { ascending: false });
 
       (archivesData as any[] ?? []).forEach((row) => {
-        const personName = row.persons?.name as string | undefined;
         const images = row.images as string[] | null;
-        if (personName && images && images.length > 0 && !map.has(personName)) {
-          map.set(personName, images[0]);
-        }
+        if (!images || images.length === 0) return;
+        const personNames: string[] = (row.archive_persons || [])
+          .map((ap: any) => ap.persons?.name)
+          .filter(Boolean);
+        personNames.forEach((personName: string) => {
+          if (!map.has(personName)) map.set(personName, images[0]);
+        });
       });
 
       cachedPhotos = map;

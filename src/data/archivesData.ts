@@ -10,7 +10,8 @@ export enum ArchiveCategory {
 
 export interface Archive {
   id: number;
-  person: string;
+  person: string;         // Nom(s) — peut être "Alice, Bob" si plusieurs personnes
+  persons?: string[];     // Liste des noms de personnes (source de vérité si plusieurs)
   category: ArchiveCategory;
   title: string;
   content: string;
@@ -19,6 +20,7 @@ export interface Archive {
   image?: string;       // Gardé pour compatibilité
   images?: string[];    // NOUVEAU : Pour le carrousel (ex: ["/img1.jpg", "/img2.jpg"])
   achievements?: string[];
+  sort_year?: number | null;
 }
 
 export interface CategoryConfig {
