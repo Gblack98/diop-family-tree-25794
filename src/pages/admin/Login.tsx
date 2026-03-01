@@ -1,6 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+
+// ── Rate limiting côté client (protection brute-force) ──────────────────────
+const RL_KEY      = 'diop_login_attempts';
+const MAX_TRIES   = 5;
+const WINDOW_MS   = 5 * 60 * 1000; // 5 minutes
+
+function getRLState(): { count: number; firstAt: number } {
+  try { return JSON.parse(localStorage.getItem(RL_KEY) || '{}'); } catch { return { count: 0, firstAt: 0 }; }
+}
+function isBlocked(): boolean {
+  const { count, firstAt } = getRLState();
+  return count >= MAX_TRIES && Date.now() - (firstAt || 0) < WINDOW_MS;
+}
+function remainingSeconds(): number {
+  const { firstAt } = getRLState();
+  return Math.ceil((WINDOW_MS - (Date.now() - (firstAt || 0))) / 1000);
+}
+function recordAttempt() {
+  const { count, firstAt } = getRLState();
+  const now = Date.now();
+  if (!firstAt || now - firstAt >= WINDOW_MS) {
+    localStorage.setItem(RL_KEY, JSON.stringify({ count: 1, firstAt: now }));
+  } else {
+    localStorage.setItem(RL_KEY, JSON.stringify({ count: count + 1, firstAt }));
+  }
+}
+function clearAttempts() { localStorage.removeItem(RL_KEY); }
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,11 +58,22 @@ export const AdminLogin = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError('');
+
+    if (isBlocked()) {
+      setLocalError(`Trop de tentatives. Réessayez dans ${remainingSeconds()} secondes.`);
+      return;
+    }
+
     setSubmitting(true);
     try {
       await signIn(email, password);
+      clearAttempts(); // succès → réinitialiser le compteur
     } catch (err: any) {
-      setLocalError(err.message || 'Identifiants incorrects');
+      recordAttempt();
+      const { count } = getRLState();
+      const remaining = MAX_TRIES - count;
+      const base = err.message || 'Identifiants incorrects';
+      setLocalError(remaining > 0 ? `${base} (${remaining} tentative${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''})` : `Compte temporairement bloqué. Réessayez dans ${remainingSeconds()} secondes.`);
       setSubmitting(false);
     }
   };

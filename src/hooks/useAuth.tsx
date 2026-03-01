@@ -44,6 +44,14 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Re-validation du profil toutes les 5 minutes :
+  // détecte en temps réel la suspension ou le changement de rôle côté serveur
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => loadProfile(user.id), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const loadProfile = async (userId: string) => {
     try {
       setError(null);
