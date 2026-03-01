@@ -118,46 +118,6 @@ export const FamilyView = () => {
     }
   }, [centralPerson]);
 
-  // Charger les photos des personnes de la constellation depuis Supabase
-  useEffect(() => {
-    if (nodes.length === 0) {
-      setPersonPhotos({});
-      return;
-    }
-    const names = nodes.map(n => n.id);
-
-    const fetchPhotos = async () => {
-      const { data: personsData } = await supabase
-        .from('persons')
-        .select('id, name')
-        .in('name', names);
-
-      if (!personsData?.length) return;
-
-      const idToName: Record<string, string> = {};
-      personsData.forEach((p: { id: string; name: string }) => { idToName[p.id] = p.name; });
-
-      const { data: archives } = await supabase
-        .from('archives')
-        .select('person_id, images')
-        .in('person_id', personsData.map(p => p.id))
-        .eq('category', 'photo');
-
-      if (!archives?.length) return;
-
-      const photoMap: Record<string, string> = {};
-      archives.forEach((a: any) => {
-        const name = idToName[a.person_id];
-        if (name && !photoMap[name] && Array.isArray(a.images) && a.images.length > 0) {
-          photoMap[name] = a.images[0];
-        }
-      });
-      setPersonPhotos(photoMap);
-    };
-
-    fetchPhotos();
-  }, [nodes]);
-
   // Calcul des conjoints réels
   const spousesOfCentral = useMemo(() => {
     if (!centralPerson) return [];
@@ -271,6 +231,47 @@ export const FamilyView = () => {
 
     return { nodes: nodeList, links: linkList };
   }, [centralPerson, spousesOfCentral, familyData]);
+
+  // Charger les photos des personnes de la constellation depuis Supabase
+  // (placé APRÈS la déclaration de `nodes` pour éviter la temporal dead zone)
+  useEffect(() => {
+    if (nodes.length === 0) {
+      setPersonPhotos({});
+      return;
+    }
+    const names = nodes.map(n => n.id);
+
+    const fetchPhotos = async () => {
+      const { data: personsData } = await supabase
+        .from('persons')
+        .select('id, name')
+        .in('name', names);
+
+      if (!personsData?.length) return;
+
+      const idToName: Record<string, string> = {};
+      personsData.forEach((p: { id: string; name: string }) => { idToName[p.id] = p.name; });
+
+      const { data: archives } = await supabase
+        .from('archives')
+        .select('person_id, images')
+        .in('person_id', personsData.map(p => p.id))
+        .eq('category', 'photo');
+
+      if (!archives?.length) return;
+
+      const photoMap: Record<string, string> = {};
+      archives.forEach((a: any) => {
+        const name = idToName[a.person_id];
+        if (name && !photoMap[name] && Array.isArray(a.images) && a.images.length > 0) {
+          photoMap[name] = a.images[0];
+        }
+      });
+      setPersonPhotos(photoMap);
+    };
+
+    fetchPhotos();
+  }, [nodes]);
 
   // Gestion du redimensionnement
   useEffect(() => {
