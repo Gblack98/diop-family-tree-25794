@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import { ArrowLeft, Home, Users, Sparkles, ZoomIn, ZoomOut, RotateCcw, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFamilyData } from "@/hooks/useFamilyData";
+import { supabase } from "@/lib/supabase/client";
 
 // Types basés sur la structure de données du projet
 interface PersonData {
@@ -99,6 +100,7 @@ export const FamilyView = () => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const simulationRef = useRef<d3.Simulation<Node, Link> | null>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown>>();
+  const [personPhotos, setPersonPhotos] = useState<Record<string, string>>({});
 
   // Charger les données (le hook retourne déjà les données statiques comme fallback)
   const { familyData } = useFamilyData();
@@ -115,6 +117,46 @@ export const FamilyView = () => {
       addToHistory(centralPerson.name);
     }
   }, [centralPerson]);
+
+  // Charger les photos des personnes de la constellation depuis Supabase
+  useEffect(() => {
+    if (nodes.length === 0) {
+      setPersonPhotos({});
+      return;
+    }
+    const names = nodes.map(n => n.id);
+
+    const fetchPhotos = async () => {
+      const { data: personsData } = await supabase
+        .from('persons')
+        .select('id, name')
+        .in('name', names);
+
+      if (!personsData?.length) return;
+
+      const idToName: Record<string, string> = {};
+      personsData.forEach((p: { id: string; name: string }) => { idToName[p.id] = p.name; });
+
+      const { data: archives } = await supabase
+        .from('archives')
+        .select('person_id, images')
+        .in('person_id', personsData.map(p => p.id))
+        .eq('category', 'photo');
+
+      if (!archives?.length) return;
+
+      const photoMap: Record<string, string> = {};
+      archives.forEach((a: any) => {
+        const name = idToName[a.person_id];
+        if (name && !photoMap[name] && Array.isArray(a.images) && a.images.length > 0) {
+          photoMap[name] = a.images[0];
+        }
+      });
+      setPersonPhotos(photoMap);
+    };
+
+    fetchPhotos();
+  }, [nodes]);
 
   // Calcul des conjoints réels
   const spousesOfCentral = useMemo(() => {
@@ -288,6 +330,7 @@ export const FamilyView = () => {
     const g = d3.select(gRef.current);
 
     // Nettoyage
+    svg.selectAll("defs").remove();
     g.selectAll("*").remove();
 
     const { width, height } = dimensions;
@@ -396,6 +439,17 @@ export const FamilyView = () => {
     const spouseRadius = isMobile ? 32 : isTablet ? 40 : 45;
     const childRadius = isMobile ? 25 : isTablet ? 30 : 35;
 
+    // ClipPaths SVG pour les photos (un par personne avec photo)
+    const defs = svg.append("defs");
+    nodes.forEach(d => {
+      if (!personPhotos[d.id]) return;
+      const r = (d.type === "central" ? centralRadius : d.type === "spouse" ? spouseRadius : childRadius) - 3;
+      defs.append("clipPath")
+        .attr("id", `fv-clip-${d.id.replace(/[^a-zA-Z0-9]/g, '-')}`)
+        .append("circle")
+        .attr("r", r);
+    });
+
     // Cercles
     node.append("circle")
       .attr("r", (d) => d.type === "central" ? centralRadius : d.type === "spouse" ? spouseRadius : childRadius)
@@ -427,11 +481,29 @@ export const FamilyView = () => {
       .text((d) => d.data.genre === "Homme" ? "👔 Époux" : "👰 Épouse")
       .style("text-shadow", "0 0 3px white, 0 0 3px white");
 
-    // Initiales
+    // Photos dans les cercles (si disponibles)
+    node.each(function(d) {
+      const photoUrl = personPhotos[d.id];
+      if (!photoUrl) return;
+      const r = (d.type === "central" ? centralRadius : d.type === "spouse" ? spouseRadius : childRadius) - 3;
+      const clipId = `fv-clip-${d.id.replace(/[^a-zA-Z0-9]/g, '-')}`;
+      d3.select(this).append("image")
+        .attr("href", photoUrl)
+        .attr("x", -r)
+        .attr("y", -r)
+        .attr("width", r * 2)
+        .attr("height", r * 2)
+        .attr("clip-path", `url(#${clipId})`)
+        .attr("preserveAspectRatio", "xMidYMid slice")
+        .style("pointer-events", "none");
+    });
+
+    // Initiales — uniquement si pas de photo
     const centralFontSize = isMobile ? 18 : isTablet ? 22 : 26;
     const fontSize = isMobile ? 14 : isTablet ? 16 : 18;
 
-    node.append("text")
+    node.filter(d => !personPhotos[d.id])
+      .append("text")
       .text((d) => {
         const parts = d.data.name.split(" ");
         return parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0];
@@ -511,7 +583,7 @@ export const FamilyView = () => {
         simulationRef.current.alphaTarget(0.01);
       }
     };
-  }, [nodes, links, dimensions, navigate]);
+  }, [nodes, links, dimensions, navigate, personPhotos]);
 
   if (!centralPerson) {
     return (
