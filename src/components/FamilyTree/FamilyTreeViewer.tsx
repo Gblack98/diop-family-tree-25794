@@ -363,21 +363,17 @@ export const FamilyTreeViewer = () => {
       <Legend />
 
       {/* Panneau flottant bas-gauche : filtre générations + minimap */}
-      <div className="fixed bottom-4 left-4 z-40 flex flex-col gap-2 items-start pointer-events-none">
+      <div className="fixed bottom-4 left-4 z-40 flex flex-col gap-2 items-start pointer-events-none group/left opacity-0 hover:opacity-100 transition-opacity duration-300">
 
         {/* Filtre par génération (desktop uniquement) */}
         {!isMobile && allGenerations.length > 0 && (
           <div className="p-2 pointer-events-auto">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide" style={{ textShadow: '0 0 4px rgba(255,255,255,0.9), 0 1px 3px rgba(0,0,0,0.4)' }}>
+              <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">
                 Générations
               </span>
               {highlightedGenerations && (
-                <button
-                  onClick={clearGenFilter}
-                  className="text-[9px] text-primary hover:underline ml-auto"
-                  style={{ textShadow: '0 0 4px rgba(255,255,255,0.9)' }}
-                >
+                <button onClick={clearGenFilter} className="text-[9px] text-primary hover:underline ml-auto">
                   Tout
                 </button>
               )}
@@ -393,7 +389,7 @@ export const FamilyTreeViewer = () => {
                       w-7 h-7 rounded-md text-[10px] font-bold transition-all shadow-sm
                       ${isActive
                         ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted/40 text-muted-foreground hover:bg-muted/70 backdrop-blur-sm'}
+                        : 'bg-muted/60 text-muted-foreground hover:bg-muted'}
                     `}
                     title={`Génération ${gen}`}
                   >
@@ -418,17 +414,6 @@ export const FamilyTreeViewer = () => {
           </div>
         )}
       </div>
-
-      {/* Indication raccourcis clavier (desktop, petite pastille) */}
-      {!isMobile && (
-        <div className="fixed bottom-4 right-4 mr-[calc(theme(spacing.4))] sm:right-[calc(theme(spacing.4)+theme(spacing.20))] hidden xl:flex items-center gap-3 px-3 py-1 z-30 pointer-events-none">
-          <span className="text-[9px] text-muted-foreground" style={{ textShadow: '0 0 4px rgba(255,255,255,0.9), 0 1px 3px rgba(0,0,0,0.4)' }}>
-            <kbd className="font-mono bg-muted/40 px-1 rounded text-[8px]">+/-</kbd> zoom ·{' '}
-            <kbd className="font-mono bg-muted/40 px-1 rounded text-[8px]">F</kbd> centrer ·{' '}
-            <kbd className="font-mono bg-muted/40 px-1 rounded text-[8px]">Échap</kbd> fermer
-          </span>
-        </div>
-      )}
     </div>
   );
 };

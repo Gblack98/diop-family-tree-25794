@@ -2,7 +2,7 @@ const textStyle = { textShadow: '0 0 4px rgba(255,255,255,0.9), 0 1px 3px rgba(0
 
 export const Legend = () => {
   return (
-    <div className="fixed bottom-4 left-4 sm:left-auto sm:right-4 p-2 sm:p-3 z-40 animate-in fade-in duration-500">
+    <div className="fixed bottom-4 left-4 sm:left-auto sm:right-4 p-2 sm:p-3 z-40 animate-in fade-in duration-500 opacity-0 hover:opacity-100 transition-opacity duration-300">
       <h3 className="font-semibold text-[10px] sm:text-xs mb-1.5 sm:mb-2" style={textStyle}>Légende</h3>
       <div className="flex flex-wrap gap-x-3 gap-y-1.5 sm:flex-col sm:space-y-2 sm:flex-nowrap">
         <div className="flex items-center gap-1.5 sm:gap-3">
