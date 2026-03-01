@@ -64,13 +64,15 @@ const Archives = () => {
     const loadArchives = async () => {
       try {
         // Essai avec la table de jonction archive_persons (multi-personnes)
+        // Note : on n'inclut PAS person:persons(name) ici car PostgREST refuserait
+        // deux chemins vers la même table persons dans la même requête.
         let { data, error } = await supabase
           .from("archives")
-          .select("*, person:persons(name), archive_persons(persons(name))")
+          .select("*, archive_persons(persons(name))")
           .order("sort_year", { ascending: false, nullsFirst: false });
 
         // Si la table archive_persons n'existe pas encore (migration non exécutée),
-        // on retombe sur la requête simple
+        // on retombe sur la requête simple avec le FK direct
         if (error && error.message?.includes('relationship')) {
           const fallback = await supabase
             .from("archives")

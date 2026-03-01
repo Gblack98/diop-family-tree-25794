@@ -139,9 +139,11 @@ export const ArchivesManager = () => {
     setLoading(true);
     setError(null);
     try {
+      // Note : on n'inclut PAS person:persons(name) en même temps que archive_persons
+      // car PostgREST refuserait deux chemins vers la même table persons.
       let { data, error: fetchError } = await supabase
         .from('archives')
-        .select(`*, person:persons(name), archive_persons(person_id, persons(id, name))`)
+        .select(`*, archive_persons(person_id, persons(id, name))`)
         .order('created_at', { ascending: false });
 
       // Fallback si la table archive_persons n'existe pas encore (migration non exécutée)
