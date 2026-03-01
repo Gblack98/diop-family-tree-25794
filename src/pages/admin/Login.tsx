@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { Lock, Mail, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 
 // ── Rate limiting côté client (protection brute-force) ──────────────────────
-const RL_KEY      = 'diop_login_attempts';
-const MAX_TRIES   = 5;
-const WINDOW_MS   = 5 * 60 * 1000; // 5 minutes
+const RL_KEY    = 'diop_login_attempts';
+const MAX_TRIES = 5;
+const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 function getRLState(): { count: number; firstAt: number } {
   try { return JSON.parse(localStorage.getItem(RL_KEY) || '{}'); } catch { return { count: 0, firstAt: 0 }; }
@@ -28,11 +33,6 @@ function recordAttempt() {
   }
 }
 function clearAttempts() { localStorage.removeItem(RL_KEY); }
-import { supabase } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { Lock, Mail, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 
 export const AdminLogin = () => {
   const [email, setEmail] = useState('');
