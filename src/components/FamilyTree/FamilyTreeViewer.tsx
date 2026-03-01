@@ -367,15 +367,16 @@ export const FamilyTreeViewer = () => {
 
         {/* Filtre par génération (desktop uniquement) */}
         {!isMobile && allGenerations.length > 0 && (
-          <div className="bg-card/90 backdrop-blur-sm border border-border/60 rounded-lg shadow-lg p-2 pointer-events-auto">
+          <div className="p-2 pointer-events-auto">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">
+              <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide" style={{ textShadow: '0 0 4px rgba(255,255,255,0.9), 0 1px 3px rgba(0,0,0,0.4)' }}>
                 Générations
               </span>
               {highlightedGenerations && (
                 <button
                   onClick={clearGenFilter}
                   className="text-[9px] text-primary hover:underline ml-auto"
+                  style={{ textShadow: '0 0 4px rgba(255,255,255,0.9)' }}
                 >
                   Tout
                 </button>
@@ -389,10 +390,10 @@ export const FamilyTreeViewer = () => {
                     key={gen}
                     onClick={() => toggleGeneration(gen)}
                     className={`
-                      w-7 h-7 rounded-md text-[10px] font-bold transition-all
+                      w-7 h-7 rounded-md text-[10px] font-bold transition-all shadow-sm
                       ${isActive
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'bg-muted/60 text-muted-foreground hover:bg-muted'}
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted/40 text-muted-foreground hover:bg-muted/70 backdrop-blur-sm'}
                     `}
                     title={`Génération ${gen}`}
                   >
@@ -420,11 +421,11 @@ export const FamilyTreeViewer = () => {
 
       {/* Indication raccourcis clavier (desktop, petite pastille) */}
       {!isMobile && (
-        <div className="fixed bottom-4 right-4 mr-[calc(theme(spacing.4))] sm:right-[calc(theme(spacing.4)+theme(spacing.20))] hidden xl:flex items-center gap-3 bg-card/70 backdrop-blur-sm border border-border/40 rounded-full px-3 py-1 z-30 pointer-events-none">
-          <span className="text-[9px] text-muted-foreground">
-            <kbd className="font-mono bg-muted px-1 rounded text-[8px]">+/-</kbd> zoom ·{' '}
-            <kbd className="font-mono bg-muted px-1 rounded text-[8px]">F</kbd> centrer ·{' '}
-            <kbd className="font-mono bg-muted px-1 rounded text-[8px]">Échap</kbd> fermer
+        <div className="fixed bottom-4 right-4 mr-[calc(theme(spacing.4))] sm:right-[calc(theme(spacing.4)+theme(spacing.20))] hidden xl:flex items-center gap-3 px-3 py-1 z-30 pointer-events-none">
+          <span className="text-[9px] text-muted-foreground" style={{ textShadow: '0 0 4px rgba(255,255,255,0.9), 0 1px 3px rgba(0,0,0,0.4)' }}>
+            <kbd className="font-mono bg-muted/40 px-1 rounded text-[8px]">+/-</kbd> zoom ·{' '}
+            <kbd className="font-mono bg-muted/40 px-1 rounded text-[8px]">F</kbd> centrer ·{' '}
+            <kbd className="font-mono bg-muted/40 px-1 rounded text-[8px]">Échap</kbd> fermer
           </span>
         </div>
       )}

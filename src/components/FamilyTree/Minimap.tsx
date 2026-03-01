@@ -83,7 +83,7 @@ export const Minimap = ({ persons, nodeWidth, nodeHeight, viewWidth, viewHeight 
 
   return (
     <div
-      className="bg-card/90 backdrop-blur-sm border border-border/60 rounded-lg shadow-lg overflow-hidden"
+      className="rounded-lg overflow-hidden opacity-70 hover:opacity-100 transition-opacity"
       style={{ width: MINI_W, height: MINI_H }}
       title="Minimap — aperçu de l'arbre"
     >
