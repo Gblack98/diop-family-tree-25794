@@ -241,7 +241,7 @@ export const AdminDashboard = () => {
       headerAction={headerActions}
     >
       {/* Stats contenu */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
         {statCards.map((stat) => (
           <Card key={stat.label} className="p-4 sm:p-5">
             {loading ? (
@@ -272,7 +272,7 @@ export const AdminDashboard = () => {
           </h2>
 
           {/* 4 cartes compteurs */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
             {[
               { label: "Aujourd'hui",   icon: Eye,          color: 'text-cyan-500',   bg: 'bg-cyan-500/10',   visits: visitStats?.today.visits ?? 0,      unique: visitStats?.today.unique_sessions ?? 0 },
               { label: 'Cette semaine', icon: CalendarDays, color: 'text-indigo-500', bg: 'bg-indigo-500/10', visits: visitStats?.this_week.visits ?? 0,   unique: visitStats?.this_week.unique_sessions ?? 0 },

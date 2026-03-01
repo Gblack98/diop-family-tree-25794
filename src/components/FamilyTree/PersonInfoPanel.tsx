@@ -1,5 +1,5 @@
 import { PersonNode } from "@/lib/familyTree/types";
-import { X, Users, Heart, Baby, GitCommit, LucideIcon, ChevronDown, Eye, BookOpen, FileText, ImageIcon, Music, Video, ExternalLink } from "lucide-react";
+import { X, Users, Heart, Baby, GitCommit, LucideIcon, ChevronDown, Eye, BookOpen, FileText, ImageIcon, Music, Video, ExternalLink, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
@@ -72,12 +72,15 @@ export const PersonInfoPanel = ({
 }: PersonInfoPanelProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [archives, setArchives] = useState<PersonArchive[]>([]);
+  const [archivesLoading, setArchivesLoading] = useState(false);
   const navigate = useNavigate();
 
   // Animation d'entrée fluide
   useEffect(() => {
     if (person) {
       requestAnimationFrame(() => setIsVisible(true));
+      setArchivesLoading(true);
+      setArchives([]);
       // Chercher la personne dans Supabase par nom, puis ses archives
       supabase
         .from('persons')
@@ -98,7 +101,8 @@ export const PersonInfoPanel = ({
         })
         .then((res: any) => {
           if (res?.data) setArchives(res.data as PersonArchive[]);
-        });
+        })
+        .finally(() => setArchivesLoading(false));
     } else {
       setIsVisible(false);
       setArchives([]);
@@ -139,7 +143,7 @@ export const PersonInfoPanel = ({
           sm:bottom-6 sm:right-6 sm:left-auto sm:top-auto
           sm:w-80 sm:rounded-xl sm:border
           sm:max-h-[80vh]
-          sm:${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"}
+          ${isVisible ? "sm:translate-y-0 sm:opacity-100" : "sm:translate-y-10 sm:opacity-0 sm:pointer-events-none"}
         `}
       >
         {/* Poignée Mobile (Indicateur de scroll) */}
@@ -242,7 +246,19 @@ export const PersonInfoPanel = ({
           />
 
           {/* Archives de la personne */}
-          {archives.length > 0 && (
+          {archivesLoading && (
+            <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
+              <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wide mb-2">
+                <BookOpen className="w-3.5 h-3.5" />
+                Archives
+              </div>
+              <div className="flex items-center justify-center py-3 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <span className="text-xs">Chargement...</span>
+              </div>
+            </div>
+          )}
+          {!archivesLoading && archives.length > 0 && (
             <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
               <div className="flex items-center justify-between text-xs font-semibold text-primary uppercase tracking-wide mb-2">
                 <div className="flex items-center gap-2">
