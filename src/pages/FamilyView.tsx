@@ -243,31 +243,39 @@ export const FamilyView = () => {
     const names = nodes.map(n => n.id);
 
     const fetchPhotos = async () => {
+      // 1. Photos directes sur la fiche personne (priorité haute)
       const { data: personsData } = await supabase
         .from('persons')
-        .select('id, name')
+        .select('id, name, photo_url')
         .in('name', names);
 
-      if (cancelled || !personsData?.length) return;
+      if (cancelled) return;
 
       const idToName: Record<string, string> = {};
-      personsData.forEach((p: { id: string; name: string }) => { idToName[p.id] = p.name; });
+      const photoMap: Record<string, string> = {};
+      (personsData ?? []).forEach((p: { id: string; name: string; photo_url?: string | null }) => {
+        idToName[p.id] = p.name;
+        if (p.photo_url) photoMap[p.name] = p.photo_url;
+      });
 
+      if (!personsData?.length) return;
+
+      // 2. Photos dans archives (priorité basse — si pas de photo directe)
       const { data: archives } = await supabase
         .from('archives')
         .select('person_id, images')
         .in('person_id', personsData.map(p => p.id))
         .eq('category', 'photo');
 
-      if (cancelled || !archives?.length) return;
+      if (cancelled) return;
 
-      const photoMap: Record<string, string> = {};
-      archives.forEach((a: any) => {
+      (archives ?? []).forEach((a: any) => {
         const name = idToName[a.person_id];
         if (name && !photoMap[name] && Array.isArray(a.images) && a.images.length > 0) {
           photoMap[name] = a.images[0];
         }
       });
+
       if (!cancelled) setPersonPhotos(photoMap);
     };
 

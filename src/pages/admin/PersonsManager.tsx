@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Search, Loader2, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, Users, Camera, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MultiSelect, Option } from '@/components/ui/multi-select';
@@ -48,6 +48,7 @@ interface Person {
   name: string;
   genre: 'Homme' | 'Femme';
   generation: number;
+  photo_url?: string;
   created_at: string;
 }
 
@@ -353,11 +354,14 @@ const PersonForm = ({
 }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [allPersons, setAllPersons] = useState<Option[]>([]);
   const [formData, setFormData] = useState({
     name: person?.name || '',
     genre: person?.genre || 'Homme',
     generation: person?.generation?.toString() || '0',
+    photo_url: person?.photo_url || '',
     parents: [] as string[],
     children: [] as string[],
   });
@@ -406,6 +410,56 @@ const PersonForm = ({
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Erreur', description: 'Le fichier doit être une image', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Erreur', description: 'La photo ne doit pas dépasser 5 Mo', variant: 'destructive' });
+      return;
+    }
+
+    setPhotoUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `persons/${crypto.randomUUID()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('family-images')
+        .upload(fileName, file);
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('family-images')
+        .getPublicUrl(fileName);
+
+      setFormData(prev => ({ ...prev, photo_url: urlData.publicUrl }));
+    } catch (err: any) {
+      toast({ title: 'Erreur upload', description: err.message, variant: 'destructive' });
+    } finally {
+      setPhotoUploading(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  };
+
+  const handlePhotoRemove = async () => {
+    if (!formData.photo_url) return;
+    try {
+      // Extraire le chemin relatif depuis l'URL publique
+      const url = new URL(formData.photo_url);
+      const pathParts = url.pathname.split('/family-images/');
+      if (pathParts[1]) {
+        await supabase.storage.from('family-images').remove([pathParts[1]]);
+      }
+    } catch {
+      // Ignorer les erreurs de suppression du bucket (fichier déjà absent, etc.)
+    }
+    setFormData(prev => ({ ...prev, photo_url: '' }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -424,6 +478,7 @@ const PersonForm = ({
         name: formData.name.trim(),
         genre: formData.genre as 'Homme' | 'Femme',
         generation: parseInt(formData.generation),
+        photo_url: formData.photo_url || null,
       };
 
       let personId: string;
@@ -571,6 +626,58 @@ const PersonForm = ({
             0 = Ancêtres racines
           </p>
         </div>
+      </div>
+
+      {/* Photo de profil (optionnel) */}
+      <div className="border-t pt-4 mt-4">
+        <h3 className="text-sm font-semibold mb-3">Photo de profil <span className="font-normal text-muted-foreground">(optionnel)</span></h3>
+        <div className="flex items-center gap-4">
+          {/* Aperçu */}
+          <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-border bg-muted flex items-center justify-center">
+            {formData.photo_url ? (
+              <img src={formData.photo_url} alt="Photo de profil" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-2xl font-bold text-muted-foreground">
+                {formData.name.charAt(0).toUpperCase() || '?'}
+              </span>
+            )}
+          </div>
+          {/* Actions */}
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={photoUploading}
+              className="gap-2"
+            >
+              {photoUploading ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Envoi en cours...</>
+              ) : (
+                <><Camera className="w-3.5 h-3.5" /> {formData.photo_url ? 'Changer' : 'Choisir une photo'}</>
+              )}
+            </Button>
+            {formData.photo_url && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handlePhotoRemove}
+                className="gap-2 text-destructive hover:text-destructive"
+              >
+                <X className="w-3.5 h-3.5" /> Supprimer la photo
+              </Button>
+            )}
+          </div>
+        </div>
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoUpload}
+        />
       </div>
 
       <div className="border-t pt-4 mt-4">

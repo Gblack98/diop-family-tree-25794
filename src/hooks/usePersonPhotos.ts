@@ -20,29 +20,41 @@ export function usePersonPhotos(): Map<string, string> {
       return;
     }
 
-    supabase
-      .from('archives')
-      .select('images, persons!inner(name)')
-      .eq('category', 'photo')
-      .not('images', 'is', null)
-      .order('sort_year', { ascending: false })
-      .then(({ data, error }) => {
-        if (error || !data) return;
+    const fetchPhotos = async () => {
+      const map = new Map<string, string>();
 
-        const map = new Map<string, string>();
-        (data as any[]).forEach((row) => {
-          const personName = row.persons?.name as string | undefined;
-          const images = row.images as string[] | null;
-          // On conserve uniquement la première photo par personne (la plus récente)
-          if (personName && images && images.length > 0 && !map.has(personName)) {
-            map.set(personName, images[0]);
-          }
-        });
+      // 1. Photos directes sur la fiche personne (priorité haute)
+      const { data: personsData } = await supabase
+        .from('persons')
+        .select('name, photo_url')
+        .not('photo_url', 'is', null);
 
-        cachedPhotos = map;
-        cacheTs = Date.now();
-        setPhotoMap(new Map(map));
+      (personsData as any[] ?? []).forEach((p) => {
+        if (p.name && p.photo_url) map.set(p.name, p.photo_url);
       });
+
+      // 2. Photos dans les archives (priorité basse — si pas déjà dans la map)
+      const { data: archivesData } = await supabase
+        .from('archives')
+        .select('images, persons!inner(name)')
+        .eq('category', 'photo')
+        .not('images', 'is', null)
+        .order('sort_year', { ascending: false });
+
+      (archivesData as any[] ?? []).forEach((row) => {
+        const personName = row.persons?.name as string | undefined;
+        const images = row.images as string[] | null;
+        if (personName && images && images.length > 0 && !map.has(personName)) {
+          map.set(personName, images[0]);
+        }
+      });
+
+      cachedPhotos = map;
+      cacheTs = Date.now();
+      setPhotoMap(new Map(map));
+    };
+
+    fetchPhotos();
   }, []);
 
   return photoMap;
