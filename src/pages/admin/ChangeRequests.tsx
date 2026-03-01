@@ -435,7 +435,7 @@ export const ChangeRequests = () => {
 
       {/* Dialog: Détails + actions */}
       <Dialog open={!!selectedChange} onOpenChange={() => setSelectedChange(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Détails du changement</DialogTitle>
           </DialogHeader>

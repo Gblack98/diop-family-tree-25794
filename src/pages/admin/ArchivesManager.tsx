@@ -342,7 +342,7 @@ export const ArchivesManager = () => {
 
       {/* Dialogs */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="w-full max-w-lg sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-lg sm:max-w-2xl lg:max-w-4xl">
           <DialogHeader><DialogTitle>Créer une nouvelle archive</DialogTitle></DialogHeader>
           <ErrorBoundary>
             <ArchiveForm onSuccess={() => { setIsAddDialogOpen(false); loadArchives(); }} onCancel={() => setIsAddDialogOpen(false)} />
@@ -351,7 +351,7 @@ export const ArchivesManager = () => {
       </Dialog>
 
       <Dialog open={!!viewingArchive} onOpenChange={() => setViewingArchive(null)}>
-        <DialogContent className="w-full max-w-lg sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-lg sm:max-w-2xl lg:max-w-4xl">
           <ErrorBoundary>
             {viewingArchive && <ArchiveViewer archive={viewingArchive} />}
           </ErrorBoundary>
@@ -359,7 +359,7 @@ export const ArchivesManager = () => {
       </Dialog>
 
       <Dialog open={!!editingArchive} onOpenChange={() => setEditingArchive(null)}>
-        <DialogContent className="w-full max-w-lg sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-lg sm:max-w-2xl lg:max-w-4xl">
           <DialogHeader><DialogTitle>Modifier l'archive</DialogTitle></DialogHeader>
           <ErrorBoundary>
             {editingArchive && (
