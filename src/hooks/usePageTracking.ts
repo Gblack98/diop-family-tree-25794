@@ -36,11 +36,13 @@ export function usePageTracking() {
       .from('page_visits')
       .insert({ session_id: sessionId, page_path: path })
       .then(({ error }) => {
-        if (error) {
-          // Ne pas bloquer l'UI — juste log en dev
-          if (import.meta.env.DEV) {
-            console.warn('[Tracking] Erreur insertion visite:', error.message);
-          }
+        if (error && import.meta.env.DEV) {
+          console.warn('[Tracking] Erreur insertion visite:', error.message);
+        }
+      })
+      .catch((err: unknown) => {
+        if (import.meta.env.DEV) {
+          console.warn('[Tracking] Erreur réseau:', err);
         }
       });
   }, [location.pathname]);

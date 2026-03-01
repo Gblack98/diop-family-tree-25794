@@ -239,6 +239,7 @@ export const FamilyView = () => {
       setPersonPhotos({});
       return;
     }
+    let cancelled = false;
     const names = nodes.map(n => n.id);
 
     const fetchPhotos = async () => {
@@ -247,7 +248,7 @@ export const FamilyView = () => {
         .select('id, name')
         .in('name', names);
 
-      if (!personsData?.length) return;
+      if (cancelled || !personsData?.length) return;
 
       const idToName: Record<string, string> = {};
       personsData.forEach((p: { id: string; name: string }) => { idToName[p.id] = p.name; });
@@ -258,7 +259,7 @@ export const FamilyView = () => {
         .in('person_id', personsData.map(p => p.id))
         .eq('category', 'photo');
 
-      if (!archives?.length) return;
+      if (cancelled || !archives?.length) return;
 
       const photoMap: Record<string, string> = {};
       archives.forEach((a: any) => {
@@ -267,10 +268,11 @@ export const FamilyView = () => {
           photoMap[name] = a.images[0];
         }
       });
-      setPersonPhotos(photoMap);
+      if (!cancelled) setPersonPhotos(photoMap);
     };
 
     fetchPhotos();
+    return () => { cancelled = true; };
   }, [nodes]);
 
   // Gestion du redimensionnement
@@ -468,8 +470,7 @@ export const FamilyView = () => {
         }
         return d.data.genre === "Homme" ? "hsl(200, 80%, 45%)" : "hsl(340, 70%, 55%)";
       })
-      .attr("stroke-width", (d) => d.type === "central" ? (isMobile ? 4 : 5) : (isMobile ? 2.5 : 3))
-      .style("filter", "drop-shadow(0px 3px 6px rgba(0,0,0,0.2))");
+      .attr("stroke-width", (d) => d.type === "central" ? (isMobile ? 4 : 5) : (isMobile ? 2.5 : 3));
 
     // Badge "Épouse" / "Époux" pour les conjoints
     node.filter(d => d.type === "spouse")
@@ -577,11 +578,9 @@ export const FamilyView = () => {
       node.attr("transform", (d) => `translate(${(d as SimulatedNode).x},${(d as SimulatedNode).y})`);
     });
 
-    // NE PAS ARRÊTER la simulation pour garder l'aspect dynamique
     return () => {
-      // Ralentir mais ne pas arrêter complètement
       if (simulationRef.current) {
-        simulationRef.current.alphaTarget(0.01);
+        simulationRef.current.stop();
       }
     };
   }, [nodes, links, dimensions, navigate, personPhotos]);

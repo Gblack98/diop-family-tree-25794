@@ -106,7 +106,7 @@ export const FamilyTreeViewer = () => {
 
     window.addEventListener("resize", handleResize);
 
-    setTimeout(() => {
+    const initTimeout = setTimeout(() => {
       setDimensions(getResponsiveDimensions());
       if (window.__treeReset) window.__treeReset();
     }, 300);
@@ -114,6 +114,7 @@ export const FamilyTreeViewer = () => {
     return () => {
       window.removeEventListener("resize", handleResize);
       clearTimeout(resizeTimeout);
+      clearTimeout(initTimeout);
     };
   }, [engine]);
 
@@ -167,7 +168,7 @@ export const FamilyTreeViewer = () => {
 
       if (targetPerson) {
         isFocusHandled.current = true;
-        setTimeout(() => {
+        const focusTimeout = setTimeout(() => {
           engine.expandToRoot(targetPerson);
           updateTree();
           setSelectedPerson(targetPerson);
@@ -177,6 +178,7 @@ export const FamilyTreeViewer = () => {
           }
           setSearchParams({}, { replace: true });
         }, 500);
+        return () => clearTimeout(focusTimeout);
       }
     }
   }, [allPersons, searchParams, engine, updateTree, setSearchParams]);

@@ -109,24 +109,28 @@ function splitIntoLines(
   return [line1, truncateText(ctx, overflow.join(' '), maxWidth)];
 }
 
-/** Charge toutes les photos en parallèle, erreurs silencieuses */
+/** Charge toutes les photos en parallèle, log les échecs CORS en dev */
 async function loadImages(
   photoMap: Map<string, string> | undefined
 ): Promise<Map<string, HTMLImageElement>> {
   const cache = new Map<string, HTMLImageElement>();
   if (!photoMap || photoMap.size === 0) return cache;
 
+  let failedCount = 0;
   await Promise.all(
     Array.from(photoMap.entries()).map(([name, url]) =>
       new Promise<void>((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload  = () => { cache.set(name, img); resolve(); };
-        img.onerror = () => resolve();
+        img.onerror = () => { failedCount++; resolve(); };
         img.src = url;
       })
     )
   );
+  if (failedCount > 0 && import.meta.env.DEV) {
+    console.warn(`[Export] ${failedCount} photo(s) ignorée(s) — CORS ou URL invalide.`);
+  }
   return cache;
 }
 

@@ -1,13 +1,34 @@
 import { PersonNode, TreeDimensions } from "@/lib/familyTree/types";
 
+/** Échappe les caractères HTML spéciaux pour prévenir les injections XSS */
+function escapeHtml(value: string | number): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Valide qu'une URL photo est sûre (https, http ou data:image) */
+function safePhotoUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('https://') || url.startsWith('http://') || url.startsWith('data:image/')) {
+    return url;
+  }
+  return undefined;
+}
+
 export function createNodeHTML(
   person: PersonNode,
   selectedPerson: PersonNode | null,
   dimensions: TreeDimensions,
   photoUrl?: string
 ): string {
+  const safeName = escapeHtml(person.name);
   const initial = person.name.charAt(0).toUpperCase();
   const childCount = person.enfants.length;
+  const safePhotoSrc = safePhotoUrl(photoUrl);
   const hasHiddenChildren = childCount > 0 && !person.expanded;
   const isSelected = selectedPerson?.name === person.name;
 
@@ -85,8 +106,8 @@ export function createNodeHTML(
   ` : '';
 
   // Rendu de l'avatar (photo ou initiale)
-  const renderBadgeAvatar = photoUrl
-    ? `<img src="${photoUrl}" style="
+  const renderBadgeAvatar = safePhotoSrc
+    ? `<img src="${safePhotoSrc}" style="
         width: 30px; height: 30px; border-radius: 50%;
         object-fit: cover; flex-shrink: 0;
         border: 1.5px solid rgba(255,255,255,0.4);
@@ -130,7 +151,7 @@ export function createNodeHTML(
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           flex: 1;
-        ">${person.name}</div>
+        ">${safeName}</div>
 
         ${isSelected ? selectedBadge : hasHighlight ? highlightBadge : hasHiddenChildren ? `
           <div style="
@@ -167,14 +188,14 @@ export function createNodeHTML(
   ` : '';
 
   // Rendu de l'avatar desktop (photo ou initiale)
-  const renderDesktopAvatar = photoUrl
+  const renderDesktopAvatar = safePhotoSrc
     ? `<div style="
         width: ${avatarSize}; height: ${avatarSize};
         border-radius: 50%; overflow: hidden; flex-shrink: 0;
         border: 2px solid rgba(255,255,255,0.5);
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       ">
-        <img src="${photoUrl}" style="
+        <img src="${safePhotoSrc}" style="
           width: 100%; height: 100%; object-fit: cover; display: block;
         " />
       </div>`
@@ -221,11 +242,11 @@ export function createNodeHTML(
             overflow: hidden;
             text-overflow: ellipsis;
             color: hsl(var(--foreground));
-          ">${person.name}</div>
+          ">${safeName}</div>
           <div style="
             font-size: 10px;
             color: hsl(var(--muted-foreground));
-          ">Génération ${person.level}</div>
+          ">Génération ${escapeHtml(person.level)}</div>
         </div>
       </div>
 
@@ -238,9 +259,9 @@ export function createNodeHTML(
         color: hsl(var(--muted-foreground));
         background: hsl(var(--muted)/0.3);
       ">
-        <span style="display:flex; gap:2px">👥 ${person.parents.length}</span>
-        <span style="display:flex; gap:2px">💑 ${person.spouses.length}</span>
-        <span style="display:flex; gap:2px">👶 ${childCount}</span>
+        <span style="display:flex; gap:2px">👥 ${escapeHtml(person.parents.length)}</span>
+        <span style="display:flex; gap:2px">💑 ${escapeHtml(person.spouses.length)}</span>
+        <span style="display:flex; gap:2px">👶 ${escapeHtml(childCount)}</span>
       </div>
 
       ${selectedBadge}
@@ -253,7 +274,7 @@ export function createNodeHTML(
           display: flex; align-items: center; justify-content: center;
           font-weight: bold; font-size: 10px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        ">+${childCount}</div>
+        ">+${escapeHtml(childCount)}</div>
       ` : ''}
     </div>
   `;
